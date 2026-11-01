@@ -1,0 +1,1544 @@
+:root{font-family:"DM Sans",sans-serif;color:#202b25;background:#f5f7f3;font-synthesis:none;text-rendering:optimizeLegibility;--green:#176b4b;--deep:#104b36;--muted:#7a8780;--line:#e4e9e3;--white:#fff;--ink:#202b25}
+*{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh;background:radial-gradient(ellipse at 90% 0%,#e3efe5 0,transparent 34rem),#f5f7f3}button,input{font:inherit}button{cursor:pointer}.app-shell{width:min(100% - 48px,980px);margin:auto;padding:26px 0 32px}.topbar{display:flex;align-items:center;justify-content:space-between;padding:2px 0 25px;border-bottom:1px solid #dfe7df}.brand{display:flex;align-items:center;gap:11px;color:inherit;text-decoration:none}.brand-mark{display:grid;width:42px;height:42px;place-items:center;border-radius:13px;background:var(--green);color:#fff;font:700 26px Manrope,sans-serif;box-shadow:0 5px 13px #176b4b2b}.brand-name,.brand-caption{display:block}.brand-name{font:800 16px Manrope,sans-serif;letter-spacing:-.035em}.brand-caption{margin-top:2px;color:var(--muted);font-size:10px}.connection{display:flex;align-items:center;gap:8px;color:#637269;font-size:11px}.connection i{width:7px;height:7px;border-radius:50%;background:#55a776;box-shadow:0 0 0 4px #55a7761d}.intro-block{padding:49px 0 35px}.eyebrow{margin:0 0 9px;color:var(--green);font-size:10px;font-weight:700;letter-spacing:.16em}.intro-block h1{margin:0;color:#1a3025;font:800 clamp(34px,5.4vw,58px)/1.05 Manrope,sans-serif;letter-spacing:-.06em}.intro-copy{max-width:470px;margin:15px 0 0;color:#738078;font-size:14px;line-height:1.65}.mobile-break{display:none}.library{overflow:hidden;border:1px solid #e4e9e3;border-radius:17px;background:#ffffffdc;box-shadow:0 12px 38px #213d2810}.library-heading{display:flex;align-items:center;justify-content:space-between;padding:23px 25px 17px}.library-heading .eyebrow{margin-bottom:6px}.library-heading h2{display:flex;align-items:center;gap:9px;margin:0;font:700 21px Manrope,sans-serif;letter-spacing:-.04em}.count-pill{display:inline-grid;min-width:25px;height:22px;place-items:center;border-radius:8px;background:#edf4ee;padding:0 7px;color:var(--green);font:700 11px "DM Sans",sans-serif}.refresh-button{width:38px;height:38px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--green);font-size:23px;line-height:1}.refresh-button:hover{background:#f2f7f2}.search-box{display:flex;align-items:center;gap:11px;height:47px;margin:0 25px 14px;border:1px solid #e0e7e0;border-radius:11px;background:#fbfcfa;padding:0 13px;color:#819087}.search-box:focus-within{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}.search-box>span{font-size:23px;line-height:1;transform:rotate(-20deg)}.search-box input{min-width:0;flex:1;border:0;outline:0;background:transparent;color:var(--ink);font-size:13px}.search-box input::placeholder{color:#a2aca5}.search-box kbd{border:1px solid #e1e6e1;border-radius:5px;background:#fff;padding:2px 6px;color:#89948d;font:11px "DM Sans",sans-serif}.category-filters{display:flex;gap:7px;overflow-x:auto;padding:0 25px 17px;scrollbar-width:none}.category-filters::-webkit-scrollbar{display:none}.category-chip{flex:0 0 auto;height:30px;border:1px solid #e3e9e3;border-radius:20px;background:#fff;padding:0 12px;color:#69776e;font-size:11px;font-weight:600;white-space:nowrap}.category-chip:hover{border-color:#b8cebb;color:var(--green)}.category-chip[aria-pressed=true]{border-color:var(--green);background:var(--green);color:white}.list-status{margin:0;padding:15px 25px;color:#78857d;font-size:12px}.list-status:empty{display:none}.song-list{border-top:1px solid #edf0ec}.song-card{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:14px;width:100%;min-height:75px;border:0;border-bottom:1px solid #edf0ec;background:transparent;padding:12px 25px;text-align:left;transition:background .15s}.song-card:last-child{border-bottom:0}.song-card:hover,.song-card:focus-visible{outline:0;background:#f7faf6}.song-index{display:grid;width:42px;height:42px;place-items:center;border-radius:12px;background:#edf4ee;color:var(--green);font:700 11px Manrope,sans-serif}.song-details{min-width:0}.song-title{overflow:hidden;margin:0;color:#26352b;font-size:14px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}.song-subtitle{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:5px;color:#829087;font-size:10px}.song-category{color:var(--green);font-weight:700}.song-key{border-radius:5px;background:#f1f3ef;padding:2px 6px;color:#607267;font-weight:600}.song-open{color:#a0aaa3;font-size:18px}.empty-state{padding:30px 24px;color:#77847b;text-align:center;font-size:13px}.footer-note{padding:18px 4px 0;color:#9aa49c;text-align:center;font-size:10px}
+.song-dialog{width:min(100% - 36px,900px);max-width:none;max-height:min(92dvh,980px);border:0;border-radius:18px;background:transparent;padding:0;color:var(--ink);box-shadow:0 22px 90px #0b20163d}.song-dialog::backdrop{background:#101b15a6;backdrop-filter:blur(4px)}.dialog-frame{display:flex;max-height:min(92dvh,980px);flex-direction:column;overflow:hidden;border:1px solid #e8ece7;border-radius:18px;background:#fff}.dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:22px 25px 16px}.dialog-heading{min-width:0}.dialog-category{margin:0 0 5px;color:var(--green);font-size:10px;font-weight:700;letter-spacing:.13em}.dialog-header h2{margin:0;color:#1c2c22;font:800 clamp(20px,3vw,28px)/1.2 Manrope,sans-serif;letter-spacing:-.04em}.dialog-meta{display:flex;flex-wrap:wrap;gap:6px 11px;margin:8px 0 0;color:#78857d;font-size:11px}.close-button{flex:0 0 36px;width:36px;height:36px;border:1px solid #e5eae4;border-radius:11px;background:#fff;color:#58665c;font-size:25px;line-height:1}.close-button:hover{background:#f4f7f3}.reader-toolbar{display:flex;align-items:center;justify-content:space-between;min-height:42px;border-top:1px solid #edf0ec;border-bottom:1px solid #edf0ec;background:#f9faf8;padding:0 20px;color:#89948c;font-size:9px;font-weight:700;letter-spacing:.13em}.reader-toolbar div{display:flex;gap:6px}.reader-toolbar button{display:grid;width:29px;height:27px;place-items:center;border:1px solid #e3e9e3;border-radius:8px;background:#fff;color:var(--green);font-size:22px;line-height:1}.reader-toolbar button:disabled{opacity:.35;cursor:default}.song-preview{overflow:auto;min-height:150px;padding:clamp(21px,5vw,45px);overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-color:#c8d5c9 transparent}.song-content{max-width:760px;margin:0 auto}.song-section{margin:0 0 clamp(25px,5vw,44px)}.song-section:last-child{margin-bottom:4px}.song-section-title{margin:0 0 13px;color:var(--green);font:700 clamp(12px,1.8vw,14px) "DM Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase}.song-section-body{max-width:100%;overflow-x:auto;overflow-y:hidden;color:#28372d;font:500 clamp(13px,2vw,17px)/1.9 "Courier New",monospace;white-space:pre;tab-size:4;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}.song-section-body:empty{display:none}.song-section-body br{line-height:1.9}.song-section-body .chord{color:var(--green);font-weight:700}.song-section-body .lyric{color:#28372d}.song-content pre{max-width:100%;overflow:auto;margin:0;font:500 clamp(13px,2vw,17px)/1.9 "Courier New",monospace;white-space:pre;tab-size:4}.song-content p{margin:0 0 14px;line-height:1.75}.preview-note{padding:44px 20px;color:#87938a;text-align:center;font-size:13px}
+@media(min-width:760px){.song-dialog{width:min(100% - 72px,900px)}.song-card{min-height:79px}.song-preview{padding-left:clamp(35px,9vw,95px);padding-right:clamp(35px,9vw,95px)}}
+@media(max-width:600px){.app-shell{width:min(100% - 30px,980px);padding-top:17px}.topbar{padding-bottom:17px}.brand-mark{width:38px;height:38px;border-radius:12px}.connection{font-size:9px}.intro-block{padding:35px 0 25px}.mobile-break{display:block}.intro-copy{max-width:340px;font-size:13px}.library{border-radius:14px}.library-heading{padding:19px 16px 15px}.library-heading h2{font-size:18px}.search-box{margin:0 16px 13px}.category-filters{padding-right:16px;padding-left:16px}.song-card{grid-template-columns:42px minmax(0,1fr) auto;gap:11px;min-height:68px;padding:10px 16px}.song-index{width:38px;height:38px;border-radius:11px}.song-title{font-size:13px}.song-subtitle{font-size:9px}.list-status{padding:14px 16px}.song-dialog{width:100%;height:100%;max-height:100dvh;margin:0;border-radius:0}.dialog-frame{height:100%;max-height:100dvh;border:0;border-radius:0}.dialog-header{padding:calc(15px + env(safe-area-inset-top)) 17px 13px}.reader-toolbar{padding-right:16px;padding-left:16px}.song-preview{flex:1;padding:25px 20px calc(25px + env(safe-area-inset-bottom))}.song-section{margin-bottom:31px}.song-section-body{line-height:1.85}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+.library-title-group{display:flex;min-width:0;align-items:center;gap:16px}.sync-status{margin:0;color:#89958d;font-size:10px}.refresh-button{display:inline-flex;width:auto;min-width:126px;height:38px;align-items:center;justify-content:center;gap:7px;border:1px solid #dce7dd;border-radius:10px;background:#f7faf6;padding:0 12px;color:var(--green);font-size:11px;font-weight:700;white-space:nowrap}.refresh-button>span:first-child{font-size:18px;line-height:1}.refresh-button:hover{border-color:#b8cebb;background:#edf5ee}.refresh-button:disabled{opacity:.6;cursor:wait}.refresh-button.is-loading>span:first-child{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){.library-heading{align-items:flex-start;gap:12px}.library-title-group{align-items:flex-start;flex-direction:column;gap:4px}.sync-status{font-size:9px}.refresh-button{min-width:40px;height:36px;padding:0 10px;font-size:0}.refresh-button>span:first-child{font-size:20px}.refresh-button>span:last-child{font-size:0}}
+.library{margin-top:30px}@media(max-width:600px){.library{margin-top:20px}}
+.category-filters{flex-wrap:wrap;overflow:visible}.category-chip{flex-shrink:0}
+.schedule-add-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 11px;margin:0 25px 14px;border:1px solid #e4ebe3;border-radius:9px;background:#f8faf7;padding:9px 11px}.schedule-add-bar[hidden]{display:none!important}.schedule-add-bar label{color:#58675d;font-size:10px;font-weight:700}.schedule-add-bar select{min-width:150px;max-width:100%;height:31px;border:1px solid #dce5dc;border-radius:7px;background:#fff;padding:0 8px;color:#36463a;font:500 10px "DM Sans",sans-serif}.schedule-add-bar>span{color:#89958d;font-size:9px}.song-card{grid-template-columns:minmax(0,1fr) 34px;gap:8px;cursor:default}.song-card-main{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:14px;width:100%;min-width:0;min-height:58px;border:0;background:transparent;padding:0;color:inherit;text-align:left}.song-card-main:hover .song-title{color:var(--green)}.song-card-main:focus-visible{border-radius:8px;outline:2px solid #80af8d;outline-offset:2px}.add-to-schedule{display:grid;width:30px;height:30px;place-items:center;border:1px solid #d9e6da;border-radius:9px;background:#f7faf6;color:var(--green);font-size:20px;line-height:1}.add-to-schedule:hover{border-color:#8bb495;background:#eaf4eb}.schedule-add-bar{margin-right:25px;margin-left:25px}
+@media(max-width:600px){.song-card{grid-template-columns:minmax(0,1fr) 31px;gap:6px;padding-right:16px;padding-left:16px}.song-card-main{grid-template-columns:38px minmax(0,1fr) auto;gap:11px}.add-to-schedule{width:29px;height:29px}.schedule-add-bar{margin-right:16px;margin-left:16px}.schedule-add-bar>span{flex-basis:100%;padding-left:2px}}
+.library-actions{display:flex;align-items:center;gap:8px}.collapse-button{display:grid;width:38px;height:38px;place-items:center;border:1px solid #e0e7df;border-radius:10px;background:#fff;color:#637269;font-size:20px;line-height:1}.collapse-button:hover{background:#f3f7f2;color:var(--green)}#collection-results[hidden]{display:none}.schedule-song-row{grid-template-columns:25px 20px minmax(0,1fr) auto}.schedule-drag-handle{width:24px;height:31px;border:0;border-radius:6px;background:transparent;color:#8a988e;font-size:18px;letter-spacing:-5px;cursor:grab;touch-action:none;user-select:none}.schedule-drag-handle:active{cursor:grabbing;background:#eaf2e9}.schedule-song-row.is-dragging{opacity:.48;background:#e9f2e9;outline:1px dashed #80a88a}.schedule-song-name{min-width:0;border:0;background:transparent;padding:5px 0;color:#36443a;text-align:left;font:600 11px "DM Sans",sans-serif;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.schedule-song-name:hover{color:var(--green)}.schedule-song-actions{gap:3px}.schedule-song-actions button{flex:0 0 25px;width:25px;height:26px;padding:0}.schedule-edit-dialog{width:min(100% - 30px,720px);max-width:none;max-height:min(94dvh,900px);border:0;border-radius:16px;padding:0;color:var(--ink);box-shadow:0 22px 90px #0b20163d}.schedule-edit-dialog::backdrop{background:#101b15a6;backdrop-filter:blur(4px)}.schedule-edit-form{max-height:min(94dvh,900px);overflow:auto;border:1px solid #e5ebe4;border-radius:16px;background:#fff;padding:22px}.edit-dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}.edit-dialog-heading h2{margin:0;font:800 22px/1.2 Manrope,sans-serif;letter-spacing:-.04em}.schedule-edit-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.schedule-edit-fields .schedule-field input{height:40px}.edit-content-field{grid-column:1/-1}.edit-content-field textarea{width:100%;min-height:230px;max-height:52dvh;resize:vertical;border:1px solid #e1e8e1;border-radius:8px;background:#fbfcfa;padding:11px;color:#28372d;font:13px/1.75 "Courier New",monospace;white-space:pre;outline:0;tab-size:4}.edit-content-field textarea:focus{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}.edit-help{color:#89958d;font-size:10px;font-weight:400;letter-spacing:0;line-height:1.5}.edit-local-note{margin:13px 0 0;color:#718078;font-size:10px}.edit-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}.edit-cancel,.edit-save{min-height:38px;border:1px solid #dfe7df;border-radius:8px;background:#fff;padding:0 13px;color:#617067;font-size:11px;font-weight:700}.edit-save{border-color:var(--green);background:var(--green);color:#fff}.edit-save:hover{background:var(--deep)}
+@media(max-width:600px){.collapse-button{width:36px;height:36px}.library-actions{gap:6px}.schedule-song-row{grid-template-columns:21px 17px minmax(0,1fr) auto;gap:3px;padding:4px 3px}.schedule-drag-handle{width:20px;font-size:16px}.schedule-song-actions{gap:2px}.schedule-song-actions button{flex-basis:22px;width:22px;height:25px;font-size:12px}.schedule-song-name{font-size:10px}.schedule-edit-form{padding:17px}.schedule-edit-fields{grid-template-columns:1fr 1fr;gap:10px}.schedule-edit-fields .schedule-field{font-size:8px}.edit-content-field{grid-column:1/-1}.edit-content-field textarea{min-height:200px}.edit-dialog-heading h2{font-size:19px}}
+.schedule-panel{margin-top:24px;border:1px solid #e4e9e3;border-radius:17px;background:#ffffffdc;padding:22px 25px;box-shadow:0 12px 38px #213d280a}.schedule-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.schedule-heading .eyebrow{margin-bottom:6px}.schedule-heading h2{margin:0;font:700 21px Manrope,sans-serif;letter-spacing:-.04em}.schedule-caption{margin:6px 0 0;color:#89958d;font-size:10px}.create-schedule-button{display:inline-flex;min-height:38px;align-items:center;justify-content:center;gap:7px;border:0;border-radius:10px;background:var(--green);padding:0 13px;color:white;font-size:11px;font-weight:700;white-space:nowrap}.create-schedule-button:hover{background:var(--deep)}.create-schedule-button span{font-size:18px;line-height:1}.schedule-status{margin:12px 0 0;color:#718078;font-size:10px}.schedule-list{display:grid;gap:12px;margin-top:15px}.schedule-empty{border:1px dashed #dbe4db;border-radius:11px;padding:20px;color:#8a968d;text-align:center;font-size:12px}.schedule-card{min-width:0;border:1px solid #e5ebe4;border-radius:12px;background:#fff;padding:15px}.schedule-card-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,.4fr) auto;align-items:end;gap:10px}.schedule-field{display:grid;min-width:0;gap:5px;color:#78857d;font-size:9px;font-weight:700;letter-spacing:.05em}.schedule-field input,.schedule-song-select{width:100%;height:37px;min-width:0;border:1px solid #e1e8e1;border-radius:8px;background:#fff;padding:0 10px;color:#28372d;font:500 12px "DM Sans",sans-serif;outline:0}.schedule-field input:focus,.schedule-song-select:focus{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}.schedule-delete{height:37px;border:1px solid #f0dcda;border-radius:8px;background:#fff8f7;padding:0 10px;color:#a64b42;font-size:10px;font-weight:600}.schedule-delete:hover{background:#fff0ee}.schedule-add-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}.schedule-add-button{min-height:37px;border:1px solid #d8e5da;border-radius:8px;background:#f5faf5;padding:0 12px;color:var(--green);font-size:10px;font-weight:700;white-space:nowrap}.schedule-add-button:hover{background:#edf5ee}.schedule-add-button:disabled{opacity:.5;cursor:default}.schedule-song-list{display:grid;gap:6px;margin:12px 0 0;padding:0;list-style:none}.schedule-song-row{display:grid;grid-template-columns:29px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:43px;border-radius:8px;background:#f8faf7;padding:5px 7px}.schedule-song-order{color:#95a197;text-align:center;font-size:10px;font-weight:700}.schedule-song-name{overflow:hidden;color:#36443a;font-size:11px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.schedule-song-actions{display:flex;gap:4px}.schedule-song-actions button{width:27px;height:27px;border:1px solid #e2e9e1;border-radius:7px;background:#fff;color:#617367;font-size:14px;line-height:1}.schedule-song-actions button:hover{border-color:#bdd1bf;color:var(--green)}.schedule-song-actions button:disabled{opacity:.35;cursor:default}.schedule-song-actions .remove-scheduled-song{color:#a64b42}.schedule-no-songs{margin:12px 0 0;color:#929d95;font-size:10px}
+@media(max-width:600px){.schedule-panel{margin-top:18px;border-radius:14px;padding:17px 15px}.schedule-heading{align-items:flex-start}.schedule-heading h2{font-size:18px}.schedule-caption{max-width:210px;line-height:1.5}.create-schedule-button{min-height:35px;padding:0 10px;font-size:10px}.schedule-card{padding:11px}.schedule-card-header{grid-template-columns:minmax(0,1fr) 115px;gap:8px}.schedule-delete{grid-column:1/-1;height:32px;justify-self:end}.schedule-add-form{grid-template-columns:minmax(0,1fr) auto}.schedule-add-button{padding:0 9px;font-size:9px}.schedule-song-row{grid-template-columns:23px minmax(0,1fr) auto;gap:6px;padding:5px}.schedule-song-actions button{width:25px;height:26px}}
+.schedule-card{padding:12px 14px}.schedule-card-header{grid-template-columns:minmax(0,1fr) minmax(130px,190px) auto;align-items:center;gap:10px}.schedule-card-header .schedule-field{grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;white-space:nowrap}.schedule-card-header .schedule-field input{height:36px}.schedule-view-button{height:36px;border:0;border-radius:8px;background:var(--green);padding:0 13px;color:#fff;font-size:10px;font-weight:700;white-space:nowrap}.schedule-view-button:hover{background:var(--deep)}.schedule-details[hidden]{display:none}.schedule-details{margin-top:12px;border-top:1px solid #edf0ec;padding-top:10px}.schedule-details-heading{display:flex;align-items:center;justify-content:space-between;color:#718078;font-size:10px}.schedule-details-heading .schedule-delete{height:29px}.schedule-details .schedule-no-songs{margin:11px 0 2px}.schedule-details .schedule-song-list{margin-top:10px}
+@media(max-width:600px){.schedule-card{padding:10px}.schedule-card-header{grid-template-columns:minmax(0,1fr) minmax(108px,125px) auto;gap:6px}.schedule-card-header .schedule-field{grid-template-columns:1fr;gap:3px;font-size:8px}.schedule-card-header .schedule-field input{height:33px;padding:0 6px;font-size:10px}.schedule-view-button{height:33px;padding:0 8px;font-size:9px}.schedule-details-heading .schedule-delete{grid-column:auto;height:28px}}
+.schedule-card-header .schedule-field{display:block;min-width:0;font-size:0;letter-spacing:0}.schedule-card-header .schedule-field input{height:38px;font-size:12px}.schedule-card-header{grid-template-columns:minmax(0,1fr) minmax(120px,180px) auto}.schedule-view-button{height:38px}
+@media(max-width:600px){.schedule-card-header{grid-template-columns:minmax(0,1fr) 108px auto;gap:6px}.schedule-card-header .schedule-field input{height:34px;font-size:10px}.schedule-view-button{height:34px;padding:0 8px;font-size:9px}}
+.schedule-view-dialog{width:min(100% - 30px,720px);max-width:none;max-height:min(92dvh,850px);border:0;border-radius:16px;background:transparent;padding:0;color:var(--ink);box-shadow:0 22px 90px #0b20163d}.schedule-view-dialog::backdrop{background:#101b15a6;backdrop-filter:blur(4px)}.schedule-view-frame{display:flex;max-height:min(92dvh,850px);flex-direction:column;overflow:hidden;border:1px solid #e5ebe4;border-radius:16px;background:#fff}.schedule-view-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:20px 22px 15px}.schedule-view-header h2{margin:0;color:#1c2c22;font:800 22px/1.2 Manrope,sans-serif;letter-spacing:-.04em}.schedule-view-date{margin:6px 0 0;color:#839087;font-size:11px}.schedule-view-list{overflow:auto;min-height:90px;padding:0 18px 14px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.schedule-view-list .schedule-card{padding:0;border:0;background:transparent}.schedule-view-list .schedule-song-list{margin-top:0}.schedule-view-list .schedule-no-songs{border:1px dashed #dbe4db;border-radius:10px;padding:20px;text-align:center}.schedule-view-footer{display:flex;justify-content:flex-end;border-top:1px solid #edf0ec;background:#fafbf9;padding:11px 18px}.schedule-view-footer .schedule-delete{height:32px}
+@media(max-width:600px){.schedule-view-dialog{width:100%;height:100%;max-height:100dvh;margin:0;border-radius:0}.schedule-view-frame{height:100%;max-height:100dvh;border:0;border-radius:0}.schedule-view-header{padding:calc(16px + env(safe-area-inset-top)) 16px 13px}.schedule-view-header h2{font-size:19px}.schedule-view-list{padding:0 11px 12px}.schedule-view-footer{padding:10px 14px calc(10px + env(safe-area-inset-bottom))}}
+.schedule-view-list .schedule-song-row{cursor:pointer;transition:background-color .16s ease,box-shadow .16s ease}.schedule-view-list .schedule-song-row:hover,.schedule-view-list .schedule-song-row:focus-within{background:#edf5ee;box-shadow:inset 0 0 0 1px #d9e8da}.schedule-view-list .schedule-song-name{cursor:pointer}.schedule-view-list .schedule-song-row button{cursor:pointer}.schedule-view-list .schedule-drag-handle{cursor:grab}
+.schedule-song-compact-name{display:none}.schedule-view-dialog.is-compact .schedule-song-full-name{display:none}.schedule-view-dialog.is-compact .schedule-song-compact-name{display:inline}
+.schedule-compact-toggle{display:grid;width:32px;height:32px;flex:0 0 32px;place-items:center;border:1px solid #d8e5da;border-radius:8px;background:#f5faf5;color:var(--green)}.schedule-compact-toggle:hover,.schedule-compact-toggle[aria-pressed=true]{border-color:#b8cebb;background:#edf5ee}.schedule-compact-toggle svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.7}
+.schedule-compact-toggle .compact-icon-expand{display:none}
+.schedule-compact-toggle[aria-pressed="true"] .compact-icon-collapse{display:none}
+.schedule-compact-toggle[aria-pressed="true"] .compact-icon-expand{display:block}
+.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-list{gap:2px}.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-row{grid-template-columns:minmax(0,1fr);gap:0;min-height:27px;padding:3px 9px}.schedule-view-dialog.is-compact .schedule-view-list .schedule-drag-handle,.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-order,.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-actions{display:none}.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-name{grid-column:1;width:100%;padding:0;font-size:10px}
+.schedule-song-editor-wrap{position:relative;display:block;height:min(42dvh,360px);min-height:220px;overflow:hidden;border:1px solid #dfe7df;border-radius:8px;background:#fff;touch-action:pan-x pan-y}.schedule-song-editor-wrap:focus-within{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}.schedule-content-highlight,.edit-content-field textarea[name=content]{position:absolute;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:12px;border:0;border-radius:0;font:13px/1.75 'Courier New',monospace;letter-spacing:normal;tab-size:4;white-space:pre;overflow-wrap:normal;word-break:normal}.schedule-content-highlight{z-index:0;left:0;top:0;right:auto;bottom:auto;width:max-content;min-width:100%;overflow:visible;color:#28372d;pointer-events:none;will-change:transform}.schedule-section-marker{border-radius:3px;background:#e3f2e7;color:#176b4b;font-weight:700;box-shadow:0 0 0 2px #e3f2e7}.schedule-content-highlight.is-placeholder{color:#9aa69e}.schedule-content-highlight.is-placeholder .schedule-section-marker{background:#eaf3ec;color:#4e7a5b}.edit-content-field textarea[name=content]{z-index:1;display:block;resize:none;overflow:auto;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#176b4b;outline:0;touch-action:pan-x pan-y;scrollbar-width:thin}.edit-content-field textarea[name=content]::selection{background:#87bf9b66}
+@media(max-width:600px){.schedule-song-editor-wrap{height:42dvh;min-height:200px}.schedule-content-highlight,.edit-content-field textarea[name=content]{padding:11px;font-size:12px;line-height:1.8}}
+.app-shell{padding-top:10px}.library{margin-top:0}.library-heading{padding:12px 18px 8px}.library-title-group{gap:10px}.library-heading .eyebrow{margin-bottom:3px;font-size:9px}.library-heading h2{font-size:18px}.count-pill{min-width:22px;height:20px}.refresh-button{min-width:112px;height:34px}.sync-status{max-width:min(48vw,460px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.search-box{height:40px;margin:0 18px 9px}.category-filters{gap:6px;padding:0 18px 9px}.category-chip{height:27px;padding:0 10px;font-size:10px}.list-status{padding:8px 18px;font-size:10px}.song-list{max-height:min(38dvh,340px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c8d5c9 transparent}.song-card{min-height:60px;padding-top:8px;padding-bottom:8px}.song-index{width:36px;height:36px}.song-title{font-size:13px}.song-subtitle{margin-top:3px;font-size:9px}
+@media(max-width:600px){.app-shell{padding-top:8px}.library-heading{align-items:center;gap:8px;padding:10px 13px 7px}.library-title-group{flex-direction:row;align-items:center;gap:8px}.library-heading .eyebrow{margin-bottom:2px;font-size:8px}.library-heading h2{gap:6px;font-size:15px}.count-pill{min-width:19px;height:18px;padding:0 5px;font-size:9px}.sync-status{max-width:38vw;font-size:8px}.refresh-button{min-width:34px;width:34px;height:32px;padding:0 7px}.search-box{height:37px;margin:0 13px 8px;padding:0 10px}.category-filters{gap:5px;padding:0 13px 8px}.category-chip{height:26px;padding:0 9px;font-size:9px}.list-status{padding:7px 13px}.song-list{max-height:min(32dvh,230px)}.song-card{min-height:55px;padding-top:7px;padding-bottom:7px}.song-card-main{gap:8px}.song-index{width:34px;height:34px}.song-title{font-size:12px}.song-subtitle{gap:4px 7px;font-size:8px}}
+.reader-toolbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;min-height:52px;padding:6px 14px;letter-spacing:0}.chord-controls,.transpose-controls,.reader-navigation{display:flex;align-items:center;gap:5px}.chord-controls{justify-content:center}.reader-navigation{justify-content:flex-end}.chord-controls select{height:30px;max-width:124px;border:1px solid #e0e7e0;border-radius:7px;background:#fff;padding:0 7px;color:#405146;font:600 10px "DM Sans",sans-serif}.transpose-controls[hidden]{display:none!important}.transpose-controls button{width:27px;height:28px;border:1px solid #e0e7e0;border-radius:7px;background:#fff;color:var(--green);font-size:16px;line-height:1}.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@media(max-width:600px){.reader-toolbar{grid-template-columns:1fr auto;gap:5px 8px;padding:7px 12px}.reader-toolbar>span{grid-column:1}.chord-controls{grid-column:1;grid-row:2;justify-content:flex-start}.reader-navigation{grid-column:2;grid-row:1 / span 2}.chord-controls select{height:28px;max-width:112px;font-size:9px}.transpose-controls{gap:3px}.transpose-controls button{width:25px;height:26px}}
+.score-image-dialog{display:none;width:100vw;height:100dvh;max-width:none;max-height:none;overflow:auto;border:0;background:#111;padding:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}.score-image-dialog::backdrop{background:#101512f2}.score-image-dialog[open]{display:grid;place-items:center}.score-image-dialog>img{display:block;width:auto;max-width:100vw;height:auto;max-height:100dvh;margin:auto;object-fit:contain}.score-image-close{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:3;display:flex;align-items:center;gap:7px;min-height:38px;border:1px solid #ffffff70;border-radius:20px;background:#18251dcc;padding:0 12px;color:#fff;font-size:20px;line-height:1;backdrop-filter:blur(3px)}.score-image-close span{font-size:10px;font-weight:700}.score-image-close:hover{background:#24392be8}.score-image-nav{position:fixed;top:50%;z-index:3;width:42px;height:48px;transform:translateY(-50%);border:1px solid #ffffff59;border-radius:12px;background:#18251dcc;color:#fff;font-size:32px;line-height:1;backdrop-filter:blur(3px)}.score-image-nav:hover:not(:disabled){background:#24392be8}.score-image-nav[hidden],.score-image-position[hidden]{display:none}.score-image-nav:disabled{opacity:.32;cursor:default}.score-image-previous{left:max(12px,env(safe-area-inset-left))}.score-image-next{right:max(12px,env(safe-area-inset-right))}.score-image-position{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;z-index:3;transform:translateX(-50%);border:1px solid #ffffff38;border-radius:18px;background:#111b;padding:7px 12px;color:#fff;font-size:11px;font-weight:700;pointer-events:none}
+/* Fit fixed-width lyric/chord lines while keeping pinch zoom available on mobile. */
+.song-preview{touch-action:pan-y}
+.song-section-body{overflow-x:visible;overflow-y:visible;scrollbar-width:none}
+.song-section-body::-webkit-scrollbar{display:none}
+.song-content pre{overflow:visible;white-space:pre}
+.reader-toolbar .score-preview-close{display:inline-flex;width:auto;min-width:29px;height:28px;place-items:center;padding:0 9px;border-color:#e5d8d6;color:#a64b42;font-size:9px;font-weight:700;white-space:nowrap}
+.reader-toolbar .score-preview-close:hover{background:#fff4f2}
+.reader-toolbar .score-preview-close[hidden]{display:none!important}
+.schedule-card-header{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 14px}
+.schedule-card-header .schedule-field{display:grid;grid-template-columns:1fr;gap:4px;white-space:normal;font-size:9px;letter-spacing:.05em}
+.schedule-card-header .schedule-field input{height:36px}
+.schedule-view-button{grid-column:2;grid-row:1 / span 2;justify-self:end;align-self:center}
+.schedule-card-header{grid-template-columns:minmax(0,1fr) auto;align-items:end}
+.schedule-card-header .schedule-field:first-child{grid-column:1 / -1;grid-row:1}
+.dialog-credits{margin:5px 0 0;color:#78857d;font-size:10px;line-height:1.5}
+.dialog-credits[hidden]{display:none!important}
+.schedule-card-header .schedule-field:nth-child(2){grid-column:1;grid-row:2}
+.schedule-card-header .schedule-view-button{grid-column:2;grid-row:2;align-self:end}
+@media(max-width:600px){.schedule-card-header{grid-template-columns:minmax(0,1fr) auto;gap:7px 10px}.schedule-card-header .schedule-field{grid-template-columns:1fr;gap:3px;font-size:8px}.schedule-card-header .schedule-field input{height:34px}.schedule-card-header .schedule-field:first-child{grid-column:1 / -1;grid-row:1}.schedule-card-header .schedule-field:nth-child(2){grid-column:1;grid-row:2}.schedule-card-header .schedule-view-button{grid-column:2;grid-row:2;height:34px}}
+.score-page img{cursor:zoom-in}.score-page figcaption a{color:var(--green);font-weight:700}
+.dialog-header-actions{display:flex;min-width:0;max-width:52%;align-items:flex-start;justify-content:flex-end;gap:8px}.dialog-header-actions .score-instruments{max-width:min(42vw,360px);flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:3px 0 6px;scrollbar-width:thin}.dialog-header-actions .score-instrument-button{flex:0 0 auto;min-height:30px;padding:0 9px;font-size:9px}.dialog-header-actions .close-button{flex:0 0 36px}.score-section{padding-top:9px}
+@media(max-width:600px){.dialog-header{gap:8px;padding-right:12px;padding-left:12px}.dialog-header-actions{max-width:58%;gap:5px}.dialog-header-actions .score-instruments{max-width:calc(58vw - 48px);gap:4px}.dialog-header-actions .score-instrument-button{min-height:28px;padding:0 7px;font-size:8px}.dialog-header-actions .close-button{flex-basis:32px;width:32px;height:32px}.dialog-header-actions .score-instrument-button{white-space:nowrap}}
+.score-section{border-bottom:1px solid #edf0ec;background:#fbfcfa;padding:10px 18px 12px}.score-section[hidden],.score-pages[hidden]{display:none!important}.score-instruments{display:flex;flex-wrap:wrap;gap:7px}.score-instrument-button{min-height:30px;border:1px solid #dfe7df;border-radius:18px;background:#fff;padding:0 12px;color:#617067;font-size:10px;font-weight:700}.score-instrument-button:hover,.score-instrument-button[aria-pressed=true]{border-color:var(--green);background:#edf5ee;color:var(--green)}.score-pages{display:grid;gap:14px;margin-top:12px}.score-page{display:grid;justify-items:center;gap:5px;margin:0;border:1px solid #e5ebe4;border-radius:9px;background:white;padding:8px}.score-page img{display:block;width:auto;max-width:100%;max-height:68dvh;object-fit:contain}.score-page figcaption{color:#89958d;font-size:9px;overflow-wrap:anywhere;text-align:center}
+@media(max-width:600px){.score-section{padding:9px 12px 10px}.score-instruments{gap:6px}.score-instrument-button{min-height:29px;padding:0 10px;font-size:9px}.score-page{padding:5px}.score-page img{max-height:62dvh}}
+.score-carousel-controls{display:flex;align-items:center;justify-content:center;gap:13px;margin:11px auto 0;color:#6d7a70;font-size:11px;font-weight:700}.score-carousel-controls[hidden]{display:none!important}.score-carousel-controls button{display:grid;width:32px;height:30px;place-items:center;border:1px solid #dfe7df;border-radius:9px;background:#fff;color:var(--green);font-size:22px;line-height:1}.score-carousel-controls button:disabled{opacity:.35;cursor:default}.score-pages{display:flex;gap:0;margin-top:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.score-pages::-webkit-scrollbar{display:none}.score-page{flex:0 0 100%;min-width:0;scroll-snap-align:center}.score-page img{max-width:100%}
+@media(prefers-reduced-motion:reduce){.score-pages{scroll-behavior:auto}}
+.footer-note{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
+.footer-description{max-width:min(100%,520px);margin:0;color:#78857d;font-size:11px;font-style:italic;line-height:1.55;text-align:center}
+.footer-description::before{content:"\201C";margin-right:3px;color:#9aa49c}
+.footer-description::after{content:"\201D";margin-left:3px;color:#9aa49c}
+.footer-credit{display:flex;align-items:center;gap:8px}
+.footer-note img{display:block;width:24px;height:24px;object-fit:contain;border-radius:6px}
+.schedule-heading-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}.schedule-secondary-button{border:1px solid #d8e5da;background:#f5faf5;color:var(--green)}.schedule-secondary-button:hover{background:#edf5ee}.share-dialog{width:min(100% - 30px,460px)}.share-frame{max-height:none}.share-body{display:grid;gap:13px;padding:0 22px 22px}.share-select{width:100%;height:40px;border:1px solid #e1e8e1;border-radius:8px;background:#fff;padding:0 10px;color:#28372d;font:500 13px "DM Sans",sans-serif}.share-result{border:1px solid #dce9dd;border-radius:12px;background:#f7fbf7;padding:14px;text-align:center}.share-result[hidden]{display:none}.share-result p{margin:4px;color:#718078;font-size:11px}.share-result>strong{display:block;margin:9px 0;color:var(--green);font:800 38px Manrope,sans-serif;letter-spacing:.18em}.share-result p strong{display:inline;color:#29372e;font-size:14px;letter-spacing:0}.share-result button{margin-top:7px}.share-status{min-height:15px;margin:0;color:#718078;font-size:11px;line-height:1.5}.schedule-heading-actions button:disabled{opacity:.55;cursor:wait}@media(max-width:600px){.schedule-heading{flex-direction:column}.schedule-heading-actions{width:100%;justify-content:flex-start}.schedule-heading-actions .create-schedule-button{flex:1;min-width:0;padding:0 8px;font-size:9px}.share-body{padding:0 16px 18px}}
+#pull-schedule-code{width:min(100%,280px);height:64px;margin:3px auto 0;padding:0 12px;text-align:center;font:800 28px Manrope,sans-serif;letter-spacing:.45em;text-indent:.45em}
+#schedule-pull-dialog .schedule-view-header{justify-content:center;text-align:center;position:relative}#schedule-pull-dialog .schedule-view-header>div{width:100%;text-align:center}#schedule-pull-dialog .schedule-view-header .close-button{position:absolute;top:16px;right:16px}#schedule-pull-dialog .share-body{justify-items:center;text-align:center}#schedule-pull-dialog .share-body>.schedule-field{width:100%;justify-items:center;text-align:center}#schedule-pull-dialog #pull-schedule-code{display:block}#schedule-pull-dialog #pull-schedule-submit{justify-self:center}#schedule-pull-dialog #pull-status{text-align:center}
+#delete-my-song-dialog .schedule-view-header{position:relative;justify-content:center;text-align:center}#delete-my-song-dialog .schedule-view-header>div{width:100%;text-align:center}#delete-my-song-dialog .schedule-view-header .close-button{position:absolute;top:16px;right:16px}#delete-my-song-dialog .share-body{justify-items:center;gap:15px;text-align:center}#delete-my-song-dialog .intro-delete-message{max-width:100%;text-align:center}#delete-my-song-dialog .intro-delete-actions{width:100%;justify-content:center}#delete-my-song-dialog .intro-delete-actions button{min-width:112px}
+@media(max-width:600px){#schedule-pull-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#schedule-pull-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}}
+@media(max-width:600px){#delete-my-song-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#delete-my-song-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#delete-my-song-dialog .schedule-view-header{padding:18px 48px 14px}#delete-my-song-dialog .schedule-view-header h2{font-size:19px}#delete-my-song-dialog .share-body{padding:0 16px 18px}#delete-my-song-dialog .intro-delete-actions{gap:9px}#delete-my-song-dialog .intro-delete-actions button{flex:1;min-width:0;min-height:42px}}
+#my-song-upload-success-dialog{width:min(calc(100% - 30px),460px);height:auto;max-height:min(82dvh,680px);margin:auto;border-radius:16px}#my-song-upload-success-dialog .schedule-view-frame{height:auto;max-height:min(82dvh,680px);min-height:0;border:1px solid #e5ebe4;border-radius:16px}#my-song-upload-success-dialog .schedule-view-header{position:relative;justify-content:center;padding:20px 52px 14px;text-align:center}#my-song-upload-success-dialog .schedule-view-header>div{width:100%}#my-song-upload-success-dialog .schedule-view-header h2{font-size:21px}#my-song-upload-success-dialog .schedule-view-header .close-button{position:absolute;top:15px;right:16px}#my-song-upload-success-dialog .share-body{min-height:0;overflow:hidden;gap:12px;padding:0 22px 20px}#my-song-upload-success-dialog .upload-success-intro{text-align:center}#my-song-upload-success-dialog .upload-success-list{width:100%;max-height:min(45dvh,360px);min-height:0;overflow:auto;padding:2px 4px 4px;overscroll-behavior:contain;scrollbar-width:thin}#my-song-upload-success-dialog .upload-success-list li{overflow-wrap:anywhere;text-align:left}#my-song-upload-success-dialog .upload-success-actions{flex:0 0 auto;justify-content:center}#my-song-upload-success-dialog .upload-success-actions .create-schedule-button{min-width:120px;min-height:40px}
+@media(max-width:600px){#my-song-upload-success-dialog{width:calc(100% - 30px);height:auto;max-height:calc(100dvh - 32px);margin:auto;border-radius:16px}#my-song-upload-success-dialog .schedule-view-frame{height:auto;max-height:calc(100dvh - 32px);border:1px solid #e5ebe4;border-radius:16px}#my-song-upload-success-dialog .schedule-view-header{padding:18px 48px 13px}#my-song-upload-success-dialog .schedule-view-header h2{font-size:19px}#my-song-upload-success-dialog .share-body{gap:10px;padding:0 15px 16px}#my-song-upload-success-dialog .upload-success-list{max-height:45dvh}#my-song-upload-success-dialog .upload-success-list li{padding:9px 10px;font-size:11px}#my-song-upload-success-dialog .upload-success-actions .create-schedule-button{width:100%}}
+#my-song-content{z-index:1!important;background:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent!important;caret-color:var(--green)!important}
+#my-song-highlight{z-index:0!important;color:var(--ink)!important;pointer-events:none}
+#my-song-highlight.is-placeholder{color:var(--ink)!important;opacity:.78}
+#my-song-highlight.is-placeholder .my-song-section-marker{background:#dceee0!important;color:var(--green)!important;box-shadow:none!important}
+#my-song-content::placeholder{color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+:root[data-theme] :is(input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="password"],input[type="date"],input:not([type]),select,textarea){border-color:var(--line)!important;background-color:var(--field-bg)!important;color:var(--ink)!important;-webkit-text-fill-color:var(--ink)}
+:root[data-theme] :is(input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="password"],input:not([type]),select,textarea)::placeholder{color:var(--muted)!important;-webkit-text-fill-color:var(--muted)}
+:root[data-theme] :is(input[type="text"],input[type="search"],input[type="number"],input[type="email"],input[type="url"],input[type="tel"],input[type="password"],input[type="date"],input:not([type]),select,textarea):focus{border-color:var(--green)!important;outline:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 18%,transparent)!important}
+:root[data-theme] option{background:var(--surface);color:var(--ink)}
+:root[data-theme] input[type="checkbox"],:root[data-theme] input[type="radio"],:root[data-theme] input[type="range"]{accent-color:var(--green)}
+:root[data-theme] input[type="file"]{border-color:var(--line)!important;background:var(--field-bg)!important;color:var(--ink)!important}
+:root[data-theme] input[type="file"]::file-selector-button{border:1px solid var(--line);border-radius:6px;background:var(--surface-soft);padding:6px 9px;color:var(--ink);font:inherit}
+:root[data-theme] input:disabled,:root[data-theme] select:disabled,:root[data-theme] textarea:disabled{opacity:.62;cursor:not-allowed}
+:root[data-theme] .schedule-date-control input[type="date"],:root[data-theme] #my-song-content,:root[data-theme] #schedule-content-input{background:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme] .schedule-date-control input[type="date"]::-webkit-datetime-edit,:root[data-theme] .schedule-date-control input[type="date"]::-webkit-datetime-edit-fields-wrapper{color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme] .schedule-date-display{color:var(--ink)!important}
+:root[data-theme="dark"] .my-song-form .schedule-field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23a2b0a7' stroke-width='1.5'/%3E%3C/svg%3E")}
+@media(max-width:600px){#schedule-share-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#schedule-share-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}}
+/* Soft zebra striping for song and worship schedule lists. */
+.song-list>.song-card:nth-child(even){background:#f7faf6}
+.song-list>.song-card:hover,.song-list>.song-card:focus-visible{background:#edf5ee}
+.schedule-list>.schedule-card:nth-child(even){background:#f8fbf7}
+.schedule-song-row:nth-child(even){background:#f0f5f0}
+.schedule-list>.schedule-card.schedule-just-imported{border-color:#70b879;background:#e5f5df;box-shadow:0 0 0 3px #70b87935,0 8px 22px #397b3a20;transition:background-color .35s ease,border-color .35s ease,box-shadow .35s ease}
+.sync-status{min-width:0;overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+@media(max-width:600px){.library-title-group{min-width:0;flex:1}.sync-status{max-width:38vw;font-size:8px}}
+.share-schedule-picker{position:relative;width:100%;min-width:0}.share-schedule-picker>summary{position:relative;display:block;min-height:48px;border:1px solid #e1e8e1;border-radius:8px;background:#fff;padding:12px 38px 12px 12px;color:#28372d;font:500 13px/1.45 "DM Sans",sans-serif;white-space:normal;overflow-wrap:anywhere;cursor:pointer;list-style:none}.share-schedule-picker>summary::-webkit-details-marker{display:none}.share-schedule-picker>summary::after{position:absolute;top:50%;right:13px;content:"";transform:translateY(-50%);color:#718078;font-size:17px}.share-schedule-options{position:absolute;top:calc(100% + 5px);right:0;left:0;z-index:5;display:none;max-height:220px;overflow:auto;border:1px solid #dce5dc;border-radius:9px;background:#fff;padding:5px;box-shadow:0 10px 24px #1b33251f}.share-schedule-picker[open] .share-schedule-options{display:grid;gap:3px}.share-schedule-option{width:100%;border:0;border-radius:6px;background:#fff;padding:9px 10px;color:#34443a;font:500 12px/1.45 "DM Sans",sans-serif;text-align:left;white-space:normal;overflow-wrap:anywhere}.share-schedule-option:hover,.share-schedule-option[aria-selected=true]{background:#edf5ee;color:var(--green)}
+.share-schedule-picker>summary::after{content:"";width:8px;height:8px;border-right:2px solid #718078;border-bottom:2px solid #718078;transform:translateY(-70%) rotate(45deg)}
+#schedule-share-dialog{max-height:90dvh;overflow:visible}#schedule-share-dialog .share-frame{max-height:90dvh;overflow:visible}#schedule-share-dialog .share-body{position:relative;overflow:visible}#schedule-share-dialog .share-schedule-picker{position:relative;z-index:10}#schedule-share-dialog .share-schedule-options{position:absolute;top:calc(100% + 5px);right:0;left:0;z-index:20;max-height:min(220px,35dvh);margin:0;overflow-y:auto;box-shadow:0 10px 24px #1b33253d}#schedule-share-dialog .share-schedule-picker.opens-up .share-schedule-options{top:auto;bottom:calc(100% + 5px)}
+.schedule-view-header-actions{display:flex;flex:0 0 auto;align-items:center;gap:8px}.add-schedule-intro{min-height:36px;border:1px solid #d8e5da;border-radius:9px;background:#f5faf5;padding:0 11px;color:var(--green);font-size:10px;font-weight:700;white-space:nowrap}.add-schedule-intro:hover{background:#edf5ee}.schedule-intro-display{display:grid;justify-items:center;gap:8px;border-bottom:1px solid #edf0ec;background:#f8faf7;padding:12px 18px}.schedule-intro-display[hidden]{display:none}.schedule-intro-name{margin:0;color:#53645a;font-size:11px;font-weight:700}.schedule-intro-image{display:block;width:auto;max-width:100%;max-height:32dvh;object-fit:contain;border:1px solid #e3e9e3;border-radius:8px;background:#fff}.schedule-intro-form{max-height:min(90dvh,700px);overflow:auto}.schedule-intro-form .share-body{padding-bottom:22px}.schedule-intro-form input[type=file]{height:auto;min-height:44px;padding:8px}.intro-file-help{color:#89958d;font-size:10px;font-weight:400;letter-spacing:0;line-height:1.45}
+@media(max-width:600px){.schedule-view-header-actions{gap:5px}.add-schedule-intro{min-height:32px;padding:0 8px;font-size:9px}.schedule-intro-display{padding:10px 12px}#schedule-intro-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#schedule-intro-dialog .schedule-view-frame{height:auto;max-height:90dvh;border-radius:16px}}
+.schedule-intro-actions{display:grid;justify-items:stretch;gap:5px}.schedule-intro-actions-group{display:flex;min-width:0;overflow:hidden;border:1px solid #d5e4d6;border-radius:8px;background:#eaf3e9}.schedule-intro-actions-group[hidden]{display:none}.schedule-intro-name-button{flex:1;min-width:0;max-width:180px;min-height:29px;border:0;background:transparent;padding:5px 9px;color:#355b3d;font-size:10px;font-weight:700;line-height:1.35;text-align:center;white-space:normal;overflow-wrap:anywhere}.schedule-intro-name-button:hover{background:#dcebd9}
+.remove-schedule-intro{display:grid;flex:0 0 34px;place-items:center;min-height:29px;border:0;border-left:1px solid #edc9c5;background:#fff5f4;padding:5px;color:#a23f38}.remove-schedule-intro:hover{background:#fce9e7}.remove-schedule-intro:disabled{opacity:.6}.remove-schedule-intro svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}
+@media(max-width:600px){.schedule-intro-name-button{max-width:145px;min-height:27px;padding:4px 7px;font-size:9px}}
+.schedule-intro-image-fallback{position:fixed;bottom:max(18px,env(safe-area-inset-bottom));left:50%;z-index:4;transform:translateX(-50%);border:1px solid #ffffff70;border-radius:20px;background:#18251dcc;padding:10px 14px;color:#fff;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap}.schedule-intro-image-fallback[hidden]{display:none}
+.schedule-intro-preview-button{flex:0 1 auto;max-width:150px;min-height:30px;border:1px solid #d5e4d6;border-radius:9px;background:#eaf3e9;padding:0 9px;color:#355b3d;font-size:9px;font-weight:700;white-space:normal;overflow-wrap:anywhere}.schedule-intro-preview-button:hover{background:#dcebd9}.schedule-intro-preview-button[hidden]{display:none!important}
+@media(max-width:600px){.schedule-intro-preview-button{max-width:100px;min-height:28px;padding:0 6px;font-size:8px}}
+.dialog-header-actions{display:grid;flex:0 1 58%;width:58%;max-width:58%;grid-template-columns:minmax(0,1fr) 36px;align-items:start;justify-content:stretch;gap:6px}.dialog-header-actions #schedule-intro-preview-button{grid-column:1;grid-row:1;justify-self:end;max-width:100%;border-color:#e8c77f;background:#fff2d9;color:#86570b}.dialog-header-actions #schedule-intro-preview-button:hover{border-color:#d9ad53;background:#ffe9bd}.dialog-header-actions #score-instruments{grid-column:1/-1;grid-row:2;display:flex;max-width:100%;flex-wrap:wrap;justify-content:flex-end;overflow:visible;gap:5px}.dialog-header-actions #score-instruments[hidden]{display:none!important}.dialog-header-actions #close-dialog{grid-column:2;grid-row:1;justify-self:end}
+@media(max-width:600px){.dialog-header-actions{flex-basis:64%;width:64%;max-width:64%;grid-template-columns:minmax(0,1fr) 32px;gap:5px}.dialog-header-actions #schedule-intro-preview-button{max-width:100px;min-height:28px;padding:0 6px;font-size:8px}.dialog-header-actions #score-instruments{gap:4px}}
+.schedule-intro-general-button{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:4;min-height:38px;border:1px solid #e8c77f;border-radius:20px;background:#fff2d9;padding:0 13px;color:#86570b;font-size:10px;font-weight:800;backdrop-filter:blur(3px)}.schedule-intro-general-button:hover{background:#ffe9bd}.schedule-intro-general-button[hidden]{display:none}
+.score-next-general-song-button{position:fixed;top:calc(max(12px,env(safe-area-inset-top)) + 48px);left:max(12px,env(safe-area-inset-left));z-index:4;min-height:36px;border:1px solid #c9d9eb;border-radius:19px;background:#edf5ff;padding:0 12px;color:#315b86;font-size:10px;font-weight:800;backdrop-filter:blur(3px)}.score-next-general-song-button:hover{background:#dcecff}.score-next-general-song-button[hidden]{display:none}
+.score-image-top-actions{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));z-index:4;display:flex;align-items:center;gap:6px;pointer-events:none}.score-image-top-actions>button{position:static;flex:0 0 auto;min-height:36px;padding:0 10px;white-space:nowrap;pointer-events:auto}.score-image-top-actions .schedule-intro-general-button{border-color:#e8c77f;background:#fff2d9;color:#86570b}.score-image-top-actions .score-next-general-song-button,.score-image-top-actions .score-previous-general-song-button{border:1px solid #c9d9eb;border-radius:19px;background:#edf5ff;color:#315b86;font-size:10px;font-weight:800}.score-image-top-actions .score-next-general-song-button:hover,.score-image-top-actions .score-previous-general-song-button:hover{background:#dcecff}.score-image-top-actions #close-score-image{margin-left:auto;border-color:#ffffff70;background:#18251dcc;padding:0 10px}.score-image-top-actions #close-score-image span{font-size:9px}
+@media(max-width:420px){.score-image-top-actions{gap:4px}.score-image-top-actions>button{min-height:33px;padding:0 7px;font-size:9px}.score-image-top-actions #close-score-image{gap:4px;padding:0 7px}.score-image-top-actions #close-score-image span{font-size:8px}}
+.pre-worship-toggle{display:inline-flex;align-items:center;gap:4px;margin-right:3px;color:#435b49;font-size:8px;font-weight:700;letter-spacing:0;white-space:nowrap;cursor:pointer}.pre-worship-toggle input{width:14px;height:14px;margin:0;accent-color:#176b4b}.schedule-song-row.is-pre-worship,.schedule-view-list .schedule-song-row.is-pre-worship{background:#dce8dc}.schedule-view-list .schedule-song-row.is-pre-worship:hover,.schedule-view-list .schedule-song-row.is-pre-worship:focus-within{background:#d2e1d2;box-shadow:inset 0 0 0 1px #bdd1bf}.song-preview.is-pre-worship{background:#e3ede2}
+.search-box>span{display:grid;width:19px;height:19px;flex:0 0 19px;place-items:center;transform:none}.search-box>span svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}.refresh-button>span:first-child{display:grid;place-items:center;line-height:1}.refresh-button>span:first-child svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}.share-schedule-picker>summary::after{content:"";width:8px;height:8px;border-right:2px solid #718078;border-bottom:2px solid #718078;transform:translateY(-70%) rotate(45deg)}
+.score-image-nav,.score-image-position,.score-image-top-actions{transition:opacity .2s ease}.score-image-dialog.controls-hidden .score-image-nav,.score-image-dialog.controls-hidden .score-image-position,.score-image-dialog.controls-hidden .score-image-top-actions{opacity:0;pointer-events:none}
+.score-image-nav{border-color:#ffffff30;background:rgba(24,37,29,.12);backdrop-filter:none;text-shadow:0 1px 3px #000}.score-image-nav:hover:not(:disabled){background:rgba(36,57,43,.3)}.score-image-position{border-color:#ffffff30;background:rgba(17,17,17,.4);backdrop-filter:none;text-shadow:0 1px 3px #000}.score-image-top-actions #close-score-image{border-color:#ffffff40;background:rgba(24,37,29,.38);backdrop-filter:none;text-shadow:0 1px 3px #000}.score-image-top-actions #close-score-image:hover{background:rgba(36,57,43,.5)}
+.score-image-top-actions .schedule-intro-general-button,.score-image-top-actions .score-previous-general-song-button,.score-image-top-actions .score-next-general-song-button{border:1px solid #ffffff40;border-radius:20px;background:rgba(24,37,29,.38);color:#fff;font-weight:700;text-shadow:0 1px 3px #000;backdrop-filter:none}.score-image-top-actions .schedule-intro-general-button:hover,.score-image-top-actions .score-previous-general-song-button:hover,.score-image-top-actions .score-next-general-song-button:hover{border-color:#ffffff70;background:rgba(36,57,43,.5)}
+.intro-delete-message{margin:0;color:#5e6d63;font-size:12px;line-height:1.6}.intro-delete-actions{display:flex;justify-content:flex-end;gap:8px}.intro-delete-cancel,.intro-delete-confirm{min-height:38px;border-radius:9px;padding:0 13px;font-size:11px;font-weight:700}.intro-delete-cancel{border:1px solid #dce5dc;background:#fff;color:#526258}.intro-delete-cancel:hover{background:#f5f8f4}.intro-delete-confirm{border:1px solid #a9473f;background:#b64e45;color:#fff}.intro-delete-confirm:hover{border-color:#923b34;background:#a1433b}
+@media(max-width:600px){#remove-schedule-intro-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#remove-schedule-intro-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#remove-schedule-intro-dialog .schedule-view-header{padding:18px 16px 14px}#remove-schedule-intro-dialog .schedule-view-header h2{font-size:19px}#remove-schedule-intro-dialog .share-body{gap:15px;padding:0 16px 18px}.intro-delete-message{font-size:12px}.intro-delete-actions{gap:9px}.intro-delete-actions button{flex:1;min-width:0;min-height:42px}}
+#score-image-dialog #score-intro-back-button{border-color:#f0cd83;background:rgba(112,77,20,.78);color:#fff8e8;text-shadow:0 1px 3px #513608;box-shadow:0 2px 10px #0003}#score-image-dialog #score-intro-back-button:hover{border-color:#ffe2a1;background:rgba(143,99,25,.9)}
+#score-image-dialog{scrollbar-width:none}#score-image-dialog::-webkit-scrollbar{display:none}
+@media(max-width:600px){.score-image-top-actions #close-score-image{width:38px;min-width:38px;flex-basis:38px;min-height:38px;justify-content:center;padding:0;font-size:28px}.score-image-top-actions #close-score-image span{display:none}}
+body.schedule-view-open{overflow:hidden;scrollbar-width:none}body.schedule-view-open::-webkit-scrollbar{display:none}
+body.song-reader-open{overflow:hidden;scrollbar-width:none}body.song-reader-open::-webkit-scrollbar{display:none}
+.schedule-date-control{position:relative;display:block;min-width:0}.schedule-date-display{position:absolute;top:50%;right:26px;left:8px;z-index:1;overflow:hidden;transform:translateY(-50%);color:#25332a;font-size:12px;font-weight:400;letter-spacing:0;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}.schedule-date-control input[type=date]{position:relative;z-index:2;background:transparent;color:transparent}.schedule-date-control input[type=date]::-webkit-datetime-edit{color:transparent}.schedule-date-control input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.68}
+.schedule-date-control.is-date-fallback .schedule-date-display{display:none}.schedule-date-control.is-date-fallback input[type=text]{position:relative;z-index:2;width:100%;min-height:38px;padding:9px 10px;border:1px solid var(--line,#dfe7df);border-radius:9px;background:var(--surface,#fff);color:var(--ink,#25332a);font:inherit;letter-spacing:normal}
+.schedule-date-control.is-date-fallback{display:flex;align-items:center;gap:5px}.schedule-date-control.is-date-fallback input[type=text]{min-width:0;flex:1}.schedule-date-picker-open{flex:0 0 38px;min-height:38px;border:1px solid var(--line,#dfe7df);border-radius:9px;background:var(--surface,#fff);color:var(--ink,#25332a);font-size:17px;cursor:pointer}.schedule-date-picker{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow:auto;padding:14px;background:#15231c88}.schedule-date-picker[hidden]{display:none}.schedule-date-picker-card{width:min(340px,100%);border:1px solid var(--line,#dfe7df);border-radius:18px;padding:18px;background:var(--surface,#fff);color:var(--ink,#25332a);box-shadow:0 24px 70px #17251c44}.schedule-date-picker-heading{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:8px}.schedule-date-picker-heading h2{margin:0;text-align:center;font-size:17px}.schedule-date-picker-heading button,.schedule-date-cancel{min-height:38px;border:1px solid var(--line,#dfe7df);border-radius:9px;background:var(--surface,#fff);color:var(--ink,#25332a);font:inherit;cursor:pointer}.schedule-date-weekdays,.schedule-date-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:12px;text-align:center}.schedule-date-weekdays span{padding:6px 0;color:var(--muted,#718076);font-size:11px}.schedule-date-day{min-height:38px;border:0;border-radius:9px;background:transparent;color:var(--ink,#25332a);font:inherit;cursor:pointer}.schedule-date-day:hover,.schedule-date-day.is-selected{background:var(--green,#e2f1e5);color:var(--white,#fff)}.schedule-date-day.is-outside-month{color:var(--muted,#aab4ac)}.schedule-date-cancel{display:block;margin:14px 0 0 auto;padding:0 14px}
+@media(max-width:600px){.schedule-card-header{grid-template-columns:minmax(0,1fr) minmax(142px,1fr)}.schedule-view-button{grid-column:1/-1;justify-self:end}.schedule-date-display{right:24px;left:6px;font-size:9px}}
+.score-image-top-actions #score-intro-back-button,.score-image-top-actions .score-previous-general-song-button,.score-image-top-actions .score-next-general-song-button{flex:0 1 auto;min-width:0;max-width:24vw;overflow:hidden;padding-right:8px;padding-left:8px;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:600px){#delete-schedule-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#delete-schedule-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#delete-schedule-dialog .schedule-view-header{padding:18px 16px 14px}#delete-schedule-dialog .share-body{gap:15px;padding:0 16px 18px}.intro-delete-message{font-size:12px}.intro-delete-actions{gap:9px}.intro-delete-actions button{flex:1;min-width:0;min-height:42px}}
+.score-image-top-actions .score-general-song-position{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;min-height:30px;border:1px solid #ffffff30;border-radius:16px;background:rgba(17,17,17,.4);padding:0 7px;color:#fff;font-size:9px;font-weight:800;white-space:nowrap;text-shadow:0 1px 3px #000;pointer-events:none}.score-image-top-actions .score-general-song-position[hidden]{display:none}
+.score-image-top-actions .score-next-general-song-button{display:flex;align-items:center}.score-image-top-actions .score-next-general-song-button .score-song-button-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-image-top-actions .score-next-general-song-button[hidden],.score-image-top-actions .score-previous-general-song-button[hidden]{display:none}
+.score-image-instruments{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(92px,calc(env(safe-area-inset-bottom) + 86px));left:max(12px,env(safe-area-inset-left));z-index:4;display:flex;max-width:calc(100vw - 24px);align-items:center;justify-content:center;gap:6px;overflow-x:auto;padding:3px 2px;scrollbar-width:none;transition:opacity .2s ease;-webkit-overflow-scrolling:touch}.score-image-instruments::-webkit-scrollbar{display:none}.score-image-instruments[hidden]{display:none}.score-image-dialog.instrument-controls-hidden .score-image-instruments{opacity:0;pointer-events:none}.score-image-instrument-button{flex:0 0 auto;min-height:32px;border:1px solid #ffffff55;border-radius:18px;background:rgba(24,37,29,.76);padding:0 12px;color:#fff;font-size:10px;font-weight:700;text-shadow:0 1px 3px #000}.score-image-instrument-button:hover,.score-image-instrument-button[aria-pressed=true]{border-color:#b7dbbf;background:rgba(31,101,67,.9)}
+@media(max-width:600px){.reader-toolbar{grid-template-columns:minmax(0,1fr) auto auto;gap:5px;min-height:40px;padding:4px 10px}.reader-toolbar>span{grid-column:2;grid-row:1;justify-self:center;white-space:nowrap}.reader-toolbar .chord-controls{grid-column:1;grid-row:1;justify-content:flex-start;min-width:0}.reader-toolbar .reader-navigation{grid-column:3;grid-row:1;gap:4px}.reader-toolbar button{width:26px;height:25px}.reader-toolbar .chord-controls select{width:92px;max-width:100%;height:27px;padding:0 5px;font-size:9px}.reader-toolbar .transpose-controls{gap:3px}.reader-toolbar .transpose-controls button{width:23px;height:24px}}
+
+.song-list>.song-card{grid-template-columns:minmax(0,1fr) auto}
+.song-card-quick-actions{display:flex;flex-direction:column;align-items:stretch;gap:5px}
+.song-list .add-to-schedule{display:inline-flex;width:auto;min-width:105px;height:30px;align-items:center;justify-content:center;border:1px solid #d9e6da;border-radius:8px;background:#f7faf6;padding:0 8px;color:var(--green);font-size:9px;font-weight:700;white-space:nowrap}
+.song-list .add-to-schedule:hover{border-color:#8bb495;background:#eaf4eb}
+.add-to-my-songs{min-height:30px;border:1px solid #d8e5da;border-radius:8px;background:#f5faf5;padding:0 9px;color:var(--green);font-size:9px;font-weight:700;white-space:nowrap}
+.add-to-my-songs:hover{border-color:#b8cebb;background:#edf5ee}
+.schedule-song-actions [data-action="copy-to-my-songs"]{flex:0 0 auto;width:auto;min-width:48px;height:26px;border-color:#d8e5da;background:#f5faf5;padding:0 4px;color:var(--green);font-size:8px;font-weight:700}
+@media(max-width:600px){.add-to-my-songs{min-height:28px;padding:0 6px;font-size:8px}.song-list>.song-card{grid-template-columns:minmax(0,1fr) auto;gap:5px}.song-list .add-to-schedule{min-width:92px;height:28px;padding:0 5px;font-size:8px}.schedule-song-actions [data-action="copy-to-my-songs"]{min-width:42px;height:25px;padding:0 3px;font-size:7px}}
+:root[data-theme="dark"] .add-to-my-songs,:root[data-theme="dark"] .song-list .add-to-schedule,:root[data-theme="dark"] .schedule-song-actions [data-action="copy-to-my-songs"]{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--green)!important}
+
+.schedule-view-footer{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}.schedule-view-footer>#refresh-schedule-songs{grid-column:1;grid-row:1;justify-self:start}.schedule-view-footer>#toggle-schedule-compact{grid-column:2;grid-row:1}.schedule-view-footer>#delete-viewed-schedule{grid-column:3;grid-row:1;justify-self:end;align-self:center}.schedule-view-footer>#refresh-schedule-songs-status{grid-column:1/-1;grid-row:2;color:#718078;font-size:9px;line-height:1.35}.schedule-view-footer>#refresh-schedule-songs-status:empty{display:none}.schedule-refresh-songs{min-height:32px;border:1px solid #d8e5da;border-radius:8px;background:#f5faf5;padding:0 11px;color:var(--green);font-size:10px;font-weight:700;white-space:nowrap}.schedule-refresh-songs:hover{border-color:#b8cebb;background:#edf5ee}@media(max-width:600px){.schedule-view-footer{align-items:center;gap:8px;padding:10px 11px calc(10px + env(safe-area-inset-bottom))}.schedule-refresh-songs{min-height:32px;padding:0 9px;font-size:9px}.schedule-view-footer>#refresh-schedule-songs-status{max-width:100%;font-size:8px}.schedule-view-footer .schedule-delete{flex:0 0 auto;align-self:center}}
+.schedule-start-footer{border-top:1px solid #edf0ec;background:#fff;padding:8px 18px 11px;text-align:center}
+.start-worship-button{width:100%;min-height:38px;border:1px solid var(--green);border-radius:9px;background:var(--green);padding:0 14px;color:#fff;font-size:11px;font-weight:700}
+.start-worship-button:hover{border-color:var(--deep);background:var(--deep)}
+.start-worship-button:disabled{opacity:.5;cursor:default}
+@media(max-width:600px){.schedule-start-footer{padding:8px 14px calc(9px + env(safe-area-inset-bottom))}.start-worship-button{min-height:40px}}
+.intro-image-picker{display:grid;gap:9px}.intro-image-picker-actions{display:flex;flex-wrap:wrap;gap:8px}.intro-image-picker-actions button{min-height:40px;font-size:11px}.intro-file-input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;clip-path:inset(50%)}#schedule-intro-file-name{overflow-wrap:anywhere}
+@media(max-width:600px){.intro-image-picker-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.intro-image-picker-actions button{min-height:42px;padding:0 8px;font-size:10px}}
+.camera-body{display:grid;gap:12px;padding:0 22px 22px}.camera-body video{display:block;width:100%;max-height:62dvh;border-radius:10px;background:#111;object-fit:contain}.camera-actions{display:flex;justify-content:center}.camera-actions button{min-width:140px;min-height:42px}.camera-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:600px){#schedule-intro-camera-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#schedule-intro-camera-dialog .camera-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#schedule-intro-camera-dialog .schedule-view-header{padding:18px 16px 14px}.camera-body{padding:0 16px 18px}.camera-body video{max-height:55dvh}}
+#schedule-intro-dialog{width:min(460px,calc(100vw - 30px));max-width:calc(100vw - 30px);overflow-x:hidden}.schedule-intro-form{width:100%;min-width:0;overflow-x:hidden}.schedule-intro-form .share-body,.intro-image-picker{min-width:0}.schedule-intro-form .intro-file-input{display:none!important}
+.instrument-filter-open svg{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}.instrument-filter-open[aria-pressed=true]{border-color:var(--green);background:#edf5ee;color:var(--green)}.instrument-filter-actions{display:flex;justify-content:flex-end;gap:8px}.instrument-filter-actions button{min-height:38px}.instrument-filter-actions .intro-delete-cancel{font-size:11px;font-weight:700}
+@media(max-width:600px){#instrument-filter-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#instrument-filter-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#instrument-filter-dialog .schedule-view-header{padding:18px 16px 14px}#instrument-filter-dialog .share-body{padding:0 16px 18px}.instrument-filter-actions{width:100%}.instrument-filter-actions button{flex:1;min-width:0}}
+.instrument-filter-actions button{min-height:44px;touch-action:manipulation;pointer-events:auto}.instrument-filter-open,#instrument-filter-dialog .close-button{touch-action:manipulation}#instrument-filter-dialog .share-select{min-height:44px;font-size:16px}.dialog-fallback-open{position:fixed!important;inset:50% auto auto 50%!important;z-index:10000!important;transform:translate(-50%,-50%);margin:0!important;box-shadow:0 0 0 100vmax #101b15a6,0 22px 90px #0b20163d!important}
+.instrument-filter-refresh{touch-action:manipulation}.instrument-filter-refresh>span{display:inline-block;font-size:17px;line-height:1}.instrument-filter-refresh.is-loading>span{animation:instrument-filter-spin .8s linear infinite}.instrument-filter-refresh:disabled{opacity:.6;cursor:wait}@keyframes instrument-filter-spin{to{transform:rotate(360deg)}}
+.instrument-filter-select-row{display:flex;min-width:0;align-items:center;gap:8px}.instrument-filter-select-row .share-select{min-width:0;flex:1}.instrument-filter-select-row .instrument-filter-refresh{display:grid;flex:0 0 44px;width:44px;height:44px;min-height:44px;place-items:center;border-radius:9px;padding:0;font-size:0}.instrument-filter-select-row .instrument-filter-refresh>span{font-size:22px}
+.instrument-filter-open{position:relative;z-index:2;display:grid;flex:0 0 38px;width:38px;min-width:38px;height:38px;appearance:none;-webkit-appearance:none;border:1px solid #d5e3d7!important;border-radius:10px;background:#fff!important;color:#176b4b!important;-webkit-tap-highlight-color:transparent;touch-action:manipulation;pointer-events:auto}.instrument-filter-open[aria-pressed=true]{border-color:#176b4b!important;background:#edf5ee!important;color:#176b4b!important}.instrument-filter-open svg{display:block;width:20px;height:20px;fill:none!important;stroke:#176b4b!important;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8;pointer-events:none}@media(max-width:600px){.instrument-filter-open{flex-basis:36px;width:36px;min-width:36px;height:36px}}
+.dialog-fallback-open{display:block!important;max-height:90dvh;overflow:auto}
+.song-section-body .chord-extension,.song-content pre .chord-extension{font-size:.68em;line-height:0;vertical-align:super}.song-section-body .chord-subscript,.song-content pre .chord-subscript{font-size:.68em;line-height:0;vertical-align:sub}
+#transpose-key{flex:0 0 54px;width:54px;min-width:0;max-width:54px;padding-right:3px;padding-left:4px;text-align:center}
+@media(max-width:600px){.reader-toolbar .chord-controls #transpose-key{flex-basis:50px;width:50px;max-width:50px;padding-right:2px;padding-left:3px;font-size:9px}}
+
+:root[data-theme="light"]{--green:#176b4b;--deep:#104b36;--muted:#7a8780;--line:#e4e9e3;--white:#fff;--ink:#202b25;--page-bg:#f5f7f3;--surface:#fff;--surface-soft:#f7faf6;--field-bg:#fbfcfa;--theme-tint:#edf4ee}
+:root[data-theme="dark"]{color-scheme:dark;--green:#72d1a0;--deep:#9be0b8;--muted:#a2b0a7;--line:#35443b;--white:#1d2922;--ink:#e6eee8;--page-bg:#111914;--surface:#1b261f;--surface-soft:#202e26;--field-bg:#17211b;--theme-tint:#293d31}
+:root[data-theme="ocean"]{--green:#16758a;--deep:#105665;--muted:#6b858b;--line:#d7e7e9;--white:#fff;--ink:#203237;--page-bg:#f1f8f9;--surface:#fff;--surface-soft:#f3fafb;--field-bg:#f8fcfc;--theme-tint:#e3f2f5}
+:root[data-theme="forest"]{--green:#55752e;--deep:#3d5720;--muted:#78826f;--line:#e0e7d8;--white:#fff;--ink:#2b3325;--page-bg:#f6f8f1;--surface:#fff;--surface-soft:#f8faf3;--field-bg:#fcfdf9;--theme-tint:#eaf0df}
+:root[data-theme="sunset"]{--green:#b35c35;--deep:#864328;--muted:#8e7970;--line:#eedfd7;--white:#fff;--ink:#382a25;--page-bg:#fcf5f0;--surface:#fff;--surface-soft:#fff8f3;--field-bg:#fffaf7;--theme-tint:#f8e8dc}
+:root[data-theme="rose"]{--green:#a64f69;--deep:#78364b;--muted:#8a7680;--line:#ecdde3;--white:#fff;--ink:#352a30;--page-bg:#fbf4f7;--surface:#fff;--surface-soft:#fff8fa;--field-bg:#fffbfc;--theme-tint:#f6e6ec}
+:root[data-theme="lavender"]{--green:#7057a1;--deep:#514078;--muted:#81798f;--line:#e4deef;--white:#fff;--ink:#302b3a;--page-bg:#f7f5fb;--surface:#fff;--surface-soft:#faf8fd;--field-bg:#fdfcff;--theme-tint:#eee9f7}
+:root[data-theme]{color:var(--ink);background:var(--page-bg)}
+:root[data-theme] body{color:var(--ink);background:radial-gradient(ellipse at 90% 0%,color-mix(in srgb,var(--green) 11%,transparent) 0,transparent 34rem),var(--page-bg)}
+:root[data-theme] .topbar,:root[data-theme] .library,:root[data-theme] .schedule-panel,:root[data-theme] .schedule-card,:root[data-theme] .instrument-profile-inline,:root[data-theme] .dialog-frame,:root[data-theme] .schedule-view-frame,:root[data-theme] .library-tabs-shell{border-color:var(--line);background-color:var(--surface);color:var(--ink)}
+:root[data-theme] .library,:root[data-theme] .dialog-frame,:root[data-theme] .schedule-view-frame{background:var(--surface)}
+:root[data-theme] .intro-block h1,:root[data-theme] .library-heading h2,:root[data-theme] .schedule-heading h2,:root[data-theme] .song-title,:root[data-theme] .dialog-header h2,:root[data-theme] .schedule-view-header h2,:root[data-theme] .schedule-card h3{color:var(--ink)}
+:root[data-theme] .intro-copy,:root[data-theme] .connection,:root[data-theme] .schedule-caption,:root[data-theme] .song-subtitle,:root[data-theme] .list-status,:root[data-theme] .schedule-status,:root[data-theme] .share-status{color:var(--muted)}
+:root[data-theme] input:not([type="radio"]),:root[data-theme] textarea,:root[data-theme] select,:root[data-theme] .share-schedule-picker summary,:root[data-theme] .search-box,:root[data-theme] .my-song-content-wrap,:root[data-theme] .schedule-song-editor-wrap{border-color:var(--line);background-color:var(--field-bg);color:var(--ink)}
+:root[data-theme] input::placeholder,:root[data-theme] textarea::placeholder{color:var(--muted)}
+:root[data-theme] .song-card,:root[data-theme] .schedule-card,:root[data-theme] .song-list,:root[data-theme] .song-card{border-color:var(--line)}
+:root[data-theme] .song-card:hover,:root[data-theme] .song-card:focus-visible,:root[data-theme] .refresh-button,:root[data-theme] .category-chip,:root[data-theme] .schedule-secondary-button,:root[data-theme] .count-pill,:root[data-theme] .song-index,:root[data-theme] .share-result{border-color:var(--line);background:var(--surface-soft);color:var(--green)}
+:root[data-theme] .category-chip[aria-pressed="true"],:root[data-theme] .create-schedule-button,:root[data-theme] .library-tab.is-selected{border-color:var(--green);background:var(--green);color:#fff}
+:root[data-theme] .library-tab,:root[data-theme] .close-button,:root[data-theme] .reader-toolbar,:root[data-theme] .reader-toolbar button{border-color:var(--line);background:var(--surface-soft);color:var(--ink)}
+:root[data-theme] .song-section-body,:root[data-theme] .song-section-body .lyric,:root[data-theme] .song-content pre,:root[data-theme] .my-song-content-wrap textarea,:root[data-theme] .schedule-content-highlight,:root[data-theme] .edit-content-field textarea[name=content]{color:var(--ink)}
+:root[data-theme] .song-section-body .chord,:root[data-theme] .song-section-title,:root[data-theme] .eyebrow,:root[data-theme] .dialog-category{color:var(--green)}
+:root[data-theme="dark"] .brand-mark,:root[data-theme="dark"] .create-schedule-button,:root[data-theme="dark"] .category-chip[aria-pressed="true"],:root[data-theme="dark"] .library-tab.is-selected{color:#102017}
+:root[data-theme="dark"] .song-dialog::backdrop,:root[data-theme="dark"] dialog::backdrop{background:#050907cc}
+:root[data-theme="dark"] .song-index,:root[data-theme="dark"] .count-pill,:root[data-theme="dark"] .schedule-share-status{background:var(--theme-tint);color:var(--green)}
+:root[data-theme="dark"] .instrument-filter-open{border-color:var(--line)!important;background:var(--surface)!important;color:var(--green)!important}
+:root[data-theme="dark"] .instrument-filter-open svg{stroke:var(--green)!important}
+:root[data-theme] #theme-choice-field[hidden]{display:none!important}
+
+/* Keep every Song Book tab and dialog on the dark palette. */
+:root[data-theme="dark"]{color-scheme:dark}
+:root[data-theme="dark"] body,:root[data-theme="dark"] .app-shell,:root[data-theme="dark"] .main-scroll-area{color:var(--ink)}
+:root[data-theme="dark"] .library,:root[data-theme="dark"] .schedule-panel,:root[data-theme="dark"] .library-tabs-shell,:root[data-theme="dark"] .schedule-card,:root[data-theme="dark"] .instrument-profile-inline,:root[data-theme="dark"] .dialog-frame,:root[data-theme="dark"] .schedule-view-frame,:root[data-theme="dark"] .schedule-edit-form,:root[data-theme="dark"] .my-song-form,:root[data-theme="dark"] .my-song-form-section,:root[data-theme="dark"] .share-result,:root[data-theme="dark"] .upload-success-list li{border-color:var(--line)!important;background:var(--surface)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .library-tabs,:root[data-theme="dark"] .reader-toolbar,:root[data-theme="dark"] .schedule-view-footer,:root[data-theme="dark"] .my-song-form-footer,:root[data-theme="dark"] .schedule-add-bar,:root[data-theme="dark"] .my-song-content-wrap,:root[data-theme="dark"] .schedule-song-editor-wrap,:root[data-theme="dark"] .my-song-score-input-item,:root[data-theme="dark"] .my-song-existing-score-file,:root[data-theme="dark"] .my-song-instrument-row{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .schedule-field,:root[data-theme="dark"] .schedule-heading,:root[data-theme="dark"] .library-heading,:root[data-theme="dark"] .instrument-profile-inline-heading h2,:root[data-theme="dark"] .dialog-header h2,:root[data-theme="dark"] .schedule-view-header h2,:root[data-theme="dark"] .edit-dialog-heading h2,:root[data-theme="dark"] .my-song-form-section,:root[data-theme="dark"] .my-song-section-title,:root[data-theme="dark"] .upload-success-intro{color:var(--ink)!important}
+:root[data-theme="dark"] .schedule-field input,:root[data-theme="dark"] .schedule-field select,:root[data-theme="dark"] .schedule-field textarea,:root[data-theme="dark"] .my-song-form input:not([type="checkbox"]):not([type="radio"]),:root[data-theme="dark"] .my-song-form select,:root[data-theme="dark"] .my-song-form textarea:not(#my-song-content),:root[data-theme="dark"] .schedule-edit-form input,:root[data-theme="dark"] .schedule-edit-form select,:root[data-theme="dark"] .schedule-edit-form textarea:not(#schedule-content-input),:root[data-theme="dark"] .schedule-add-bar select,:root[data-theme="dark"] .my-songs-category-filter,:root[data-theme="dark"] .share-select,:root[data-theme="dark"] .share-schedule-picker summary{border-color:var(--line)!important;background-color:var(--field-bg)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .edit-content-field textarea,:root[data-theme="dark"] #my-song-content{background:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme="dark"] .edit-content-field textarea::selection,:root[data-theme="dark"] #my-song-content::selection{background:#72d1a066}
+:root[data-theme="dark"] .schedule-field input::placeholder,:root[data-theme="dark"] .schedule-field textarea::placeholder,:root[data-theme="dark"] .my-song-form input::placeholder,:root[data-theme="dark"] .schedule-edit-form input::placeholder,:root[data-theme="dark"] .schedule-edit-form textarea::placeholder,:root[data-theme="dark"] .search-box input::placeholder{color:var(--muted)!important}
+:root[data-theme="dark"] .schedule-add-bar label,:root[data-theme="dark"] .schedule-song-name,:root[data-theme="dark"] .schedule-song-order,:root[data-theme="dark"] .schedule-details-heading,:root[data-theme="dark"] .schedule-caption,:root[data-theme="dark"] .schedule-status,:root[data-theme="dark"] .schedule-no-songs,:root[data-theme="dark"] .schedule-empty,:root[data-theme="dark"] .edit-help,:root[data-theme="dark"] .edit-local-note,:root[data-theme="dark"] .my-song-file-note,:root[data-theme="dark"] .my-song-editor-hint,:root[data-theme="dark"] .my-song-form-status,:root[data-theme="dark"] .share-status,:root[data-theme="dark"] .schedule-view-date,:root[data-theme="dark"] .dialog-meta,:root[data-theme="dark"] .sync-status,:root[data-theme="dark"] .list-status,:root[data-theme="dark"] .empty-state{color:var(--muted)!important}
+:root[data-theme="dark"] .song-card,:root[data-theme="dark"] .song-list,:root[data-theme="dark"] .schedule-details,:root[data-theme="dark"] .schedule-song-row,:root[data-theme="dark"] .schedule-add-bar,:root[data-theme="dark"] .schedule-share-status,:root[data-theme="dark"] .song-card-main{border-color:var(--line)!important}
+:root[data-theme="dark"] .schedule-song-row,:root[data-theme="dark"] .schedule-add-bar,:root[data-theme="dark"] .schedule-share-status,:root[data-theme="dark"] .song-index,:root[data-theme="dark"] .count-pill,:root[data-theme="dark"] .song-key,:root[data-theme="dark"] .my-song-section-marker,:root[data-theme="dark"] .schedule-section-marker{background:var(--theme-tint)!important;color:var(--green)!important}
+:root[data-theme="dark"] .song-card:hover,:root[data-theme="dark"] .song-card:focus-visible,:root[data-theme="dark"] .schedule-song-row:hover,:root[data-theme="dark"] .schedule-view-list .schedule-song-row:hover,:root[data-theme="dark"] .schedule-view-list .schedule-song-row:focus-within{background:#293d31!important}
+:root[data-theme="dark"] .song-title,:root[data-theme="dark"] .song-section-body,:root[data-theme="dark"] .song-section-body .lyric,:root[data-theme="dark"] .song-content pre,:root[data-theme="dark"] .my-song-highlight,:root[data-theme="dark"] .schedule-content-highlight{color:var(--ink)!important}
+:root[data-theme="dark"] .eyebrow,:root[data-theme="dark"] .dialog-category,:root[data-theme="dark"] .song-category,:root[data-theme="dark"] .song-section-title,:root[data-theme="dark"] .song-section-body .chord{color:var(--green)!important}
+:root[data-theme="dark"] .library-tab,:root[data-theme="dark"] .refresh-button,:root[data-theme="dark"] .collapse-button,:root[data-theme="dark"] .close-button,:root[data-theme="dark"] .reader-toolbar button,:root[data-theme="dark"] .upload-my-songs-button,:root[data-theme="dark"] .my-song-upload-cancel,:root[data-theme="dark"] .schedule-add-button,:root[data-theme="dark"] .schedule-compact-toggle,:root[data-theme="dark"] .schedule-song-actions button,:root[data-theme="dark"] .my-song-list-actions button,:root[data-theme="dark"] .schedule-refresh-songs{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .library-tab.is-selected,:root[data-theme="dark"] .create-schedule-button,:root[data-theme="dark"] .schedule-view-button,:root[data-theme="dark"] .edit-save{border-color:var(--green)!important;background:var(--green)!important;color:#102017!important}
+:root[data-theme="dark"] .category-chip{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--muted)!important}
+:root[data-theme="dark"] .category-chip[aria-pressed="true"]{border-color:var(--green)!important;background:var(--green)!important;color:#102017!important}
+:root[data-theme="dark"] .schedule-delete,:root[data-theme="dark"] .remove-scheduled-song,:root[data-theme="dark"] .my-song-list-actions [data-my-song-action="delete"]{border-color:#69403d!important;background:#382725!important;color:#ffaaa0!important}
+:root[data-theme="dark"] .edit-cancel,:root[data-theme="dark"] .my-song-upload-cancel{color:var(--ink)!important}
+:root[data-theme="dark"] .song-dialog::backdrop,:root[data-theme="dark"] dialog::backdrop{background:#050907dc}
+:root[data-theme="dark"] .my-song-dialog{background:transparent!important}
+:root[data-theme="dark"] dialog form,:root[data-theme="dark"] dialog .dialog-frame,:root[data-theme="dark"] dialog .schedule-view-frame{border-color:var(--line)!important;background:var(--surface)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .my-song-form .dialog-header,:root[data-theme="dark"] .schedule-view-header,:root[data-theme="dark"] .dialog-header,:root[data-theme="dark"] .my-song-form-footer,:root[data-theme="dark"] .schedule-view-footer{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .my-song-form-section>.eyebrow,:root[data-theme="dark"] .my-song-section-title .eyebrow,:root[data-theme="dark"] #my-song-form-status,:root[data-theme="dark"] #instrument-filter-status,:root[data-theme="dark"] .upload-success-intro{color:var(--muted)!important}
+:root[data-theme="dark"] .my-song-instrument-name,:root[data-theme="dark"] .my-song-score-input-item,:root[data-theme="dark"] .my-song-existing-score-file,:root[data-theme="dark"] .schedule-view-list .schedule-no-songs,:root[data-theme="dark"] .schedule-empty{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--muted)!important}
+:root[data-theme="dark"] .my-song-remove-instrument,:root[data-theme="dark"] .intro-delete-cancel,:root[data-theme="dark"] .edit-cancel{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .instrument-profile-inline-controls .share-status,:root[data-theme="dark"] .schedule-details-heading{color:var(--muted)!important}
+:root[data-theme="dark"] .song-subtitle,:root[data-theme="dark"] .song-open,:root[data-theme="dark"] .brand-caption,:root[data-theme="dark"] .footer-note,:root[data-theme="dark"] .dialog-meta,:root[data-theme="dark"] .preview-note{color:var(--muted)!important}
+:root[data-theme="dark"] .search-box kbd,:root[data-theme="dark"] .song-key,:root[data-theme="dark"] .schedule-song-actions button,:root[data-theme="dark"] .reader-navigation button{border-color:var(--line)!important;background:var(--surface-soft)!important;color:var(--muted)!important}
+:root[data-theme="dark"] .schedule-card:has(.active-schedule-choice input:checked){border-color:#4c8d68!important;box-shadow:0 0 0 2px #72d1a01f}
+:root[data-theme="dark"] #song-list>.song-card:nth-child(even),:root[data-theme="dark"] #my-songs-list>.song-card:nth-child(even){background:#202e26!important}
+:root[data-theme="dark"] #song-list>.song-card:nth-child(odd),:root[data-theme="dark"] #my-songs-list>.song-card:nth-child(odd){background:transparent!important}
+:root[data-theme="dark"] #song-list>.song-card:hover,:root[data-theme="dark"] #song-list>.song-card:focus-visible,:root[data-theme="dark"] #my-songs-list>.song-card:hover,:root[data-theme="dark"] #my-songs-list>.song-card:focus-visible{background:#293d31!important}
+:root[data-theme="dark"] #song-list>.song-card,:root[data-theme="dark"] #my-songs-list>.song-card{border-bottom-color:var(--line)!important;color:var(--ink)!important}
+:root[data-theme="dark"] .footer-note{border-top:1px solid var(--line);background:#111914!important;color:#a2b0a7!important}
+:root[data-theme="dark"] .footer-description{color:#a2b0a7!important}
+:root[data-theme="dark"] .footer-description::before,:root[data-theme="dark"] .footer-description::after{color:#72d1a0!important}
+:root[data-theme="dark"] .footer-credit{color:#a2b0a7!important}
+:root[data-theme="dark"] .schedule-date-display{color:var(--ink)!important}
+:root[data-theme="dark"] .schedule-date-control input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.85);opacity:.9}
+:root[data-theme="dark"] .schedule-date-control input[type="date"]{background:transparent!important;background-color:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme="dark"] .schedule-date-control input[type="date"]::-webkit-datetime-edit,:root[data-theme="dark"] .schedule-date-control input[type="date"]::-webkit-datetime-edit-fields-wrapper{color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme] .schedule-date-display{color:var(--ink)!important}
+:root[data-theme] .schedule-date-control input[type="date"]{background:transparent!important;background-color:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-theme] .schedule-date-control input[type="date"]::-webkit-datetime-edit,:root[data-theme] .schedule-date-control input[type="date"]::-webkit-datetime-edit-fields-wrapper{color:transparent!important;-webkit-text-fill-color:transparent!important}
+:root[data-font-style="dm-sans"]{--profile-font:"DM Sans",sans-serif}
+:root[data-font-style="arial"]{--profile-font:Arial,sans-serif}
+:root[data-font-style="georgia"]{--profile-font:Georgia,serif}
+:root[data-font-style="trebuchet"]{--profile-font:"Trebuchet MS",sans-serif}
+:root[data-font-style="verdana"]{--profile-font:Verdana,sans-serif}
+:root[data-font-style] body *{font-family:var(--profile-font)!important}
+:root[data-font-style] .song-section-body,:root[data-font-style] .song-section-body *,:root[data-font-style] .song-content pre,:root[data-font-style] .my-song-highlight,:root[data-font-style] .schedule-content-highlight,:root[data-font-style] #my-song-content,:root[data-font-style] #schedule-content-input{font-family:"Courier New",monospace!important}
+
+.my-songs-library{margin-top:24px}
+@media(max-width:600px){.my-songs-library{margin-top:18px}}
+
+.my-songs-library .library-heading{gap:12px}.my-song-dialog{width:min(100% - 30px,760px);max-width:none;max-height:92dvh;border:0;border-radius:16px;background:#fff;padding:0;color:var(--ink);box-shadow:0 22px 90px #0b20163d}.my-song-form{max-height:92dvh;overflow:auto;border:1px solid #e5ebe4;border-radius:16px;background:#fff}.my-song-form .dialog-header{position:sticky;top:0;z-index:10;border-bottom:1px solid #edf0ec;background:#fff}.my-song-form-section{padding:18px 25px;border-bottom:1px solid #edf0ec}.my-song-form-section>.eyebrow,.my-song-section-title .eyebrow{margin-bottom:13px}.my-song-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.my-song-fields .schedule-field input,.my-song-fields .schedule-field select,.my-song-instrument-row input{height:39px}.my-song-wide{grid-column:span 2}.my-song-form textarea{width:100%;min-height:200px;resize:vertical;border:1px solid #e1e8e1;border-radius:8px;background:#fbfcfa;padding:11px;color:#28372d;font:13px/1.7 'Courier New',monospace;white-space:pre;outline:0;tab-size:4}.my-song-form textarea:focus,.my-song-form input:focus,.my-song-form select:focus{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}.my-song-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.my-song-instruments{display:grid;gap:9px}.my-song-instrument-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 32px;align-items:end;gap:10px;border:1px solid #e5ebe4;border-radius:9px;background:#fbfcfa;padding:11px}.my-song-instrument-row input[type=file],#my-song-intro{height:auto;min-height:39px;padding:8px;font-size:11px}.my-song-remove-instrument{width:30px;height:30px;margin-bottom:4px;border:0;border-radius:6px;background:#f7eeec;color:#b55c50;font-size:20px}.my-song-file-note{margin:10px 0 0;color:#89958d;font-size:10px}.my-song-form-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fafbf9;padding:15px 25px}.my-song-form-footer p{margin:0;color:#718078;font-size:10px}.my-song-form-footer button:disabled{opacity:.55;cursor:wait}@media(max-width:600px){.my-song-dialog{width:100%;height:100%;max-height:100dvh;margin:0;border-radius:0}.my-song-form{height:100%;max-height:100dvh;border:0;border-radius:0}.my-song-form .dialog-header{padding:calc(15px + env(safe-area-inset-top)) 17px 13px}.my-song-form-section{padding:16px}.my-song-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.my-song-wide{grid-column:1/-1}.my-song-instrument-row{grid-template-columns:1fr 32px}.my-song-instrument-row>.schedule-field:first-child{grid-column:1}.my-song-instrument-row>.schedule-field:nth-child(2){grid-column:1/-1;grid-row:2}.my-song-remove-instrument{grid-column:2;grid-row:1;justify-self:center}.my-song-form-footer{align-items:stretch;flex-direction:column;padding:14px 16px}.my-song-form-footer button{width:100%}}
+
+.my-song-editor-hint{margin-top:-3px;color:#87928a;font-size:10px;font-weight:400;line-height:1.5}.my-song-content-wrap{position:relative;z-index:0;isolation:isolate;display:block;min-height:200px;overflow:hidden;border:1px solid #dfe5df;border-radius:8px;background:#fff}.my-song-highlight,.my-song-content-wrap textarea{position:absolute;inset:0;width:100%;min-height:100%;margin:0;padding:12px;border:0;border-radius:0;font:400 13px/1.7 'Courier New',monospace;letter-spacing:normal;tab-size:4;white-space:pre;overflow-wrap:normal;word-break:normal}.my-song-highlight{z-index:0;overflow:hidden;color:#28342d;pointer-events:none}.my-song-section-marker{border-radius:3px;background:#e3f2e7;color:#176b4b;font-weight:700;box-shadow:0 0 0 2px #e3f2e7}.my-song-highlight.is-placeholder{color:#9aa69e}.my-song-highlight.is-placeholder .my-song-section-marker{background:#eaf3ec;color:#4e7a5b;box-shadow:0 0 0 2px #eaf3ec}.my-song-content-wrap textarea{z-index:1;display:block;height:100%;resize:none;overflow:auto;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:#176b4b;outline:0;scrollbar-width:thin}.my-song-content-wrap textarea::placeholder{color:transparent;-webkit-text-fill-color:transparent}.my-song-content-wrap textarea::selection{background:#87bf9b66}.my-song-highlight{left:0;top:0;right:auto;bottom:auto;width:max-content;min-width:100%;overflow:visible;will-change:transform}@media(max-width:600px){.my-song-highlight,.my-song-content-wrap textarea{padding:11px;font-size:12px;line-height:1.7}}
+
+.active-schedule-choice{display:flex;align-items:center;gap:7px;width:max-content;margin:0 0 12px;color:#68776d;font-size:10px;font-weight:700;cursor:pointer}.active-schedule-choice input{width:16px;height:16px;margin:0;accent-color:var(--green)}.schedule-card:has(.active-schedule-choice input:checked){border-color:#a9c8ad;box-shadow:0 0 0 2px #176b4b10}.my-songs-library .song-card{grid-template-columns:minmax(0,1fr) auto}.my-song-list-actions{display:flex;align-items:center;gap:5px}.my-song-list-actions button{width:29px;height:29px;border:1px solid #dfe7df;border-radius:8px;background:#fff;color:#64736a;font-size:15px;line-height:1}.my-song-list-actions button[data-my-song-action=add]{border-color:#d9e6da;background:#f7faf6;color:var(--green);font-size:19px}.my-song-list-actions button[data-my-song-action=delete]{color:#a64b42}.my-song-list-actions button:hover{border-color:#a8c5ae;background:#f5faf5}.my-song-list-actions button:disabled{opacity:.4;cursor:default}@media(max-width:600px){.active-schedule-choice{margin-bottom:9px}.my-songs-library .song-card{grid-template-columns:minmax(0,1fr) auto;gap:5px;padding-right:10px}.my-song-list-actions{gap:3px}.my-song-list-actions button{width:26px;height:27px;font-size:13px}}
+
+.schedule-card.is-active-schedule{border-color:#a9c8ad;box-shadow:0 0 0 2px #176b4b10}
+.my-song-form .schedule-field select{width:100%;height:39px;appearance:none;-webkit-appearance:none;border:1px solid #dfe5df;border-radius:8px;background:#fff;padding:0 35px 0 11px;color:#28372d;font:500 12px "DM Sans",sans-serif;outline:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%236b7a70' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}.my-song-form .schedule-field select:focus{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}.my-song-form .my-song-instrument-name{background-color:#fff}.my-song-remove-instrument{display:grid;place-items:center}.my-song-remove-instrument svg,.my-song-list-actions [data-my-song-action=delete] svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.my-song-remove-instrument svg{width:17px;height:17px}.active-schedule-choice span{min-width:62px}.schedule-card.is-active-schedule .active-schedule-choice span{color:var(--green)}
+.profile-toolbar{display:flex;justify-content:flex-end;margin:0 0 8px}
+.library-tabs-shell{margin-top:18px}.library-tabs{display:flex;gap:4px;border-bottom:1px solid #e8ece7;background:#fafbf9;padding:10px 18px 0}.library-tab{position:relative;min-height:39px;border:0;border-radius:9px 9px 0 0;background:transparent;padding:0 15px;color:#718078;font-size:12px;font-weight:700}.library-tab:hover{background:#f1f5f0;color:var(--green)}.library-tab.is-selected{background:#fff;color:var(--green)}.library-tab.is-selected::after{position:absolute;right:10px;bottom:-1px;left:10px;height:2px;border-radius:2px;background:var(--green);content:""}.library-tab-panel[hidden]{display:none!important}.library-tabs-shell .my-songs-library{margin-top:0}@media(max-width:600px){.library-tabs-shell{margin-top:14px}.library-tabs{gap:2px;padding:7px 10px 0}.library-tab{min-height:35px;padding:0 12px;font-size:11px}}
+.library-tabs .instrument-filter-open{margin-left:auto}.instrument-profile-inline{border-bottom:1px solid #e8ece7;background:#fff;padding:17px 22px 18px}.instrument-profile-inline[hidden]{display:none!important}.instrument-profile-inline-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.instrument-profile-inline-heading .eyebrow{margin-bottom:4px}.instrument-profile-inline-heading h2{margin:0;color:#1c2c22;font:700 17px Manrope,sans-serif;letter-spacing:-.035em}.instrument-profile-inline-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 14px}.instrument-profile-inline-controls .instrument-filter-field{grid-column:1/-1}.instrument-profile-inline-controls .share-status{margin:0}.instrument-profile-inline-controls>.create-schedule-button{min-width:130px}@media(max-width:600px){.library-tabs .instrument-filter-open{width:34px;min-width:34px;height:34px;flex-basis:34px}.instrument-profile-inline{padding:14px 15px 16px}.instrument-profile-inline-controls{grid-template-columns:minmax(0,1fr)}.instrument-profile-inline-controls .share-status{grid-column:1}.instrument-profile-inline-controls>.create-schedule-button{grid-column:1;width:100%}}
+.library-tabs .instrument-filter-open{border:1px solid transparent!important;background:transparent!important;color:#718078!important}.library-tabs .instrument-filter-open svg{stroke:#718078!important}.library-tabs .instrument-filter-open[aria-selected=true]{border-color:var(--green)!important;background:#edf5ee!important;color:var(--green)!important}.library-tabs .instrument-filter-open[aria-selected=true] svg{stroke:var(--green)!important}.library-info-icon{display:grid;flex:0 0 38px;width:38px;height:38px;place-items:center;margin-left:auto;color:#718078}.library-info-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}.library-tabs .instrument-filter-open{margin-left:0}@media(max-width:600px){.library-info-icon{flex-basis:36px;width:36px;height:36px}}
+.my-song-instrument-select-row{display:flex;align-items:center;gap:6px}.my-song-instrument-select-row select{flex:1;min-width:0}.my-song-refresh-instruments{display:grid;width:36px;min-width:36px;height:36px;min-height:36px;place-items:center;padding:0;font-size:17px;line-height:1}.my-song-refresh-instruments.is-loading span{animation:spin .8s linear infinite}.my-song-other-instrument{width:100%;margin-top:6px;border:1px solid #dfe5df;border-radius:8px;background:#fff;padding:0 10px;color:#28372d;font:500 12px "DM Sans",sans-serif}
+.my-song-score-inputs{display:grid;gap:6px}.my-song-score-inputs input[type=file]{width:100%;min-width:0}
+.my-song-existing-score-files{display:grid;gap:6px;margin-bottom:6px}.my-song-existing-score-file{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid #e2e9e1;border-radius:7px;background:#fff;padding:5px 7px;color:#65736a;font-size:10px}.my-song-existing-score-file img{width:42px;height:42px;flex:0 0 42px;border-radius:4px;object-fit:cover;background:#f3f6f2}.my-song-existing-score-file span{overflow-wrap:anywhere}
+.my-song-existing-score-preview{display:grid;width:46px;height:46px;flex:0 0 46px;place-items:center;border:0;border-radius:5px;background:transparent;padding:0;cursor:zoom-in}.my-song-existing-score-preview img{width:100%;height:100%;object-fit:cover}.my-song-image-preview{position:relative;width:min(94vw,1000px);max-width:none;max-height:92dvh;border:0;border-radius:12px;background:#101611;padding:44px 16px 14px;color:#fff;box-shadow:0 22px 90px #0b20163d}.my-song-image-preview::backdrop{background:#101b15b3;backdrop-filter:blur(4px)}.my-song-image-preview>img{display:block;max-width:100%;max-height:76dvh;margin:auto;object-fit:contain}.my-song-image-preview>.close-button{position:absolute;top:9px;right:9px}.my-song-image-preview>p{margin:10px 0 0;overflow-wrap:anywhere;text-align:center;font-size:11px}
+.my-song-score-input-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:7px}.my-song-new-score-preview{width:46px;height:46px;border:1px solid #dfe7df;border-radius:5px;background:#fff;padding:2px;cursor:zoom-in}.my-song-new-score-preview[hidden]{display:none}.my-song-new-score-preview img{display:block;width:100%;height:100%;border-radius:3px;object-fit:cover}.my-song-instrument-row.has-new-score-selection .my-song-existing-score-files{display:none}
+.my-songs-search-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:center;gap:9px;margin:0 25px 14px}.my-songs-search-row .search-box{min-width:0;margin:0}.my-songs-category-filter{width:100%;height:47px;border:1px solid #e0e7e0;border-radius:11px;background:#fbfcfa;padding:0 10px;color:#405146;font:600 11px "DM Sans",sans-serif;outline:0}.my-songs-category-filter:focus{border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}@media(max-width:600px){.my-songs-search-row{grid-template-columns:minmax(0,1fr) 120px;gap:7px;margin-right:15px;margin-left:15px}.my-songs-category-filter{height:43px;padding:0 7px;font-size:10px}}
+.schedule-source-legend{display:flex;gap:14px;padding:0 22px 10px;color:#68776d;font-size:9px}.schedule-source-legend span{display:inline-flex;align-items:center;gap:6px}.schedule-source-legend i{width:15px;height:9px;border-left:4px solid;border-radius:2px;background:#f4f0fa}.schedule-source-legend i.is-local{border-color:#8763b2;background:#f4f0fa}.schedule-source-legend i.is-database{border-color:#4c8d9c;background:#edf5f6}.schedule-view-list .schedule-song-row.is-local-song{border-left:4px solid #8763b2;background:#f4f0fa}.schedule-view-list .schedule-song-row.is-database-song{border-left:4px solid #4c8d9c;background:#edf5f6}.schedule-view-list .schedule-song-row.is-pre-worship{background:#dce8dc}@media(max-width:600px){.schedule-source-legend{padding-right:14px;padding-left:14px}}
+.schedule-song-attribution{display:block;overflow:hidden;margin-top:2px;color:#7a688f;font-size:8px;font-weight:500;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}.schedule-view-dialog.is-compact .schedule-song-attribution{font-size:7px}
+.instrument-profile-inline-controls>.create-schedule-button.is-saved{background:#2f8058;box-shadow:0 0 0 3px #2f80581c}
+.my-songs-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}.upload-my-songs-button,.my-song-upload-cancel{min-height:38px;border:1px solid #d8e5da;border-radius:10px;background:#f5faf5;padding:0 12px;color:var(--green);font-size:10px;font-weight:700;white-space:nowrap}.upload-my-songs-button:hover,.my-song-upload-cancel:hover{border-color:#b8cebb;background:#edf5ee}.upload-my-songs-button:disabled,.my-song-upload-cancel:disabled{opacity:.55;cursor:wait}.my-song-upload-cancel{border-color:#e3e7e2;background:#fff;color:#64736a}.my-song-upload-choice{display:grid;grid-template-columns:17px 42px minmax(0,1fr);align-items:center;gap:10px;width:100%;min-width:0;min-height:58px;cursor:pointer}.my-song-upload-choice>input{width:16px;height:16px;margin:0;accent-color:var(--green)}.my-song-upload-choice .song-details{display:grid;min-width:0;gap:4px}.is-upload-request-mode .song-card{grid-template-columns:minmax(0,1fr);padding:7px 12px}.is-upload-request-mode .song-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@media(max-width:600px){.my-songs-heading-actions{gap:5px}.upload-my-songs-button,.my-song-upload-cancel{min-height:34px;padding:0 8px;font-size:9px}.my-songs-heading-actions #add-my-song{min-height:34px;padding:0 8px;font-size:9px}.my-song-upload-choice{grid-template-columns:16px 36px minmax(0,1fr);gap:7px}.is-upload-request-mode .song-card{padding:5px 8px}}
+#my-song-upload-access-dialog{width:min(100% - 30px,460px);max-height:90dvh;margin:auto;border-radius:16px}#my-song-upload-access-dialog .schedule-view-frame{max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#my-song-upload-access-dialog .schedule-view-header{position:relative;justify-content:center;padding:22px 54px 16px;text-align:center}#my-song-upload-access-dialog .schedule-view-header>div{width:100%}#my-song-upload-access-dialog .schedule-view-header h2{font-size:21px}#my-song-upload-access-dialog .schedule-view-header .close-button{position:absolute;top:15px;right:16px}#my-song-upload-access-dialog .share-body{justify-items:center;gap:11px;padding:0 24px 24px;text-align:center}#my-song-upload-access-dialog .share-body>.schedule-field{width:100%;justify-items:center;gap:8px;text-align:center}#my-song-upload-access-code{height:48px;text-align:center;font-size:17px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}#my-song-upload-access-dialog .share-body>.share-status{max-width:100%;text-align:center}.upload-access-message{max-width:370px;border-top:1px solid #e8eee8;padding-top:11px;color:#5d6d62;font-size:11px;line-height:1.55}.upload-access-message p{margin:0 0 9px}.upload-access-message a{color:var(--green);font-weight:700}.upload-access-message blockquote{margin:0;color:#526057}.upload-access-message cite{display:block;margin-top:5px;color:var(--green);font-size:10px;font-style:normal;font-weight:700}#submit-my-song-upload-access{min-width:190px;min-height:42px;justify-self:center;margin-top:2px}@media(max-width:600px){#my-song-upload-access-dialog{width:calc(100% - 30px);height:auto;max-height:90dvh;margin:auto;border-radius:16px}#my-song-upload-access-dialog .schedule-view-frame{height:auto;max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#my-song-upload-access-dialog .schedule-view-header{padding:19px 48px 14px}#my-song-upload-access-dialog .schedule-view-header h2{font-size:19px}#my-song-upload-access-dialog .share-body{padding:0 17px 20px}#submit-my-song-upload-access{width:100%}}
+#my-song-upload-success-dialog{width:min(100% - 30px,480px);max-height:90dvh;margin:auto;border-radius:16px}#my-song-upload-success-dialog .schedule-view-frame{max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#my-song-upload-success-dialog .schedule-view-header{position:relative;padding:21px 54px 15px}#my-song-upload-success-dialog .schedule-view-header .close-button{position:absolute;top:15px;right:16px}.upload-success-intro{margin:0;color:#68776e;font-size:12px}.upload-success-list{display:grid;gap:8px;max-height:42dvh;overflow:auto;margin:0;padding:0;list-style:none}.upload-success-list li{border:1px solid #e1e9e1;border-radius:9px;background:#f8faf7;padding:10px 12px;color:#344139;font-size:12px;font-weight:600;line-height:1.5}.upload-success-actions{display:flex;justify-content:flex-end}.upload-success-actions .create-schedule-button{min-width:92px}@media(max-width:600px){#my-song-upload-success-dialog{width:calc(100% - 30px);max-height:90dvh;margin:auto;border-radius:16px}#my-song-upload-success-dialog .schedule-view-frame{max-height:90dvh;border:1px solid #e5ebe4;border-radius:16px}#my-song-upload-success-dialog .schedule-view-header{padding:19px 48px 14px}#my-song-upload-success-dialog .share-body{padding:0 17px 20px}}
+
+html,body{height:100%;overflow:hidden}
+.app-shell{display:flex;width:min(100% - 48px,980px);height:100vh;height:100dvh;min-height:0;flex-direction:column;overflow:hidden;margin:0 auto;padding:12px 0 6px}
+.main-scroll-area{display:flex;min-height:0;flex:1 1 auto;flex-direction:column;gap:14px;overflow-x:hidden;overflow-y:auto;padding:0 2px 10px;overscroll-behavior:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.schedule-panel,.library-tabs-shell{flex:0 0 auto}
+.library-tabs-shell,.library{margin-top:0}
+.footer-note{flex:0 0 auto;margin:0;padding:7px 4px max(3px,env(safe-area-inset-bottom));background:#f5f7f3}
+.footer-app-name{font-weight:700}
+@media(max-width:600px){.app-shell{width:min(100% - 30px,980px);padding:8px 0 4px}.main-scroll-area{gap:10px;padding-right:1px;padding-left:1px}.library-tabs-shell{margin-top:0}.footer-note{gap:4px;padding-top:5px;font-size:9px}.footer-note img{width:20px;height:20px}}
+.schedule-secondary-button.is-sharing{border-color:#e7c8c5;background:#fff5f3;color:#a64b42}.schedule-secondary-button.is-sharing:hover{background:#ffefec}
+.schedule-share-status{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;border:1px solid #d9e9dc;border-radius:8px;background:#f4faf4;padding:8px 10px;color:#4d7057;font-size:10px}.schedule-share-status strong{color:var(--green);font:700 12px "DM Sans",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.schedule-pullers{display:block;margin-top:5px;color:#4d7057;font-size:9px;font-weight:600;letter-spacing:0;line-height:1.35}
+.share-result-actions{display:flex;justify-content:center;gap:8px;margin-top:10px}.share-result-actions button{margin-top:0}.share-result-actions .schedule-refresh-songs,.share-result-actions .schedule-delete{min-height:34px}
+@media(max-width:600px){.schedule-share-status{font-size:9px}.schedule-share-status strong{font-size:11px}.share-result-actions{flex-wrap:wrap}.schedule-heading-actions .schedule-secondary-button.is-sharing{flex:1 0 100%}}
+.font-size-field{grid-template-columns:minmax(0,1fr) auto;align-items:center}.font-size-field output{color:var(--green);font-size:11px;font-weight:700}.font-size-field .font-size-slider{grid-column:1/-1;width:100%;height:24px;min-height:24px;margin:0;border:0;background:transparent;padding:0;accent-color:var(--green);cursor:pointer}
+.schedule-field .optional-hint{margin-top:-3px;color:var(--muted);font-size:10px;font-weight:400;letter-spacing:0;line-height:1.35}
+
+/* iPhone Safari: keep the fixed app frame and its footer compact in the safe area. */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 600px) and (pointer: coarse) {
+    html,body{height:100%;min-height:0}
+    .app-shell{height:100vh;height:100dvh;padding-top:max(6px,env(safe-area-inset-top));padding-bottom:0}
+    .main-scroll-area{min-height:0;gap:8px;padding-bottom:6px}
+    .footer-note{display:flex;align-items:center;justify-content:center;min-height:0;padding:3px 4px max(2px,env(safe-area-inset-bottom));line-height:1.2}
+    .footer-credit{display:flex;align-items:center;gap:5px}
+    .footer-note img{display:block;width:18px;height:18px}
+    .library-heading{gap:8px}
+    .library-title-group{min-width:0}
+    .library-actions{flex:0 0 auto}
+    .refresh-button{width:38px;min-width:38px;height:36px;padding:0;font-size:0}
+    .refresh-button>span:first-child{display:grid;width:20px;height:20px;place-items:center;font-size:0}
+    .refresh-button>span:first-child svg{display:block;width:20px;height:20px}
+    .refresh-button>span:last-child{display:none}
+  }
+}
+:root[data-theme="dark"] .font-size-field .font-size-slider{border:0!important;background:transparent!important}
+.library-info-icon{border:0;background:transparent;padding:0;cursor:pointer}.library-info-icon:hover{color:var(--green);background:#f1f5f0}.library-info-icon:focus-visible{outline:2px solid var(--green);outline-offset:-2px}.about-program-dialog{width:min(100% - 30px,650px);max-height:min(92dvh,820px);border:0;border-radius:16px;background:transparent;padding:0;color:var(--ink);box-shadow:0 22px 90px #0b20163d}.about-program-dialog::backdrop{background:#101b15a6;backdrop-filter:blur(4px)}.about-program-frame{max-height:min(92dvh,820px);border-radius:16px}.about-program-header{position:relative;justify-content:center;padding:21px 58px 16px;text-align:center}.about-program-header>div{width:100%}.about-program-header .close-button{position:absolute;top:15px;right:16px}.about-program-body{overflow:auto;padding:0 28px 26px;color:#536259;font-size:13px;line-height:1.7;overscroll-behavior:contain}.about-program-logo{display:block;width:76px;height:76px;margin:0 auto 17px;border-radius:19px;object-fit:contain}.about-program-body p{margin:0 0 14px}.about-program-credit{margin-top:20px;border-top:1px solid #e6ece6;padding-top:14px;color:#64736a;text-align:center;font-size:11px;line-height:1.55}.about-program-credit p{margin:0 0 4px}.about-program-credit a{color:var(--green);font-weight:700;text-decoration:none}.about-program-credit a:hover{text-decoration:underline}@media(max-width:600px){.about-program-dialog{width:100%;height:100%;max-height:100dvh;margin:0;border-radius:0}.about-program-frame{height:100%;max-height:100dvh;border:0;border-radius:0}.about-program-header{padding:calc(18px + env(safe-area-inset-top)) 52px 14px}.about-program-header h2{font-size:20px}.about-program-body{padding:0 20px calc(22px + env(safe-area-inset-bottom));font-size:12px}.about-program-logo{width:68px;height:68px;margin-bottom:14px}}
+.about-program-body,.about-program-credit{color:var(--muted)}.about-program-credit{border-color:var(--line)}
+.footer-note,:root[data-theme] .footer-note{background:transparent!important}.footer-credit{color:var(--ink)}.footer-app-name{color:var(--ink)}
+
+.required-profile-dialog{width:min(440px,calc(100% - 28px));max-width:none;border:0;border-radius:22px;background:transparent;padding:0;color:var(--ink);box-shadow:0 28px 100px #07140c66}.required-profile-dialog::backdrop{background:#101b15b8;backdrop-filter:blur(7px)}.required-profile-card{border:1px solid var(--line);border-radius:22px;background:var(--surface,#fff);padding:clamp(22px,5vw,34px);box-shadow:0 18px 50px #0d27152b}.required-profile-card h2{margin:8px 0;color:var(--ink);font-size:clamp(22px,6vw,28px);letter-spacing:-.035em}.required-profile-card>p:not(.eyebrow){margin:0 0 22px;color:var(--muted);font-size:13px;line-height:1.6}.required-profile-card form{display:grid;gap:11px}.required-profile-card label{color:var(--muted);font-size:12px;font-weight:700}.required-profile-card input{width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);padding:0 13px;color:var(--ink);font:inherit}.required-profile-card input:focus{outline:3px solid color-mix(in srgb,var(--green) 24%,transparent);border-color:var(--green)}.required-profile-card .create-schedule-button{width:100%;min-height:46px;margin-top:4px;border-radius:12px}.required-profile-status{min-height:18px;margin:0;color:var(--danger,#a33);font-size:12px;line-height:1.5}.required-profile-dialog[open]{animation:required-profile-enter .18s ease-out}@keyframes required-profile-enter{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(prefers-reduced-motion:reduce){.required-profile-dialog[open]{animation:none}}
+
+/* Sidebar navigation */
+.app-shell{position:relative}
+.sidebar-menu-toggle{position:fixed;z-index:40;top:18px;left:18px;width:42px;height:42px;border:0;border-radius:12px;background:transparent;color:var(--green);font-size:23px;line-height:1;box-shadow:none}
+.app-sidebar{position:fixed;z-index:50;top:0;bottom:0;left:0;width:270px;padding:25px 16px;background:var(--surface,#fff);border-right:1px solid var(--line,#e4e9e3);box-shadow:12px 0 34px #213d2818;transform:translateX(-105%);transition:transform .22s ease}
+.app-sidebar.is-open{transform:translateX(0)}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:4px 10px 26px;color:var(--ink,#26352b)}
+.sidebar-brand-logo{display:block;width:48px;height:48px;flex:0 0 48px;border-radius:12px;object-fit:cover;box-shadow:0 5px 13px #176b4b22}
+.sidebar-brand strong,.sidebar-brand small,.sidebar-about-link{display:block}.sidebar-brand strong{font:800 15px Manrope,sans-serif;letter-spacing:-.03em}.sidebar-about-link{margin-top:3px;border:0;background:transparent;padding:0;color:var(--muted,#78857d);font:500 10px "DM Sans",sans-serif;text-align:left;text-decoration:none;cursor:pointer}.sidebar-about-link:hover{color:var(--green);text-decoration:underline}.sidebar-about-link:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:3px}
+.sidebar-nav{display:grid;gap:6px}.sidebar-nav-item{display:flex;align-items:center;gap:11px;width:100%;min-height:46px;border:0;border-radius:10px;background:transparent;padding:0 13px;color:var(--muted,#718078);font-size:13px;font-weight:700;text-align:left}.sidebar-nav-item span{width:20px;color:var(--green);font-size:18px;text-align:center}.sidebar-nav-item:hover,.sidebar-nav-item.is-active{background:var(--theme-tint,#edf4ee);color:var(--green)}
+.sidebar-backdrop{position:fixed;z-index:45;inset:0;background:#0c1d1266}.sidebar-backdrop[hidden]{display:none}
+.app-view{display:none}.app-view.is-active{display:block}
+@media(max-width:600px){.sidebar-menu-toggle{top:10px;left:10px;width:38px;height:38px;font-size:21px}.app-sidebar{width:min(82vw,270px);padding-top:18px}.main-scroll-area{padding-top:4px}}
+
+.app-header{display:flex;align-items:center;gap:12px;min-height:58px;margin-bottom:10px;padding:9px 12px;border:1px solid #e4e9e3;border-radius:17px;background:#ffffffdc;box-shadow:0 12px 38px #213d280a}
+.app-header .sidebar-menu-toggle{position:static;flex:0 0 auto;width:42px;height:42px}
+.app-header-title{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;gap:2px;color:var(--ink,#26352b)}
+.app-header-title strong{font:800 16px Manrope,sans-serif;letter-spacing:-.03em}.app-header-title span{color:var(--muted,#78857d);font-size:10px;white-space:nowrap;overflow:visible;text-overflow:clip}
+.app-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin-left:auto}.app-header-actions .create-schedule-button{min-height:38px}
+.schedule-heading{align-items:center}.schedule-heading>div:first-child{min-width:0}.schedule-heading-actions{display:none!important}
+@media(max-width:700px){.app-header{gap:8px;min-height:52px;margin-bottom:7px;padding:0 2px}.app-header .sidebar-menu-toggle{width:38px;height:38px}.app-header-title{min-width:72px}.app-header-title strong{font-size:14px}.app-header-title span{font-size:9px}.app-header-actions{gap:4px}.app-header-actions .create-schedule-button{min-height:33px;padding:0 7px;font-size:9px}.app-header-actions .schedule-secondary-button{font-size:8px;width:auto;padding:0 6px}}
+@media(max-width:430px){.app-header{gap:5px;padding:0 1px}.app-header-title{display:flex;flex:1 1 auto;min-width:0;max-width:none}.app-header-title strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.app-header-title span{font-size:8px;white-space:nowrap;overflow:visible;text-overflow:clip;line-height:1.2}.app-header-actions{width:auto;min-width:0;flex:1;gap:3px}.app-header-actions .create-schedule-button{flex:1;min-width:0;padding:0 4px;font-size:7px}.app-header-actions .schedule-secondary-button{width:auto;font-size:7px}}
+
+/* Sidebar song views: show one library container at a time. */
+.library-tabs-shell.sidebar-my-songs-view .library-tabs{display:none}
+.library-tabs-shell.sidebar-collection-view .library-tabs{display:none}
+.library-tabs-shell.sidebar-my-songs-view #all-songs-panel{display:none!important}
+.library-tabs-shell.sidebar-collection-view #my-songs-panel{display:none!important}
+.library-tabs-shell.sidebar-my-songs-view #my-songs-panel{display:block!important}
+.library-tabs-shell.sidebar-collection-view #all-songs-panel{display:block!important}
+
+.app-header-actions .refresh-button{width:auto;min-width:38px;height:38px;padding:0 12px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:7px}.app-header-actions .refresh-button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.app-header-actions .upload-my-songs-button,.app-header-actions .my-song-upload-cancel{min-height:38px}.app-header-actions .my-song-upload-cancel[hidden]{display:none}
+@media(max-width:700px){.app-header-actions .refresh-button{height:33px;min-width:33px;padding:0 8px;font-size:0}.app-header-actions .refresh-button svg{width:16px;height:16px}.app-header-actions .upload-my-songs-button,.app-header-actions .my-song-upload-cancel{min-height:33px;padding:0 8px;font-size:9px}}
+
+.library-tabs-shell.sidebar-settings-view .library-tabs{display:none}
+.library-tabs-shell.sidebar-settings-view #my-songs-panel,.library-tabs-shell.sidebar-settings-view #all-songs-panel{display:none!important}
+.library-tabs-shell.sidebar-settings-view #instrument-profile-panel{display:block!important;margin:0;border:0;border-radius:0;box-shadow:none}
+
+@media(max-width:600px){.sidebar-brand-logo{width:44px;height:44px;flex-basis:44px}.sidebar-brand strong{font-size:14px}}
+
+.app-view[data-app-view-panel="schedule"]{width:100%}.app-view[data-app-view-panel="schedule"].is-active{display:block!important}
+
+.app-view{display:none!important}.app-view.is-active{display:block!important}
+.app-header-actions.is-empty{display:none!important}.app-header-actions.has-actions{display:flex!important}
+.app-view[data-app-view-panel="schedule"].is-active .schedule-panel{display:block!important;visibility:visible;opacity:1}
+
+.schedule-actions-bar{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#e4e9e3);border-radius:13px;background:var(--surface,#fff);box-shadow:0 8px 24px #213d2808}.schedule-actions-bar[hidden]{display:none!important}.schedule-actions-bar button{min-height:36px}.schedule-panel .schedule-heading{display:none}.schedule-panel{margin-top:0}.schedule-panel>.schedule-status[hidden]{display:none!important}
+@media(max-width:600px){.schedule-actions-bar{justify-content:stretch;gap:5px;margin-bottom:9px;padding:7px}.schedule-actions-bar button{flex:1;min-width:0;padding:0 6px;font-size:9px}}
+
+@media(max-width:430px){.app-header-title{display:flex!important;visibility:visible!important;opacity:1!important}}
+
+:root[data-theme] .app-header{border-color:var(--line);background-color:var(--surface);color:var(--ink)}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header{display:grid;grid-template-columns:auto minmax(180px,1fr) auto;align-items:center}
+  .app-shell.schedule-view-active .app-header-title{grid-column:2}
+  .app-shell.schedule-view-active .schedule-actions-bar{grid-column:3;grid-row:1;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{position:absolute;top:9px;right:12px;display:flex!important;z-index:2}
+  .app-shell.schedule-view-active .main-scroll-area{padding-top:0}
+}
+@media(max-width:700px){.app-shell.schedule-view-active .schedule-actions-bar{display:flex!important;position:static}}
+
+/* Responsive placement for worship schedule actions. */
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header{padding-right:350px}
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{width:max-content;max-width:calc(100% - 365px);align-items:center}
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar button{white-space:nowrap}
+}
+@media(max-width:700px){
+  .app-shell.schedule-view-active .app-header{padding-right:8px}
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{position:static;top:auto;right:auto;width:100%;max-width:none}
+}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{
+    top:12px;
+    right:12px;
+    height:58px;
+    margin:0;
+    padding:0;
+    align-items:center;
+    transform:none;
+  }
+}
+
+@media(min-width:701px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    align-items:start;
+    gap:14px;
+  }
+}
+@media(max-width:700px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(min-width:701px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+    grid-template-columns:repeat(auto-fit,minmax(300px,360px));
+    justify-content:start;
+  }
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-card{
+    width:100%;
+    max-width:360px;
+  }
+}
+
+/* Smoothly adapt schedule cards between grid and list layouts. */
+@media(min-width:601px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),360px));
+    justify-content:start;
+    align-items:start;
+    gap:clamp(10px,1.5vw,16px);
+  }
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-card{width:100%;max-width:360px}
+}
+@media(max-width:600px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{grid-template-columns:1fr;gap:10px}
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-card{width:100%;max-width:none}
+}
+
+@media(min-width:601px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list.has-single-schedule{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list.has-single-schedule .schedule-card{
+    max-width:none;
+  }
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list.has-multiple-schedules{
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),360px));
+    justify-content:start;
+  }
+}
+
+/* Let schedule cards grow into the available width. */
+@media(min-width:601px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));
+    justify-content:stretch;
+    align-items:start;
+    gap:clamp(10px,1.5vw,16px);
+  }
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list .schedule-card{
+    width:100%;
+    max-width:none;
+  }
+}
+@media(max-width:600px){
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+    grid-template-columns:1fr;
+  }
+  .app-view[data-app-view-panel="schedule"].is-active .schedule-list .schedule-card{
+    width:100%;
+    max-width:none;
+  }
+}
+
+/* Container-based responsive schedule grid: grow one column first, then add columns. */
+.app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));
+  width:100%;
+  justify-content:stretch;
+  align-items:start;
+  gap:clamp(10px,1.5vw,16px);
+}
+.app-view[data-app-view-panel="schedule"].is-active .schedule-list .schedule-card{
+  width:100%;
+  max-width:none;
+}
+
+/* Keep one full-width column until two grid columns actually fit. */
+.app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));
+}
+
+/* Schedule always uses a single vertical list. */
+.app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+  grid-template-columns:1fr!important;
+  width:100%;
+}
+.app-view[data-app-view-panel="schedule"].is-active .schedule-list .schedule-card{
+  width:100%;
+  max-width:none;
+}
+
+main.app-shell > .footer-note{display:none!important}
+
+/* Full-width top header. */
+.app-shell{padding-top:0}
+.app-header{width:100vw;margin-top:0;margin-left:calc(50% - 50vw);border-radius:0;border-top:0;border-left:0;border-right:0}
+@media(max-width:600px){.app-shell{padding-top:0}.app-header{width:100vw;margin-left:calc(50% - 50vw);border-radius:0}}
+
+/* Let the main element span the viewport while keeping its scroll content centered. */
+.app-shell{width:100%;margin:0;overflow:hidden}
+.main-scroll-area{width:min(100% - 48px,980px);margin:0 auto}
+@media(max-width:600px){.main-scroll-area{width:calc(100% - 30px);margin:0 auto}}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{
+    top:0!important;
+    right:0!important;
+    height:58px!important;
+    min-height:58px;
+    margin:0!important;
+    padding:0!important;
+    align-items:center!important;
+    justify-content:flex-end;
+    transform:none!important;
+  }
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar button{
+    align-self:center;
+    margin-top:0;
+    margin-bottom:0;
+  }
+}
+
+/* Keep the three schedule actions without a surrounding container background. */
+.schedule-actions-bar{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+
+/* Schedule content follows the full-width header. */
+.app-view[data-app-view-panel="schedule"].is-active{
+  width:100vw!important;
+  max-width:none!important;
+  margin-left:calc(50% - 50vw);
+}
+.app-view[data-app-view-panel="schedule"].is-active .schedule-panel,
+.app-view[data-app-view-panel="schedule"].is-active .schedule-list{
+  width:100%!important;
+  max-width:none!important;
+}
+
+/* Prevent clipping while keeping the worship schedule as wide as the header. */
+.app-shell.schedule-view-active .main-scroll-area{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding-left:clamp(12px,2vw,24px);
+  padding-right:clamp(12px,2vw,24px);
+}
+.app-shell.schedule-view-active .app-view[data-app-view-panel="schedule"].is-active{
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+.app-shell.schedule-view-active .schedule-panel,
+.app-shell.schedule-view-active .schedule-list{
+  width:100%!important;
+  max-width:none!important;
+}
+@media(max-width:600px){
+  .app-shell.schedule-view-active .main-scroll-area{
+    padding-left:10px;
+    padding-right:10px;
+  }
+}
+
+.sidebar-nav-icon{width:20px;height:20px;flex:0 0 20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.song-actions-bar{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#e4e9e3);border-radius:13px;background:var(--surface,#fff);box-shadow:0 8px 24px #213d2808}.song-actions-bar[hidden]{display:none!important}.song-actions-bar button{min-height:36px}.library-tabs-shell.sidebar-my-songs-view .my-songs-heading-actions{display:none!important}
+@media(min-width:701px){.app-shell .song-actions-bar{display:none!important}.app-shell:not(.schedule-view-active) .app-header-actions{align-items:center}}
+@media(max-width:700px){.song-actions-bar{justify-content:stretch;gap:5px;margin-bottom:9px;padding:7px}.song-actions-bar button{flex:1;min-width:0;padding:0 6px;font-size:9px}.song-actions-bar .my-song-upload-cancel[hidden]{display:none!important}}
+
+@media(min-width:701px){.app-shell.schedule-view-active .schedule-actions-bar[hidden]{display:none!important}.app-shell.schedule-view-active .app-header-actions{display:flex!important}}
+
+/* Stable schedule card sizing prevents content clipping on narrow screens. */
+.app-shell.schedule-view-active .schedule-panel{box-sizing:border-box;overflow:visible}
+.app-shell.schedule-view-active .schedule-list{box-sizing:border-box;min-width:0}
+.app-shell.schedule-view-active .schedule-card{box-sizing:border-box;min-width:0;overflow:hidden}
+@media(max-width:600px){
+  .app-shell.schedule-view-active .schedule-card-header{grid-template-columns:minmax(0,1fr);width:100%}
+  .app-shell.schedule-view-active .schedule-card-header .schedule-field,
+  .app-shell.schedule-view-active .schedule-card-header .schedule-view-button{grid-column:1;width:100%;min-width:0}
+  .app-shell.schedule-view-active .schedule-card-header .schedule-view-button{justify-self:start}
+}
+
+.app-shell.schedule-view-active .schedule-card{overflow:visible}
+.app-shell.schedule-view-active .schedule-card-header .schedule-view-button{
+  display:inline-flex!important;
+  position:relative;
+  z-index:5;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
+/* Keep Lihat jadwal beside the date/calendar control. */
+.app-shell.schedule-view-active .schedule-card-header{display:grid;grid-template-columns:minmax(0,1fr) auto!important;align-items:end;gap:8px 10px;width:100%;min-width:0}
+.app-shell.schedule-view-active .schedule-card-header .schedule-field{min-width:0}
+.app-shell.schedule-view-active .schedule-card-header .schedule-field:first-child{grid-column:1/-1;grid-row:1}
+.app-shell.schedule-view-active .schedule-card-header .schedule-field:nth-child(2){grid-column:1;grid-row:2}
+.app-shell.schedule-view-active .schedule-card-header .schedule-view-button{grid-column:2;grid-row:2;width:auto;min-width:92px;height:38px;justify-self:end;align-self:end}
+@media(max-width:600px){
+  .app-shell.schedule-view-active .schedule-card-header{grid-template-columns:minmax(0,1fr) auto!important;gap:7px 8px}
+  .app-shell.schedule-view-active .schedule-card-header .schedule-field:first-child{grid-column:1/-1;grid-row:1}
+  .app-shell.schedule-view-active .schedule-card-header .schedule-field:nth-child(2){grid-column:1;grid-row:2}
+  .app-shell.schedule-view-active .schedule-card-header .schedule-view-button{grid-column:2;grid-row:2;width:auto;min-width:84px;height:34px;padding:0 8px;font-size:9px}
+}
+
+.app-shell.schedule-view-active .schedule-card-header .schedule-view-button{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  line-height:1;
+  padding:0 12px;
+}
+@media(max-width:600px){
+  .app-shell.schedule-view-active .schedule-card-header .schedule-view-button{
+    justify-content:center;
+    text-align:center;
+    padding:0 8px;
+  }
+}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{
+    right:18px!important;
+    justify-content:flex-end;
+    padding-right:0!important;
+  }
+}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header + .schedule-actions-bar{
+    position:absolute!important;
+    top:0!important;
+    right:18px!important;
+    left:auto!important;
+    width:max-content!important;
+    max-width:calc(100% - 36px)!important;
+    height:58px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    margin:0!important;
+    transform:none!important;
+  }
+}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header{
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) max-content!important;
+    align-items:center!important;
+  }
+  .app-shell.schedule-view-active .app-header-title{grid-column:2!important;min-width:0}
+  .app-shell.schedule-view-active .app-header-actions{
+    grid-column:3!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    align-self:center!important;
+    width:max-content!important;
+    max-width:calc(100vw - 90px)!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+  }
+}
+
+@media(min-width:701px){
+  .app-shell.schedule-view-active .app-header{padding-right:18px!important;padding-left:18px!important}
+}
+
+/* When actions leave the header, center the button group in its own bar. */
+@media(max-width:700px){
+  .app-shell.schedule-view-active .schedule-actions-bar{
+    justify-content:center!important;
+    align-items:center!important;
+    width:100%;
+  }
+  .app-shell.schedule-view-active .schedule-actions-bar button{
+    flex:0 1 auto;
+  }
+  .app-shell:not(.schedule-view-active) .song-actions-bar{
+    justify-content:center!important;
+    align-items:center!important;
+    width:100%;
+  }
+  .app-shell:not(.schedule-view-active) .song-actions-bar button{
+    flex:0 1 auto;
+  }
+}
+
+@media(max-width:700px){
+  .app-shell.schedule-view-active .schedule-actions-bar button,
+  .app-shell:not(.schedule-view-active) .song-actions-bar button{
+    flex:1 1 0!important;
+    min-width:0;
+  }
+}
+
+.upload-my-songs-button{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:126px;min-height:52px;line-height:1.15;text-align:center}.upload-my-songs-button .upload-button-icon{display:grid;place-items:center}.upload-my-songs-button .upload-button-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.app-header-actions .upload-my-songs-button{min-height:46px;padding:5px 10px}.song-actions-bar .upload-my-songs-button{min-height:54px;padding:6px 12px}
+@media(max-width:700px){.song-actions-bar .upload-my-songs-button{min-height:58px}.app-header-actions .upload-my-songs-button{min-height:42px;min-width:112px;padding:4px 7px;font-size:8px}.app-header-actions .upload-my-songs-button .upload-button-icon svg{width:17px;height:17px}}
+
+/* Request mode: keep Request and Batal together in the action group. */
+.song-actions-bar,.app-header-actions{align-items:center}
+.song-actions-bar .my-song-upload-cancel,
+.app-header-actions .my-song-upload-cancel{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:42px;padding:0 13px}
+@media(max-width:700px){
+  .app-shell:not(.schedule-view-active) .song-actions-bar{justify-content:center!important}
+  .app-shell:not(.schedule-view-active) .song-actions-bar button{flex:0 0 auto!important}
+  .app-shell:not(.schedule-view-active) .song-actions-bar .upload-my-songs-button{min-width:126px}
+  .app-shell:not(.schedule-view-active) .song-actions-bar .my-song-upload-cancel{min-width:82px}
+}
+
+.upload-my-songs-button,.my-song-upload-cancel{flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;line-height:1.15}.my-song-upload-cancel{display:inline-flex!important;min-width:82px;min-height:54px;padding:6px 12px}.cancel-button-icon{display:grid;place-items:center}.cancel-button-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:700px){.song-actions-bar .my-song-upload-cancel{min-width:82px;min-height:58px;padding:6px 9px}.app-header-actions .my-song-upload-cancel{min-height:46px;padding:4px 9px;font-size:8px}.app-header-actions .my-song-upload-cancel .cancel-button-icon svg{width:17px;height:17px}}
+
+button.my-song-upload-cancel[hidden]{display:none!important}
+
+.add-song-button{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:104px;min-height:54px;padding:6px 12px;line-height:1.15;text-align:center}.add-song-icon{display:grid;place-items:center}.add-song-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.app-header-actions .add-song-button{min-height:46px}.song-actions-bar .add-song-button{min-height:58px}
+@media(max-width:700px){.app-header-actions .add-song-button{min-width:92px;min-height:42px;padding:4px 8px;font-size:8px}.app-header-actions .add-song-icon svg{width:17px;height:17px}.song-actions-bar .add-song-button{min-height:58px;min-width:104px}}
+
+/* Consistent action-button typography and colors. */
+.app-header-actions button,
+.schedule-actions-bar button,
+.song-actions-bar button,
+.my-songs-heading-actions button{
+  font-family:"DM Sans",sans-serif;
+  font-weight:700;
+  letter-spacing:-.01em;
+}
+.upload-my-songs-button{
+  border:1px solid #cfe1d1;
+  background:#f1f8f2;
+  color:#286846;
+}
+.upload-my-songs-button:hover{border-color:#9fc5a5;background:#e5f2e7;color:#1d5a39}
+.add-song-button,
+.app-header-actions .add-song-button,
+.song-actions-bar .add-song-button{
+  border:1px solid var(--green);
+  background:var(--green);
+  color:#fff;
+}
+.add-song-button:hover{background:var(--deep);border-color:var(--deep)}
+.my-song-upload-cancel{
+  border:1px solid #e3c9c5;
+  background:#fff7f6;
+  color:#9a4b43;
+}
+.my-song-upload-cancel:hover{border-color:#d9a8a2;background:#ffefed;color:#843b35}
+.upload-button-icon svg,.cancel-button-icon svg,.add-song-icon svg{stroke-width:1.8}
+.upload-my-songs-button>span:last-child,.my-song-upload-cancel>span:last-child,.add-song-button>span:last-child{font-size:10px}
+@media(max-width:700px){
+  .upload-my-songs-button>span:last-child,.my-song-upload-cancel>span:last-child,.add-song-button>span:last-child{font-size:9px}
+}
+
+/* Match action button widths. */
+.app-header-actions .upload-my-songs-button,
+.app-header-actions .add-song-button,
+.app-header-actions .my-song-upload-cancel,
+.song-actions-bar .upload-my-songs-button,
+.song-actions-bar .add-song-button,
+.song-actions-bar .my-song-upload-cancel{
+  width:126px;
+  min-width:126px;
+}
+@media(max-width:700px){
+  .app-header-actions .upload-my-songs-button,
+  .app-header-actions .add-song-button,
+  .app-header-actions .my-song-upload-cancel,
+  .song-actions-bar .upload-my-songs-button,
+  .song-actions-bar .add-song-button,
+  .song-actions-bar .my-song-upload-cancel{
+    width:clamp(96px,30vw,126px);
+    min-width:clamp(96px,30vw,126px);
+  }
+}
+
+@media(max-width:700px){
+  .song-actions-bar.is-uploading > [data-header-action="upload-my-songs"],
+  .song-actions-bar.is-uploading > [data-header-action="cancel-my-song-upload"]{
+    flex:0 0 clamp(96px,30vw,126px)!important;
+    width:clamp(96px,30vw,126px)!important;
+    min-width:clamp(96px,30vw,126px)!important;
+    max-width:clamp(96px,30vw,126px)!important;
+  }
+}
+
+/* Dark mode: keep reader content and schedule-related controls readable. */
+:root[data-theme="dark"] .song-preview,
+:root[data-theme="dark"] .song-content,
+:root[data-theme="dark"] .song-section,
+:root[data-theme="dark"] .song-section-body,
+:root[data-theme="dark"] .song-section-body *,
+:root[data-theme="dark"] .song-content pre,
+:root[data-theme="dark"] .song-content p{
+  color:var(--ink)!important;
+  -webkit-text-fill-color:var(--ink)!important;
+}
+:root[data-theme="dark"] .song-preview{background:var(--surface)!important;scrollbar-color:var(--line) transparent}
+:root[data-theme="dark"] .song-section-body .chord,
+:root[data-theme="dark"] .song-section-title{color:var(--green)!important}
+:root[data-theme="dark"] .song-section-body .chord{-webkit-text-fill-color:var(--green)!important}
+:root[data-theme="dark"] .song-preview.is-pre-worship{background:var(--surface-soft)!important}
+:root[data-theme="dark"] .start-worship-button{
+  border-color:var(--green)!important;
+  background:var(--surface-soft)!important;
+  color:var(--green)!important;
+}
+:root[data-theme="dark"] .start-worship-button:hover{
+  background:var(--theme-tint)!important;
+}
+:root[data-theme="dark"] .add-schedule-intro,
+:root[data-theme="dark"] .schedule-intro-preview-button,
+:root[data-theme="dark"] .schedule-intro-name-button,
+:root[data-theme="dark"] .schedule-intro-general-button{
+  border-color:var(--line)!important;
+  background:var(--surface-soft)!important;
+  color:var(--ink)!important;
+}
+:root[data-theme="dark"] .schedule-intro-actions-group,
+:root[data-theme="dark"] .schedule-intro-display{
+  border-color:var(--line)!important;
+  background:var(--surface-soft)!important;
+  color:var(--ink)!important;
+}
+:root[data-theme="dark"] .schedule-start-footer{
+  border-color:var(--line)!important;
+  background:var(--surface-soft)!important;
+  color:var(--ink)!important;
+}
+:root[data-theme="dark"] .remove-schedule-intro{
+  border-color:var(--line)!important;
+  background:#382725!important;
+  color:#ffaaa0!important;
+}
+:root[data-theme="dark"] .add-schedule-intro:hover,
+:root[data-theme="dark"] .schedule-intro-preview-button:hover,
+:root[data-theme="dark"] .schedule-intro-name-button:hover,
+:root[data-theme="dark"] .schedule-intro-general-button:hover{
+  border-color:var(--green)!important;
+  background:var(--theme-tint)!important;
+}
+:root[data-theme="dark"] .active-schedule-info{
+  border-color:var(--line)!important;
+  background:var(--surface-soft)!important;
+  color:var(--ink)!important;
+}
+:root[data-theme="dark"] .active-schedule-info:hover,
+:root[data-theme="dark"] .active-schedule-info:focus-visible{
+  border-color:var(--green)!important;
+  background:var(--theme-tint)!important;
+}
+:root[data-theme="dark"] .active-schedule-info-icon{
+  background:var(--theme-tint)!important;
+  color:var(--green)!important;
+}
+:root[data-theme="dark"] .active-schedule-info-copy strong{color:var(--green)!important}
+:root[data-theme="dark"] .active-schedule-info-copy>span{color:var(--ink)!important}
+:root[data-theme="dark"] .app-shell.collection-view-active .search-box .clear-search-button{
+  border-color:var(--line)!important;
+  background:var(--surface-soft)!important;
+  color:var(--green)!important;
+}
+:root[data-theme="dark"] .app-shell.collection-view-active .search-box .clear-search-button:hover{
+  border-color:var(--green)!important;
+  background:var(--theme-tint)!important;
+}
+
+/* Schedule activation control. It clears only the active target; saved
+   schedules remain available in the list and can be activated again. */
+.schedule-deactivate-button{display:inline-flex;align-items:center;gap:6px}
+.schedule-deactivate-button>span:last-child{font-size:inherit!important;line-height:inherit}
+.schedule-deactivate-button .schedule-deactivate-icon{display:inline-grid;width:16px;height:16px;place-items:center;flex:0 0 16px}
+.schedule-deactivate-button .schedule-deactivate-icon svg{display:block;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.schedule-deactivate-button:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:700px){
+  .app-header-actions .schedule-deactivate-button{min-width:126px;min-height:36px;padding:3px 8px;font-size:9px;line-height:1.1;white-space:normal}
+  .app-header-actions .schedule-deactivate-button>span:last-child{white-space:normal;text-align:center}
+  .app-header-actions .schedule-deactivate-button .schedule-deactivate-icon{width:15px;height:15px;flex-basis:15px}
+  .app-header-actions .schedule-deactivate-button .schedule-deactivate-icon svg{width:15px;height:15px}
+}
+@media(max-width:430px){
+  .app-header-actions .schedule-deactivate-button{min-width:112px;padding:3px 6px;font-size:7px;flex:0 1 auto}
+}
+/* Song action bar stays transparent and fits all three actions. */
+.song-actions-bar{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding-left:0;
+  padding-right:0;
+}
+@media(max-width:700px){
+  .song-actions-bar{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+    gap:5px;
+    justify-content:center!important;
+  }
+  .song-actions-bar .upload-my-songs-button,
+  .song-actions-bar .add-song-button,
+  .song-actions-bar .my-song-upload-cancel{
+    flex:1 1 0!important;
+    width:auto;
+    min-width:0;
+    max-width:none;
+  }
+}
+
+@media(max-width:700px){
+  .song-actions-bar:not(.is-uploading) .upload-my-songs-button,
+  .song-actions-bar:not(.is-uploading) .add-song-button{
+    flex:0 1 126px!important;
+    width:126px;
+    min-width:0;
+  }
+}
+
+/* The active Laguku view uses the page header, so hide its duplicate local heading. */
+.library-tabs-shell.sidebar-my-songs-view .my-songs-library .library-heading{
+  display:none!important;
+}
+
+.my-songs-search-row{display:block!important;margin:0 25px 14px!important}.my-songs-search-row .search-box{margin:0!important;width:100%}.my-songs-category-filter{display:none!important}.my-songs-category-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.my-songs-category-chips .category-chip{cursor:pointer}.my-songs-category-chips .category-chip.is-selected{border-color:var(--green);background:var(--green);color:#fff}
+@media(max-width:600px){.my-songs-search-row{margin-right:15px!important;margin-left:15px!important}.my-songs-category-chips{gap:5px;margin-top:8px}.my-songs-category-chips .category-chip{height:28px;padding:0 9px;font-size:9px}}
+
+.library-tabs-shell.sidebar-my-songs-view .my-songs-search-row{padding-top:16px}
+@media(max-width:600px){.library-tabs-shell.sidebar-my-songs-view .my-songs-search-row{padding-top:11px}}
+
+/* Compact spacing for the Laguku action group and song list. */
+.app-shell.my-songs-view-active .song-actions-bar{margin-top:0;margin-bottom:4px;padding-top:0;padding-bottom:0}
+.app-shell.my-songs-view-active .library-tabs-shell{margin-top:0}
+.app-shell.my-songs-view-active .my-songs-search-row{padding-top:7px!important;margin-bottom:8px!important}
+@media(max-width:600px){
+  .app-shell.my-songs-view-active .song-actions-bar{margin-bottom:2px}
+  .app-shell.my-songs-view-active .my-songs-search-row{padding-top:5px!important;margin-bottom:6px!important}
+}
+
+/* Let the Laguku song list fill the remaining screen height. */
+.app-shell.my-songs-view-active .main-scroll-area{min-height:0;overflow-y:hidden}
+.app-shell.my-songs-view-active .library-tabs-shell{display:flex;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.app-shell.my-songs-view-active #my-songs-panel{display:flex!important;min-height:0;flex:1 1 auto;flex-direction:column}
+.app-shell.my-songs-view-active #my-songs-list{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:600px){
+  .app-shell.my-songs-view-active .main-scroll-area{overflow-y:hidden}
+  .app-shell.my-songs-view-active #my-songs-list{max-height:none}
+}
+
+/* Complete the flex-height chain so the Laguku list can scroll. */
+.app-shell.my-songs-view-active .main-scroll-area{display:flex;min-height:0;overflow:hidden}
+.app-shell.my-songs-view-active .app-view[data-app-view-panel="songs"]{display:flex!important;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.app-shell.my-songs-view-active .library-tabs-shell{width:100%;height:100%;min-height:0;flex:1 1 auto}
+.app-shell.my-songs-view-active #my-songs-panel{width:100%;height:100%;min-height:0;overflow:hidden}
+.app-shell.my-songs-view-active #my-songs-list{display:block;height:100%;min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin}
+
+/* Final mobile sizing: action buttons share the available width without clipping. */
+@media(max-width:700px){
+  .song-actions-bar{
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box;
+    overflow:visible;
+    gap:5px;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+  .song-actions-bar .upload-my-songs-button,
+  .song-actions-bar .add-song-button,
+  .song-actions-bar .my-song-upload-cancel{
+    flex:1 1 0!important;
+    width:0!important;
+    min-width:0!important;
+    max-width:none!important;
+    box-sizing:border-box;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
+
+@media(max-width:700px){
+  .song-actions-bar .upload-my-songs-button,
+  .song-actions-bar .add-song-button,
+  .song-actions-bar .my-song-upload-cancel{
+    flex:1 1 0!important;
+    width:auto!important;
+    min-width:0!important;
+    padding-left:4px!important;
+    padding-right:4px!important;
+    white-space:nowrap;
+  }
+  .song-actions-bar button>span:last-child{
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    word-break:normal;
+    overflow-wrap:normal;
+  }
+  .song-actions-bar .upload-button-icon svg,
+  .song-actions-bar .cancel-button-icon svg,
+  .song-actions-bar .add-song-icon svg{flex:0 0 auto}
+}
+
+@media(max-width:700px){
+  .song-actions-bar:not(.is-uploading) > [data-header-action="upload-my-songs"],
+  .song-actions-bar:not(.is-uploading) > [data-header-action="add-my-song"]{
+    flex:1 1 0!important;
+    width:0!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+}
+
+@media(max-width:700px){
+  .song-actions-bar .upload-my-songs-button,
+  .song-actions-bar .add-song-button,
+  .song-actions-bar .my-song-upload-cancel{
+    flex:1 1 0!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+    overflow:visible!important;
+  }
+  .song-actions-bar button>span:last-child{
+    display:block!important;
+    width:100%;
+    max-width:none!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    white-space:normal!important;
+    word-break:normal!important;
+    overflow-wrap:normal!important;
+    line-height:1.15;
+  }
+  .song-actions-bar:not(.is-uploading)>[data-header-action="upload-my-songs"],
+  .song-actions-bar:not(.is-uploading)>[data-header-action="add-my-song"]{
+    flex:1 1 0!important;
+    width:auto!important;
+  }
+}
+
+@media(max-width:700px){
+  .song-actions-bar:not(.is-uploading){
+    justify-content:center!important;
+  }
+  .song-actions-bar:not(.is-uploading) > [data-header-action="upload-my-songs"],
+  .song-actions-bar:not(.is-uploading) > [data-header-action="add-my-song"]{
+    flex:0 0 126px!important;
+    width:126px!important;
+    min-width:126px!important;
+    max-width:126px!important;
+  }
+  .song-actions-bar.is-uploading > [data-header-action="upload-my-songs"],
+  .song-actions-bar.is-uploading > [data-header-action="cancel-my-song-upload"],
+  .song-actions-bar.is-uploading > [data-header-action="add-my-song"]{
+    flex:1 1 0!important;
+    width:0!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+}
+
+@media(max-width:700px){
+  /* Upload mode: each action follows its content while staying inside the bar. */
+  .song-actions-bar.is-uploading > [data-header-action="upload-my-songs"],
+  .song-actions-bar.is-uploading > [data-header-action="cancel-my-song-upload"],
+  .song-actions-bar.is-uploading > [data-header-action="add-my-song"]{
+    flex:0 1 auto!important;
+    width:max-content!important;
+    min-width:0!important;
+    max-width:calc((100% - 10px)/3)!important;
+    white-space:normal!important;
+  }
+  .song-actions-bar.is-uploading > button>span:last-child{
+    width:auto;
+    max-width:100%;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+}
+
+.header-count-pill{display:inline-grid;min-width:25px;height:22px;place-items:center;margin-left:6px;border-radius:8px;background:var(--theme-tint,#edf4ee);padding:0 7px;color:var(--green);font:700 11px "DM Sans",sans-serif;vertical-align:middle}
+.library-tabs-shell.sidebar-collection-view #library-title{display:none}
+.library-tabs-shell.sidebar-collection-view .library-heading{padding-top:10px;padding-bottom:10px}
+.app-header-actions .refresh-button{display:inline-flex!important;align-items:center;justify-content:center;gap:7px;width:auto;min-width:140px;height:38px;padding:0 12px;font-size:11px}
+.app-header-actions .refresh-button svg{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:700px){.app-header-actions .refresh-button{min-width:130px;height:34px;padding:0 9px;font-size:9px}.app-header-actions .refresh-button svg{width:16px;height:16px}}
+
+.library-tabs-shell.sidebar-collection-view .library-actions{display:none!important}
+.library-tabs-shell.sidebar-collection-view .library-title-group{display:none!important}
+
+@media(max-width:700px){
+  .app-header-actions .refresh-button{
+    display:inline-flex!important;
+    width:auto!important;
+    min-width:130px!important;
+    height:34px!important;
+    padding:0 9px!important;
+    font-size:9px!important;
+    gap:6px!important;
+  }
+  .app-header-actions .refresh-button>span:first-child{display:grid!important;width:16px;height:16px;place-items:center}
+  .app-header-actions .refresh-button>span:first-child svg{display:block!important;width:16px;height:16px}
+  .app-header-actions .refresh-button>span:last-child{display:inline!important;visibility:visible!important;white-space:nowrap!important}
+}
+
+/* Refresh belongs only to Koleksi Lagu, never to Jadwal Ibadah. */
+.app-shell.schedule-view-active .app-header-actions [data-header-action="refresh-button"]{
+  display:none!important;
+  visibility:hidden!important;
+}
+.app-shell:not(.collection-view-active) .app-header-actions [data-header-action="refresh-button"]{
+  display:none!important;
+  visibility:hidden!important;
+}
+.app-shell.my-songs-view-active .app-header-actions [data-header-action="refresh-button"],
+.app-shell.schedule-view-active .app-header-actions [data-header-action="refresh-button"]{
+  display:none!important;
+  visibility:hidden!important;
+}
+@media(max-width:700px){
+  .app-shell.collection-view-active .app-header-actions [data-header-action="refresh-button"]{
+    display:inline-flex!important;
+    visibility:visible!important;
+    width:auto!important;
+    min-width:130px!important;
+    height:34px!important;
+    padding:0 9px!important;
+    font-size:9px!important;
+    gap:6px!important;
+  }
+  .app-shell.collection-view-active .app-header-actions [data-header-action="refresh-button"]>span:first-child{
+    display:grid!important;
+    visibility:visible!important;
+    width:16px!important;
+    height:16px!important;
+    place-items:center;
+  }
+  .app-shell.collection-view-active .app-header-actions [data-header-action="refresh-button"]>span:last-child{
+    display:inline!important;
+    visibility:visible!important;
+    width:auto!important;
+    height:auto!important;
+    overflow:visible!important;
+    opacity:1!important;
+    white-space:nowrap!important;
+    font-size:9px!important;
+  }
+}
+
+.refresh-button.is-loading{cursor:wait;opacity:.78}
+.refresh-button.is-loading>span:first-child svg{animation:refresh-spin .8s linear infinite;transform-origin:center}
+@keyframes refresh-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.refresh-button.is-loading>span:first-child svg{animation:none}}
+
+/* Match Koleksi Lagu list container behavior with Laguku. */
+.app-shell.collection-view-active .main-scroll-area{display:flex;min-height:0;overflow:hidden}
+.app-shell.collection-view-active .app-view[data-app-view-panel="songs"]{display:flex!important;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.app-shell.collection-view-active .library-tabs-shell{display:flex;width:100%;height:100%;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.app-shell.collection-view-active #all-songs-panel{display:flex!important;width:100%;height:100%;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.app-shell.collection-view-active #collection-results{display:flex;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.app-shell.collection-view-active #song-list{display:block;flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin}
+@media(max-width:600px){.app-shell.collection-view-active #song-list{max-height:none}}
+
+.clear-search-button{flex:0 0 auto;height:30px;border:1px solid #d8e5da;border-radius:8px;background:#f5faf5;padding:0 9px;color:var(--green);font:700 10px "DM Sans",sans-serif;white-space:nowrap}.clear-search-button:hover{background:#eaf4eb;border-color:#b8cebb}
+.app-shell.collection-view-active .search-box{height:54px}
+@media(max-width:600px){.app-shell.collection-view-active .search-box{height:49px}.clear-search-button{height:29px;padding:0 7px;font-size:9px}.app-shell.collection-view-active .search-box kbd{display:none}}
+
+.search-box .clear-search-button{margin-left:auto;margin-right:0;flex:0 0 auto}
+.search-box input{min-width:0;flex:1 1 auto}
+
+.app-shell.collection-view-active .search-box{padding-right:0;overflow:hidden}
+.app-shell.collection-view-active .search-box .clear-search-button{
+  align-self:stretch;
+  height:auto;
+  margin-top:-1px;
+  margin-bottom:-1px;
+  margin-right:0;
+  border-top:0;
+  border-right:0;
+  border-bottom:0;
+  border-left:1px solid #d8e5da;
+  border-radius:0;
+  padding-left:12px;
+  padding-right:12px;
+}
+@media(max-width:600px){.app-shell.collection-view-active .search-box .clear-search-button{padding-left:9px;padding-right:9px}}
+
+.app-shell.collection-view-active .search-box{height:58px;min-height:58px}
+.app-shell.collection-view-active .search-box .clear-search-button{min-height:58px}
+@media(max-width:600px){
+  .app-shell.collection-view-active .search-box{height:54px;min-height:54px}
+  .app-shell.collection-view-active .search-box .clear-search-button{min-height:54px}
+}
+
+.app-shell.collection-view-active .search-box input{
+  padding:0 2px;
+  font-size:16px;
+  line-height:1.2;
+}
+.app-shell.collection-view-active .search-box>span{margin-left:0}
+@media(max-width:600px){
+  .app-shell.collection-view-active .search-box input{padding:0 1px;font-size:15px}
+}
+
+.app-shell.collection-view-active .search-box input{font-size:18px;font-weight:500}
+@media(max-width:600px){.app-shell.collection-view-active .search-box input{font-size:17px}}
+
+.app-shell.collection-view-active .search-box{padding-left:6px;padding-right:0;gap:7px}
+.app-shell.collection-view-active .search-box input{padding-left:0;padding-right:0}
+@media(max-width:600px){.app-shell.collection-view-active .search-box{padding-left:5px;gap:6px}.app-shell.collection-view-active .search-box input{padding-left:0;padding-right:0}}
+
+/* Keep the collection search compact vertically while giving the text field
+   enough height for comfortable, readable input. */
+.app-shell.collection-view-active .search-box{
+  --search-font-size:20px;
+  --search-control-height:clamp(44px,calc(var(--search-font-size) * 1.2 + 20px),50px);
+  height:var(--search-control-height);
+  min-height:var(--search-control-height);
+  padding-top:0;
+  padding-bottom:0;
+  align-items:center;
+}
+.app-shell.collection-view-active .search-box input{
+  box-sizing:border-box;
+  min-height:0;
+  height:100%;
+  font-size:var(--search-font-size);
+  line-height:1.2;
+  padding-top:0;
+  padding-bottom:0;
+}
+/* Use the dedicated Bersihkan button instead of the browser's native
+   search-field clear icon. */
+.app-shell.collection-view-active .search-box input[type="search"]::-webkit-search-cancel-button,
+.app-shell.collection-view-active .search-box input[type="search"]::-webkit-search-decoration{
+  -webkit-appearance:none;
+  appearance:none;
+  display:none;
+}
+.app-shell.collection-view-active .search-box input[type="search"]::-ms-clear{
+  display:none;
+  width:0;
+  height:0;
+}
+.app-shell.collection-view-active .search-box>span{
+  height:24px;
+  min-height:24px;
+  display:grid;
+  place-items:center;
+}
+.app-shell.collection-view-active .search-box .clear-search-button{
+  min-height:0;
+  height:100%;
+  align-self:stretch;
+}
+@media(max-width:600px){
+  .app-shell.collection-view-active .search-box{
+    --search-font-size:19px;
+    --search-control-height:clamp(44px,calc(var(--search-font-size) * 1.2 + 20px),48px);
+    height:var(--search-control-height);
+    min-height:var(--search-control-height);
+    padding-top:0;
+    padding-bottom:0;
+  }
+  .app-shell.collection-view-active .search-box input{
+    min-height:0;
+    height:100%;
+    font-size:var(--search-font-size);
+    line-height:1.2;
+  }
+  .app-shell.collection-view-active .search-box .clear-search-button{
+    min-height:0;
+    height:100%;
+    align-self:stretch;
+  }
+}
+
+/* Shared active-schedule context shown above the song search fields. */
+.active-schedule-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:48px;
+  width:100%;
+  margin:0 0 10px;
+  border:1px solid #dfe9df;
+  border-radius:11px;
+  background:#f4f8f3;
+  padding:8px 12px;
+  color:var(--ink,#26352b);
+  cursor:pointer;
+  transition:border-color .15s ease,background .15s ease,box-shadow .15s ease;
+}
+.active-schedule-info:hover,
+.active-schedule-info:focus-visible{
+  border-color:#9fc5a6;
+  background:#edf6ed;
+  box-shadow:0 0 0 3px #176b4b14;
+  outline:0;
+}
+.active-schedule-info[hidden]{display:none!important}
+.app-shell.my-songs-view-active #collection-active-schedule,
+.app-shell.collection-view-active #my-songs-active-schedule,
+.app-shell.schedule-view-active .active-schedule-info{
+  display:none!important;
+}
+.app-shell:not(.my-songs-view-active):not(.collection-view-active) .active-schedule-info{
+  display:none!important;
+}
+.active-schedule-info-icon{
+  display:grid;
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  place-items:center;
+  border-radius:8px;
+  background:#e2eee3;
+  color:var(--green);
+  font-size:15px;
+}
+.active-schedule-info-copy{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  gap:2px;
+  line-height:1.25;
+}
+.active-schedule-info-copy strong{
+  color:var(--green);
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.active-schedule-info-copy>span{
+  overflow-wrap:anywhere;
+  color:var(--ink,#26352b);
+  font-size:12px;
+  font-weight:600;
+  line-height:1.35;
+  white-space:normal;
+}
+@media(max-width:600px){
+  .active-schedule-info{
+    min-height:44px;
+    width:100%;
+    margin:0 0 8px;
+    padding:7px 9px;
+  }
+  .active-schedule-info-icon{width:25px;height:25px;flex-basis:25px;font-size:13px}
+  .active-schedule-info-copy strong{font-size:9px}
+  .active-schedule-info-copy>span{font-size:11px}
+}
+
+.app-toast{
+  position:fixed;
+  z-index:1000;
+  right:24px;
+  bottom:24px;
+  max-width:min(420px,calc(100vw - 32px));
+  border:1px solid #bcd5c0;
+  border-radius:10px;
+  background:#244d35;
+  padding:11px 15px;
+  color:#fff;
+  font-size:12px;
+  font-weight:600;
+  line-height:1.4;
+  box-shadow:0 10px 28px #18352233;
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity .18s ease,transform .18s ease;
+}
+.app-toast[hidden]{display:none}
+.app-toast.is-visible{opacity:1;transform:translateY(0)}
+@media(max-width:600px){
+  .app-toast{
+    right:16px;
+    bottom:16px;
+    left:16px;
+    max-width:none;
+    text-align:center;
+  }
+}
+
+.sidebar-nav-item .sidebar-nav-label{
+  display:inline-flex;
+  width:auto;
+  align-items:baseline;
+  gap:4px;
+  color:inherit;
+  font-size:inherit;
+  text-align:left;
+}
+.sidebar-nav-item .sidebar-nav-label small{
+  color:var(--muted,#78857d);
+  font-size:10px;
+  font-style:italic;
+  font-weight:500;
+}
+.sidebar-nav-item:hover .sidebar-nav-label small,
+.sidebar-nav-item.is-active .sidebar-nav-label small{color:currentColor}
+
+/* Laguku actions: Add to Jadwal above the edit and delete controls. */
+.app-shell.my-songs-view-active .my-songs-library .song-card{
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+}
+.app-shell.my-songs-view-active .my-song-list-actions{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:5px;
+  width:auto;
+}
+.app-shell.my-songs-view-active .my-song-list-actions .my-song-add-action{
+  display:inline-flex;
+  width:105px;
+  min-width:105px;
+  max-width:105px;
+  align-self:flex-start;
+  height:30px;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #d9e6da;
+  border-radius:8px;
+  background:#f7faf6;
+  padding:0 8px;
+  color:var(--green);
+  font-family:"DM Sans",sans-serif!important;
+  font-size:9px!important;
+  font-weight:700!important;
+  letter-spacing:-.01em;
+  line-height:1;
+  white-space:nowrap;
+}
+.app-shell.my-songs-view-active .my-song-list-actions .my-song-add-action:hover{
+  border-color:#8bb495;
+  background:#eaf4eb;
+}
+.app-shell.my-songs-view-active .my-song-list-actions .my-song-add-action:disabled{
+  opacity:.4;
+  cursor:default;
+}
+.app-shell.my-songs-view-active .my-song-edit-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-evenly;
+  width:100%;
+  gap:5px;
+}
+@media(max-width:600px){
+  .app-shell.my-songs-view-active .my-songs-library .song-card{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:5px;
+    padding-right:10px;
+    padding-left:16px;
+  }
+  .app-shell.my-songs-view-active .my-song-list-actions .my-song-add-action{
+    width:92px;
+    min-width:92px;
+    max-width:92px;
+    height:28px;
+    padding:0 5px;
+    font-size:8px!important;
+  }
+  .app-shell.my-songs-view-active .my-song-edit-actions{gap:4px}
+}
+
+/* Match the outer schedule container width to the song and settings views. */
+.app-shell.schedule-view-active .main-scroll-area{
+  width:min(100% - 48px,980px);
+  max-width:980px;
+  margin:0 auto;
+  padding-right:2px;
+  padding-left:2px;
+}
+.app-shell.schedule-view-active .app-view[data-app-view-panel="schedule"].is-active,
+.app-shell.schedule-view-active .schedule-panel,
+.app-shell.schedule-view-active .schedule-list{
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+}
+@media(max-width:600px){
+  .app-shell.schedule-view-active .main-scroll-area{
+    width:calc(100% - 30px);
+    max-width:none;
+    padding-right:1px;
+    padding-left:1px;
+  }
+}
+
+/* Upload mode keeps Request and Batal equal in size; Lagu baru is hidden. */
+.my-songs-heading-actions.is-uploading #add-my-song,
+.song-actions-bar.is-uploading > [data-header-action="add-my-song"]{
+  display:none!important;
+}
+@media(max-width:700px){
+  .song-actions-bar.is-uploading > [data-header-action="upload-my-songs"],
+  .song-actions-bar.is-uploading > [data-header-action="cancel-my-song-upload"]{
+    flex:0 0 clamp(96px,30vw,126px)!important;
+    width:clamp(96px,30vw,126px)!important;
+    min-width:clamp(96px,30vw,126px)!important;
+    max-width:clamp(96px,30vw,126px)!important;
+  }
+}

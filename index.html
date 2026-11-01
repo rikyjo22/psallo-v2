@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="id"> 
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="application-name" content="Psallo New Gen">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Psallo New Gen">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <title>Psallo New Gen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=dark-mode-container-1">
+  <script defer src="analytics.js?v=7"></script>
+  <script defer src="script.js?v=deactivate-schedule-header-1"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <button id="sidebar-menu-toggle" class="sidebar-menu-toggle" type="button" aria-label="Buka menu" aria-expanded="false">&#9776;</button>
+      <div class="app-header-title"><strong id="app-header-heading">Psallo</strong><span id="app-header-subtitle">Buku lagu</span></div>
+      <div class="app-header-actions" data-header-schedule-actions><button class="create-schedule-button" type="button" data-header-action="create-schedule">Buat jadwal</button><button class="create-schedule-button schedule-secondary-button" type="button" data-header-action="share-schedule-open">Bagikan jadwal</button><button class="create-schedule-button schedule-secondary-button" type="button" data-header-action="pull-schedule-open">Tarik jadwal</button><button class="create-schedule-button schedule-secondary-button schedule-deactivate-button" type="button" data-header-action="deactivate-schedule"><span class="schedule-deactivate-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 15l8 4M16 15l-8 4"/></svg></span><span>Nonaktifkan jadwal</span></button><button class="upload-my-songs-button" type="button" data-header-action="upload-my-songs"><span class="upload-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span><span>Upload ke koleksi lagu</span></button><button class="my-song-upload-cancel" type="button" data-header-action="cancel-my-song-upload" hidden><span class="cancel-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></span><span>Batal</span></button><button class="create-schedule-button add-song-button" type="button" data-header-action="add-my-song"><span class="add-song-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M12 11v6M9 14h6"/></svg></span><span>Lagu baru</span></button><button class="refresh-button" type="button" data-header-action="refresh-button" aria-label="Perbarui data dari database" title="Perbarui data dari database"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6.5L20 12M4 12l2 5.5A7 7 0 0 0 18.4 15"/></svg></span><span>Perbarui data</span></button></div>
+    </header>
+    <div class="schedule-actions-bar" data-schedule-actions-bar hidden><button class="create-schedule-button" type="button" data-header-action="create-schedule">Buat jadwal</button><button class="create-schedule-button schedule-secondary-button" type="button" data-header-action="share-schedule-open">Bagikan jadwal</button><button class="create-schedule-button schedule-secondary-button" type="button" data-header-action="pull-schedule-open">Tarik jadwal</button></div>
+    <div class="song-actions-bar" data-song-actions-bar hidden><button class="upload-my-songs-button" type="button" data-header-action="upload-my-songs"><span class="upload-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span><span>Upload ke koleksi lagu</span></button><button class="my-song-upload-cancel" type="button" data-header-action="cancel-my-song-upload" hidden><span class="cancel-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></span><span>Batal</span></button><button class="create-schedule-button add-song-button" type="button" data-header-action="add-my-song"><span class="add-song-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M12 11v6M9 14h6"/></svg></span><span>Lagu baru</span></button></div>
+    <aside id="app-sidebar" class="app-sidebar" aria-label="Navigasi utama">
+      <div class="sidebar-brand"><img class="sidebar-brand-logo" src="./icons/apple-touch-icon.png" alt="Logo Psallo New Gen"><span><strong>Psallo New Gen V2</strong><button id="sidebar-about-open" class="sidebar-about-link" type="button">Tentang Aplikasi</button></span></div>
+      <nav class="sidebar-nav" aria-label="Menu aplikasi">
+        <button class="sidebar-nav-item is-active" type="button" data-app-view="schedule"><svg class="sidebar-nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/><circle cx="3.5" cy="6" r=".8"/><circle cx="3.5" cy="12" r=".8"/><circle cx="3.5" cy="18" r=".8"/></svg>Jadwal Ibadah</button>
+        <button class="sidebar-nav-item" type="button" data-app-view="my-songs"><svg class="sidebar-nav-icon" aria-hidden="true" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="3"/><path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg><span class="sidebar-nav-label">Laguku <small>(Local)</small></span></button>
+        <button class="sidebar-nav-item" type="button" data-app-view="collection"><svg class="sidebar-nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 18.5h10.8a4.2 4.2 0 0 0 .4-8.4A6.1 6.1 0 0 0 6.4 8.6a5 5 0 0 0 .1 9.9Z"/><path d="M9 14.5h.01M12 14.5h.01M15 14.5h.01"/></svg><span class="sidebar-nav-label">Koleksi Lagu <small>(Online)</small></span></button>
+        <button class="sidebar-nav-item" type="button" data-app-view="settings"><span aria-hidden="true">&#9881;</span>Pengaturan</button>
+      </nav>
+    </aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+    <div class="main-scroll-area">
+    <div class="app-view is-active" data-app-view-panel="schedule">
+    <section class="schedule-panel" aria-labelledby="schedule-title">
+      <div class="schedule-heading" aria-hidden="true"></div>
+      <div class="schedule-action-source" hidden><button id="create-schedule" type="button">Buat jadwal</button><button id="share-schedule-open" type="button">Bagikan jadwal</button><button id="pull-schedule-open" type="button">Tarik jadwal</button><button id="deactivate-schedule" type="button">Nonaktifkan jadwal</button></div>
+      <p id="schedule-status" class="schedule-status" role="status" aria-live="polite" hidden></p>
+      <div id="schedule-list" class="schedule-list"></div>
+    </section>
+    </div>
+    <div class="app-view" data-app-view-panel="songs">
+    <section id="collection-active-schedule" class="active-schedule-info" role="button" tabindex="0" aria-label="Lihat jadwal aktif" aria-live="polite" hidden></section>
+    <section id="my-songs-active-schedule" class="active-schedule-info" role="button" tabindex="0" aria-label="Lihat jadwal aktif" aria-live="polite" hidden></section>
+    <section class="library library-tabs-shell sidebar-my-songs-view" aria-label="Koleksi lagu">
+      <nav class="library-tabs" role="tablist" aria-label="Pilih koleksi lagu">
+        <button id="my-songs-tab" class="library-tab is-selected" type="button" role="tab" aria-selected="true" aria-controls="my-songs-panel" data-tab-panel="my-songs-panel">Laguku</button>
+        <button id="all-songs-tab" class="library-tab" type="button" role="tab" aria-selected="false" aria-controls="all-songs-panel" data-tab-panel="all-songs-panel" tabindex="-1">Koleksi Lagu</button>
+        <button id="about-program-open" class="library-info-icon" type="button" aria-label="Tentang Program" title="Tentang Program"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 10v5M12 7.2v.2"/></svg></button>
+        <button id="instrument-filter-open" class="collapse-button instrument-filter-open" type="button" role="tab" aria-label="Profil" title="Profil" aria-selected="false" aria-controls="instrument-profile-panel" data-tab-panel="instrument-profile-panel" tabindex="-1"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9.5 2.5h5l.6 2.2 1.7.7 2-1.2 2.5 4.3-1.7 1.7v2l1.7 1.7-2.5 4.3-2-1.2-1.7.7-.6 2.3h-5l-.6-2.3-1.7-.7-2 1.2-2.5-4.3 1.7-1.7v-2L2.7 10l2.5-4.3 2 1.2 1.7-.7z"/><circle cx="12" cy="11.5" r="3"/></svg></button>
+      </nav>
+      <section id="instrument-profile-panel" class="instrument-profile-inline" role="tabpanel" aria-labelledby="instrument-filter-open" aria-label="Profil" hidden>
+        <div class="instrument-profile-inline-heading"><div><p class="eyebrow">PREFERENSI PENGGUNA</p><h2>Profil</h2></div></div>
+        <div class="instrument-profile-inline-controls"><label class="schedule-field instrument-filter-field" for="profile-user-name">NAMA PENGGUNA<input id="profile-user-name" class="share-select" type="text" maxlength="80" placeholder="Nama pengguna" required></label><label class="schedule-field instrument-filter-field" for="instrument-filter-select">INSTRUMEN YANG DIMAINKAN<span class="instrument-filter-select-row"><select id="instrument-filter-select" class="share-select"><option value="">Memuat instrumen&#8230;</option></select><button id="refresh-instrument-filter" class="schedule-refresh-songs instrument-filter-refresh" type="button" aria-label="Perbarui daftar instrumen" title="Perbarui daftar instrumen"><span aria-hidden="true">&#8635;</span></button></span></label><label class="schedule-field instrument-filter-field" for="theme-mode-select">TEMA TAMPILAN<select id="theme-mode-select" class="share-select"><option value="light">Light mode</option><option value="dark">Dark mode</option><option value="other">Other</option></select></label><label id="theme-choice-field" class="schedule-field instrument-filter-field" for="theme-choice-select" hidden>PILIH TEMA<select id="theme-choice-select" class="share-select"><option value="ocean">Ocean</option><option value="forest">Forest</option><option value="sunset">Sunset</option><option value="rose">Rose</option><option value="lavender">Lavender</option></select></label><label class="schedule-field instrument-filter-field" for="font-style-select">GAYA HURUF<select id="font-style-select" class="share-select"><option value="dm-sans">DM Sans</option><option value="arial">Arial</option><option value="georgia">Georgia</option><option value="trebuchet">Trebuchet MS</option><option value="verdana">Verdana</option></select></label><label class="schedule-field instrument-filter-field font-size-field" for="font-size-select">UKURAN HURUF <output id="font-size-value" for="font-size-select">100%</output><input id="font-size-select" type="range" class="font-size-slider" min="100" max="130" step="5" value="100" aria-label="Ukuran huruf"></label><p id="instrument-filter-status" class="share-status" role="status" aria-live="polite">Simpan nama pengguna dan instrumen yang dimainkan.</p><button id="apply-instrument-filter" class="create-schedule-button" type="button">Simpan Profil</button></div>
+      </section>
+      <section id="all-songs-panel" class="library-tab-panel" role="tabpanel" aria-labelledby="all-songs-tab" hidden>
+      <div class="library-heading">
+        <div class="library-title-group"><div><h2 id="library-title">Koleksi lagu <span id="song-count" class="count-pill">&#8230;</span></h2></div><p id="sync-status" class="sync-status" role="status" aria-live="polite">Memuat data&#8230;</p></div>
+        <div class="library-actions">
+          <button id="refresh-button" class="refresh-button" type="button" aria-label="Perbarui data dari database" title="Perbarui data dari database"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.6 9A7 7 0 0 1 18 6.5L20 12M4 12l2 5.5A7 7 0 0 0 18.4 15"/></svg></span><span>Perbarui data</span></button>
+        </div>
+      </div>
+       <label class="search-box" for="search-input"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg></span><input id="search-input" type="search" placeholder="Cari judul, nomor, atau lirik" autocomplete="off"><button id="clear-search" class="clear-search-button" type="button">Bersihkan</button></label>
+      <div id="collection-results">
+      <nav id="category-filters" class="category-filters" aria-label="Filter kategori lagu"></nav>
+      <p id="list-status" class="list-status" role="status" aria-live="polite">Menghubungkan ke perpustakaan&#8230;</p>
+      <div id="song-list" class="song-list" aria-label="Daftar lagu"></div>
+      </div>
+      </section>
+    <section id="my-songs-panel" class="library-tab-panel my-songs-library" role="tabpanel" aria-labelledby="my-songs-tab">
+      <div class="library-heading">
+        <div><h2 id="my-songs-title">Laguku <span id="my-songs-count" class="count-pill">0</span></h2></div>
+        <div class="my-songs-heading-actions"><button id="upload-my-songs" class="upload-my-songs-button" type="button"><span class="upload-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></span><span>Upload ke koleksi lagu</span></button><button id="cancel-my-song-upload" class="my-song-upload-cancel" type="button" hidden><span class="cancel-button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg></span><span>Batal</span></button><button id="add-my-song" class="create-schedule-button add-song-button" type="button"><span class="add-song-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M12 11v6M9 14h6"/></svg></span><span>Lagu baru</span></button></div>
+      </div>
+       <div class="my-songs-search-row"><label class="search-box" for="my-songs-search"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg></span><input id="my-songs-search" type="search" placeholder="Cari judul, nomor, atau lirik" autocomplete="off"></label><label class="visually-hidden" for="my-songs-category-filter">Filter kategori</label><select id="my-songs-category-filter" class="my-songs-category-filter" aria-label="Filter kategori lagu"><option value="ALL">Semua</option><option value="PS">Psallo</option><option value="NR">NR</option><option value="SP">Tambahan (SP)</option><option value="ZR">Zangkoor (ZR)</option><option value="KMR">Kaum Muda (KMR)</option><option value="SM">Sekolah Minggu (SM)</option><option value="OTH">Other (OTH)</option></select><div id="my-songs-category-chips" class="my-songs-category-chips" role="group" aria-label="Filter kategori lagu"><button type="button" class="category-chip is-selected" data-my-songs-category="ALL" aria-pressed="true">Semua</button><button type="button" class="category-chip" data-my-songs-category="PS" aria-pressed="false">Psallo</button><button type="button" class="category-chip" data-my-songs-category="NR" aria-pressed="false">NR</button><button type="button" class="category-chip" data-my-songs-category="SP" aria-pressed="false">Tambahan (SP)</button><button type="button" class="category-chip" data-my-songs-category="ZR" aria-pressed="false">Zangkoor (ZR)</button><button type="button" class="category-chip" data-my-songs-category="KMR" aria-pressed="false">Kaum Muda (KMR)</button><button type="button" class="category-chip" data-my-songs-category="SM" aria-pressed="false">Sekolah Minggu (SM)</button><button type="button" class="category-chip" data-my-songs-category="OTH" aria-pressed="false">Other (OTH)</button></div></div>
+      <p id="my-songs-status" class="list-status" role="status" aria-live="polite"></p>
+      <div id="my-songs-list" class="song-list" aria-label="Daftar lagu saya"></div>
+    </section>
+    </section>
+    </div>
+    </div>
+    <dialog id="my-song-dialog" class="my-song-dialog" aria-labelledby="my-song-form-title">
+      <form id="my-song-form" class="my-song-form">
+        <header class="dialog-header"><div class="dialog-heading"><p class="eyebrow">LAGU LOKAL</p><h2 id="my-song-form-title">Detail lagu baru</h2></div><button id="close-my-song-form" class="close-button" type="button" aria-label="Tutup">&#215;</button></header>
+        <section class="my-song-form-section"><p class="eyebrow">01 · INFORMASI</p><div class="my-song-fields">
+          <label class="schedule-field">KATEGORI<select id="my-song-category" required><option value="">Pilih kategori</option><option value="PS">Psallo (PS)</option><option value="NR">Nyanyian Rohani (NR)</option><option value="SP">Tambahan (SP)</option><option value="ZR">Zangkoor (ZR)</option><option value="KMR">Kaum Muda (KMR)</option><option value="SM">Sekolah Minggu (SM)</option><option value="OTH">Other (OTH)</option></select></label>
+          <label class="schedule-field">NOMOR (OPSIONAL)<small class="optional-hint">Boleh dikosongkan jika tidak ada</small><input id="my-song-number" placeholder="Boleh dikosongkan"></label><label class="schedule-field my-song-wide">JUDUL LAGU<input id="my-song-title" required placeholder="Contoh: Kasih dari Sorga"></label>
+          <label class="schedule-field">NADA DASAR<input id="my-song-key" placeholder="C, D♭, Am"></label><label class="schedule-field">JENIS MUSIK<input id="my-song-genre" placeholder="Hymne"></label><label class="schedule-field">PENCIPTA LAGU<input id="my-song-creator"></label><label class="schedule-field">TAHUN<input id="my-song-date" placeholder="1984"></label><label class="schedule-field">TEMPO<input id="my-song-tempo" placeholder="96 atau Allegro"></label>
+        </div></section>
+        <section class="my-song-form-section"><p class="eyebrow">02 · KONTEN</p><label class="schedule-field">LIRIK DAN CHORD<span class="my-song-editor-hint">Penanda bagian seperti [Intro], [Bait 1], [Reff], atau [Bridge] akan disorot otomatis.</span><span class="my-song-content-wrap"><pre id="my-song-highlight" class="my-song-highlight" aria-hidden="true"></pre><textarea id="my-song-content" required spellcheck="false" wrap="off" aria-label="Lirik dan chord" placeholder="[Intro]&#10;G   D   Em&#10;&#10;[Bait 1]&#10;Lirik lagu"></textarea></span></label></section>
+        <section class="my-song-form-section"><div class="my-song-section-title"><p class="eyebrow">03 · PARTITUR</p><button id="add-my-song-instrument" class="schedule-refresh-songs" type="button">+ Tambah instrumen</button></div><div id="my-song-instruments" class="my-song-instruments"></div><p class="my-song-file-note">Gambar disimpan lokal dengan nama kategori, nomor, judul, dan instrumen.</p></section>
+        <footer class="my-song-form-footer"><p id="my-song-form-status" role="status" aria-live="polite">Hanya kategori, judul, dan lirik yang wajib diisi.</p><button id="save-my-song" class="create-schedule-button" type="submit">Simpan lagu</button></footer>
+      </form>
+    </dialog>
+    <dialog id="delete-my-song-dialog" class="schedule-view-dialog share-dialog" aria-labelledby="delete-my-song-title"><section class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">KONFIRMASI</p><h2 id="delete-my-song-title">Hapus lagu?</h2></div><button id="close-delete-my-song" class="close-button" type="button" aria-label="Batal">&#215;</button></header><div class="share-body"><p id="delete-my-song-message" class="intro-delete-message"></p><div class="intro-delete-actions"><button id="cancel-delete-my-song" class="intro-delete-cancel" type="button">Batal</button><button id="confirm-delete-my-song" class="intro-delete-confirm" type="button">Hapus lagu</button></div></div></section></dialog>
+    <dialog id="my-song-image-preview" class="my-song-image-preview" aria-label="Pratinjau gambar partitur"><button id="close-my-song-image-preview" class="close-button" type="button" aria-label="Tutup pratinjau">&#215;</button><img id="my-song-image-preview-img" alt="Pratinjau gambar partitur"><p id="my-song-image-preview-name"></p></dialog>
+    <dialog id="schedule-view-dialog" class="schedule-view-dialog" aria-labelledby="schedule-view-title">
+      <section class="schedule-view-frame">
+        <header class="schedule-view-header">
+          <div><p class="eyebrow">DAFTAR LAGU IBADAH</p><h2 id="schedule-view-title"></h2><p id="schedule-view-date" class="schedule-view-date"></p></div>
+          <div class="schedule-view-header-actions"><div class="schedule-intro-actions"><button id="add-schedule-intro" class="add-schedule-intro" type="button">+ Add intro</button><div id="schedule-intro-actions-group" class="schedule-intro-actions-group" hidden><button id="schedule-intro-name-button" class="schedule-intro-name-button" type="button"></button><button id="remove-schedule-intro" class="remove-schedule-intro" type="button" aria-label="Hapus intro" title="Hapus intro"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></div></div><button id="close-schedule-view" class="close-button" type="button" aria-label="Tutup jadwal">&#215;</button></div>
+        </header>
+        <div class="schedule-source-legend" aria-label="Keterangan sumber lagu"><span><i class="is-local"></i>Laguku</span><span><i class="is-database"></i>Database lagu</span></div>
+        <div id="schedule-view-list" class="schedule-view-list"></div>
+        <div class="schedule-view-footer"><button id="refresh-schedule-songs" class="schedule-refresh-songs" type="button">Perbarui isi lagu</button><button id="toggle-schedule-compact" class="schedule-compact-toggle" type="button" aria-label="Tampilan ringkas" title="Tampilan ringkas" aria-pressed="false"><svg aria-hidden="true" viewBox="0 0 24 24"><path class="compact-icon-collapse" d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/><path class="compact-icon-expand" d="M8 3H3v5M3 3l6 6M16 3h5v5M21 3l-6 6M8 21H3v-5M3 21l6-6M16 21h5v-5M21 21l-6-6"/></svg></button><button id="delete-viewed-schedule" class="schedule-delete" type="button">Hapus jadwal</button><span id="refresh-schedule-songs-status" role="status" aria-live="polite"></span></div>
+        <div class="schedule-start-footer"><button id="start-worship" class="start-worship-button" type="button">Mulai Ibadah</button></div>
+      </section>
+    </dialog>
+    <dialog id="schedule-intro-dialog" class="schedule-view-dialog share-dialog" aria-labelledby="schedule-intro-dialog-title"><form id="schedule-intro-form" class="schedule-view-frame share-frame schedule-intro-form"><header class="schedule-view-header"><div><p class="eyebrow">INTRO JADWAL</p><h2 id="schedule-intro-dialog-title">Tambah intro</h2></div><button id="close-schedule-intro" class="close-button" type="button" aria-label="Tutup">&#215;</button></header><div class="share-body"><div class="schedule-field intro-image-picker"><span>PILIH GAMBAR</span><div class="intro-image-picker-actions"><button id="choose-schedule-intro-file" class="schedule-refresh-songs" type="button">Pilih gambar</button><button id="capture-schedule-intro-file" class="schedule-refresh-songs" type="button">Foto dengan kamera</button></div><input id="schedule-intro-file" class="intro-file-input" type="file" accept="image/*"><input id="schedule-intro-camera" class="intro-file-input" type="file" accept="image/*" capture="environment"><span id="schedule-intro-file-name" class="intro-file-help">Pilih gambar dari perangkat atau ambil foto dengan kamera.</span></div><p id="schedule-intro-status" class="share-status" role="status" aria-live="polite"></p><button id="save-schedule-intro" class="create-schedule-button" type="submit">Simpan intro</button></div></form></dialog>
+    <dialog id="schedule-intro-camera-dialog" class="schedule-view-dialog share-dialog" aria-labelledby="schedule-intro-camera-title"><section class="schedule-view-frame camera-frame"><header class="schedule-view-header"><div><p class="eyebrow">KAMERA</p><h2 id="schedule-intro-camera-title">Ambil foto Intro</h2></div><button id="close-schedule-intro-camera" class="close-button" type="button" aria-label="Tutup kamera">&#215;</button></header><div class="camera-body"><video id="schedule-intro-camera-preview" autoplay playsinline muted></video><p id="schedule-intro-camera-status" class="share-status" role="status" aria-live="polite"></p><div class="camera-actions"><button id="take-schedule-intro-photo" class="create-schedule-button" type="button" disabled>Ambil foto</button></div></div></section></dialog>
+    <dialog id="remove-schedule-intro-dialog" class="schedule-view-dialog share-dialog" aria-labelledby="remove-schedule-intro-title"><section class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">KONFIRMASI</p><h2 id="remove-schedule-intro-title">Hapus intro?</h2></div><button id="close-remove-schedule-intro" class="close-button" type="button" aria-label="Batal">&#215;</button></header><div class="share-body"><p id="remove-schedule-intro-message" class="intro-delete-message"></p><div class="intro-delete-actions"><button id="cancel-remove-schedule-intro" class="intro-delete-cancel" type="button">Batal</button><button id="confirm-remove-schedule-intro" class="intro-delete-confirm" type="button">Hapus intro</button></div></div></section></dialog>
+    <dialog id="delete-schedule-dialog" class="schedule-view-dialog share-dialog" aria-labelledby="delete-schedule-title"><section class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">KONFIRMASI</p><h2 id="delete-schedule-title">Hapus jadwal?</h2></div><button id="close-delete-schedule" class="close-button" type="button" aria-label="Batal">&#215;</button></header><div class="share-body"><p id="delete-schedule-message" class="intro-delete-message"></p><div class="intro-delete-actions"><button id="cancel-delete-schedule" class="intro-delete-cancel" type="button">Batal</button><button id="confirm-delete-schedule" class="intro-delete-confirm" type="button">Hapus jadwal</button></div></div></section></dialog>
+    <dialog id="schedule-share-dialog" class="schedule-view-dialog share-dialog"><section class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">BERBAGI JADWAL</p><h2>Bagikan jadwal ibadah</h2></div><button class="close-button" type="button" data-close-share aria-label="Tutup">&#215;</button></header><div class="share-body"><label class="schedule-field">PILIH JADWAL<select id="share-schedule-select" class="share-select" hidden></select><details id="share-schedule-picker" class="share-schedule-picker"><summary id="share-schedule-picker-label">Pilih jadwal</summary><div id="share-schedule-options" class="share-schedule-options" role="listbox" aria-label="Pilih jadwal"></div></details></label><label class="schedule-field" for="share-duration-select">DURASI BERBAGI<select id="share-duration-select" class="share-select"><option value="5">5 menit</option><option value="15" selected>15 menit</option><option value="30">30 menit</option><option value="60">1 jam</option><option value="120">2 jam</option><option value="300">5 jam</option></select></label><button id="share-schedule-submit" class="create-schedule-button" type="button">Bagikan</button><div id="share-result" class="share-result" hidden><p>Kode untuk menarik jadwal</p><strong id="share-code"></strong><p>Sisa waktu: <strong id="share-countdown">00:15:00</strong></p><div class="share-result-actions"><button id="minimize-share-dialog" class="schedule-refresh-songs" type="button">Minimalkan</button><button id="stop-sharing" class="schedule-delete" type="button">Berhenti bagikan</button></div></div><p id="share-status" class="share-status" role="status" aria-live="polite"></p></div></section></dialog>
+    <dialog id="schedule-pull-dialog" class="schedule-view-dialog share-dialog"><section class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">TARIK JADWAL</p><h2>Masukkan kode jadwal</h2></div><button class="close-button" type="button" data-close-pull aria-label="Tutup">&#215;</button></header><div class="share-body"><label class="schedule-field">KODE 3 KARAKTER<input id="pull-schedule-code" class="share-select" type="text" maxlength="3" autocomplete="off" placeholder="ABC"></label><button id="pull-schedule-submit" class="create-schedule-button" type="button">Tarik jadwal</button><p id="pull-status" class="share-status" role="status" aria-live="polite"></p></div></section></dialog>    <footer class="footer-note"><span class="footer-credit"><img src="./icons/lagu-rohani-192.png" alt=""><span class="footer-app-name">PSALLO New Gen</span></span></footer>
+  </main>
+
+  <dialog id="required-profile-dialog" class="required-profile-dialog" aria-labelledby="required-profile-title" aria-describedby="required-profile-message">
+    <section class="required-profile-card">
+      <p class="eyebrow">PENGATURAN WAJIB</p>
+      <h2 id="required-profile-title">Isi nama pengguna</h2>
+      <p id="required-profile-message">Nama pengguna perlu disimpan sebelum menggunakan Songbook.</p>
+      <form id="required-profile-form">
+        <label for="required-profile-name">Nama pengguna</label>
+        <input id="required-profile-name" type="text" maxlength="80" autocomplete="nickname" placeholder="Masukkan nama pengguna" required>
+        <p id="required-profile-status" class="required-profile-status" role="status" aria-live="polite"></p>
+        <button class="create-schedule-button" type="submit">Simpan dan lanjutkan</button>
+      </form>
+    </section>
+  </dialog>
+  <div id="schedule-date-picker" class="schedule-date-picker" role="dialog" aria-modal="true" aria-labelledby="schedule-date-picker-title" hidden>
+    <section class="schedule-date-picker-card">
+      <header class="schedule-date-picker-heading"><button id="schedule-date-previous" type="button" aria-label="Bulan sebelumnya">&#8249;</button><h2 id="schedule-date-picker-title"></h2><button id="schedule-date-next" type="button" aria-label="Bulan berikutnya">&#8250;</button></header>
+      <div class="schedule-date-weekdays" aria-hidden="true"><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span></div>
+      <div id="schedule-date-days" class="schedule-date-days"></div>
+      <button id="schedule-date-cancel" class="schedule-date-cancel" type="button">Batal</button>
+    </section>
+  </div>
+
+  <dialog id="song-dialog" class="song-dialog" aria-labelledby="dialog-title">
+    <div class="dialog-frame">
+      <header class="dialog-header">
+        <div class="dialog-heading"><p id="dialog-category" class="dialog-category"></p><h2 id="dialog-title"></h2><p id="dialog-meta" class="dialog-meta"></p><p id="dialog-credits" class="dialog-credits" hidden></p></div>
+        <div class="dialog-header-actions">
+          <button id="schedule-intro-preview-button" class="schedule-intro-preview-button" type="button" hidden>Intro</button>
+          <div id="score-instruments" class="score-instruments" aria-label="Pilih instrumen partitur" hidden></div>
+          <button id="close-dialog" class="close-button" type="button" aria-label="Tutup preview">&#215;</button>
+        </div>
+      </header>
+      <div class="reader-toolbar">
+        <span id="reader-position">LAGU</span>
+        <div class="chord-controls" aria-label="Pengaturan chord">
+          <label class="visually-hidden" for="chord-mode">Tampilan chord</label>
+          <select id="chord-mode" aria-label="Tampilan chord"><option value="numbers" selected>Chord angka</option><option value="letters">Chord huruf</option><option value="none">Tanpa chord</option></select>
+          <button id="close-score-preview" class="score-preview-close" type="button" aria-label="Tutup gambar partitur" title="Tutup gambar partitur" hidden>Tutup gambar</button>
+          <div id="transpose-controls" class="transpose-controls">
+            <button id="transpose-down" type="button" aria-label="Turunkan nada dasar setengah nada">-</button>
+            <label class="visually-hidden" for="transpose-key">Nada dasar</label>
+            <select id="transpose-key" aria-label="Pilih nada dasar"></select>
+            <button id="transpose-up" type="button" aria-label="Naikkan nada dasar setengah nada">+</button>
+          </div>
+        </div>
+        <div class="reader-navigation"><button id="previous-song" type="button" aria-label="Lagu sebelumnya">&#8249;</button><button id="next-song" type="button" aria-label="Lagu berikutnya">&#8250;</button></div>
+      </div>
+      <section id="score-section" class="score-section" aria-label="Gambar partitur" hidden>
+        <div id="score-carousel-controls" class="score-carousel-controls" hidden>
+          <button id="score-previous" type="button" aria-label="Gambar partitur sebelumnya">&#8249;</button>
+          <span id="score-page-position" aria-live="polite">1 / 1</span>
+          <button id="score-next" type="button" aria-label="Gambar partitur berikutnya">&#8250;</button>
+        </div>
+        <div id="score-pages" class="score-pages" hidden></div>
+      </section>
+      <article id="song-preview" class="song-preview" tabindex="0" aria-label="Isi lagu"></article>
+    </div>
+  </dialog>
+  <dialog id="score-image-dialog" class="score-image-dialog" aria-label="Tampilan penuh partitur">
+    <div class="score-image-top-actions"><button id="score-intro-back-button" class="schedule-intro-general-button" type="button" hidden>Intro</button>
+      <button id="score-previous-general-song-button" class="score-previous-general-song-button" type="button" aria-label="Lagu sebelumnya" hidden>Sebelumnya</button>
+      <span id="score-general-song-position" class="score-general-song-position" hidden aria-live="polite"></span>
+      <button id="score-next-general-song-button" class="score-next-general-song-button" type="button" aria-label="Lagu berikutnya" hidden><span class="score-song-button-label" id="score-next-general-song-label">Berikutnya</span><span aria-hidden="true"> &gt;</span></button>
+      <button id="close-score-image" class="score-image-close" type="button" aria-label="Tutup gambar dan kembali ke lirik">&#215; <span>Kembali ke lirik</span></button></div>
+    <button id="score-image-previous" class="score-image-nav score-image-previous" type="button" aria-label="Partitur sebelumnya">&#8249;</button>
+    <img id="score-image-full" alt="Partitur diperbesar">
+    <button id="score-image-next" class="score-image-nav score-image-next" type="button" aria-label="Partitur berikutnya">&#8250;</button>
+    <div id="score-image-instruments" class="score-image-instruments" aria-label="Pilih instrumen" hidden></div>
+    <span id="score-image-position" class="score-image-position" aria-live="polite"></span>
+  </dialog>
+  <dialog id="schedule-edit-dialog" class="schedule-edit-dialog" aria-labelledby="schedule-edit-title">
+    <form id="schedule-edit-form" class="schedule-edit-form" method="dialog">
+      <div class="edit-dialog-heading"><div><p class="eyebrow">SALINAN LOKAL JADWAL</p><h2 id="schedule-edit-title">Edit lagu jadwal</h2></div></div>
+      <div class="schedule-edit-fields">
+        <label class="schedule-field">JUDUL<input name="title" type="text" maxlength="120" required></label>
+        <label class="schedule-field">NOMOR (OPSIONAL)<small class="optional-hint">Boleh dikosongkan jika tidak ada</small><input name="number" type="text" maxlength="30"></label>
+        <label class="schedule-field">NADA DASAR<input name="key" type="text" maxlength="20"></label>
+        <label class="schedule-field">JENIS MUSIK<input name="genre" type="text" maxlength="60"></label>
+        <label class="schedule-field">TEMPO<input name="tempo" type="text" maxlength="20"></label>
+        <label class="schedule-field edit-content-field">LIRIK &amp; CHORD
+          <span class="edit-help">Ketik lirik dan chord dalam satu input. Penanda bagian seperti [Intro], [Bait 1], [Reff], [Verse 2], atau [Bridge] akan disorot otomatis.</span>
+          <span class="schedule-song-editor-wrap">
+            <pre id="schedule-content-highlight" class="schedule-content-highlight" aria-hidden="true"></pre>
+            <textarea name="content" id="schedule-content-input" rows="12" spellcheck="false" wrap="off" aria-label="Lirik dan chord lagu"></textarea>
+          </span>
+        </label>
+      </div>
+      <p class="edit-local-note">Perubahan ini hanya berlaku pada lagu di jadwal ini, tidak mengubah database.</p>
+      <div class="edit-dialog-actions"><button id="cancel-schedule-edit" class="edit-cancel" type="button">Batal</button><button class="edit-save" type="submit">Simpan di jadwal</button></div>
+    </form>
+  </dialog>
+  <dialog id="my-song-upload-access-dialog" class="schedule-view-dialog share-dialog" aria-labelledby="my-song-upload-access-title"><form id="my-song-upload-access-form" class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">REQUEST UPLOAD</p><h2 id="my-song-upload-access-title">Masukkan kode akses</h2></div><button id="close-my-song-upload-access" class="close-button" type="button" aria-label="Tutup">&#215;</button></header><div class="share-body"><label class="schedule-field">KODE AKSES 3 KARAKTER<input id="my-song-upload-access-code" class="share-select" type="text" maxlength="3" autocomplete="off" placeholder="A1B" required></label><p class="share-status">Gunakan 3 karakter berupa huruf dan angka.</p><p id="my-song-upload-access-status" class="share-status" role="status" aria-live="polite"></p><section class="upload-access-message" aria-label="Pesan pengembangan program"><p>Terima kasih sudah membantu untuk pengembangan program ini! ☺️ Hubungi saya lewat email <a href="mailto:rikyjohanpranata@gmail.com">rikyjohanpranata@gmail.com</a>!</p><blockquote><strong>“Tetapi aku berkata: ”Aku telah bersusah-susah dengan percuma, dan telah menghabiskan kekuatanku dengan sia-sia dan tak berguna; namun, hakku terjamin pada TUHAN dan upahku pada Allahku.”</strong><cite>Yesaya 49:4</cite></blockquote></section><button id="submit-my-song-upload-access" class="create-schedule-button" type="submit">Lanjutkan request</button></div></form></dialog>
+  <dialog id="my-song-upload-success-dialog" class="schedule-view-dialog share-dialog upload-success-dialog" aria-labelledby="my-song-upload-success-title"><section class="schedule-view-frame share-frame"><header class="schedule-view-header"><div><p class="eyebrow">REQUEST UPLOAD</p><h2 id="my-song-upload-success-title">Request berhasil</h2></div><button id="close-my-song-upload-success" class="close-button" type="button" aria-label="Tutup">&#215;</button></header><div class="share-body"><p class="upload-success-intro">Data lagu berikut berhasil dikirim:</p><ul id="my-song-upload-success-list" class="upload-success-list"></ul><div class="upload-success-actions"><button id="dismiss-my-song-upload-success" class="create-schedule-button" type="button">Tutup</button></div></div></section></dialog>
+  <dialog id="about-program-dialog" class="schedule-view-dialog about-program-dialog" aria-labelledby="about-program-title">
+    <section class="schedule-view-frame about-program-frame">
+      <header class="schedule-view-header about-program-header">
+        <div><p class="eyebrow">PSALLO NEW GEN</p><h2 id="about-program-title">Tentang Program</h2></div>
+        <button id="close-about-program" class="close-button" type="button" aria-label="Tutup">&#215;</button>
+      </header>
+      <article class="about-program-body">
+        <img src="./icons/lagu-rohani-192.png" alt="Psallo New Gen" class="about-program-logo">
+        <p>Terima kasih kepada Tuhan Yesus Kristus yang masih memberikan kesempatan kepada saya untuk boleh melayani sampai saat ini. Juga ucapan terima kasih kepada Bapak dan Ibu gembala (Pdt. Widjaja Hendra), Papa, Mama, Bang Endik, Bang Ardy, dek Nanda, dek Dhian, dan si bontot Merry, Kak Vita, Vania, Pincen, dan semuanya teman-teman gereja GPTKK Surabaya yang sudah membantu, Tuhan Yesus yang membalaskan berkat berlipat kali ganda. Puji Tuhan!</p>
+        <p>Hanya karena kemurahan Tuhan, akhirnya &quot;Psallo New Gen&quot; ini dapat diselesaikan. Aplikasi ini di buat untuk membantu pelayanan khususnya pemain musik gereja dalam mengelola data jadwal dan lagu pada setiap ibadah.</p>
+        <p>Masih banyak kekurangan dalam aplikasi yang tentunya akan terus mengalami perbaikan. Semoga aplikasi ini benar-benar dapat membantu teman-teman dimanapun berada.</p>
+        <p>Jika teman-teman ingin berkontribusi untuk memperkaya perbendaharaan lagu, dapat membuat lagu baru pada tab &quot;Laguku&quot;, lalu Upload ke koleksi lagu, nanti akan saya cek, dan jika memenuhi syarat, akan ditambahkan ke koleksi lagu dan bisa disebarkan ke semua pengguna lain.</p>
+        <p>Terima kasih! Tuhan Yesus memberkati!</p>
+        <footer class="about-program-credit"><p><em>Psallo New Gen</em> Created by Riky Jo @2026</p><a href="mailto:rikyjohanpranata@gmail.com">rikyjohanpranata@gmail.com</a></footer>
+      </article>
+    </section>
+  </dialog>
+  <div id="app-toast" class="app-toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
