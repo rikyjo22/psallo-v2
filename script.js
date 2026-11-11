@@ -2054,6 +2054,8 @@
   }
 
   async function uploadSelectedMySongs(accessCode) {
+    const progressDialog = document.getElementById('my-song-upload-progress-dialog');
+    const progressStatus = document.getElementById('my-song-upload-progress-status');
     const selected = mySongs.filter((song) => selectedMySongUploadIds.has(song.id));
     if (!selected.length) {
       mySongsStatus.textContent = 'Pilih minimal satu lagu untuk diunggah.';
@@ -2067,10 +2069,16 @@
     }
     uploadMySongsButton.disabled = true;
     cancelMySongUploadButton.disabled = true;
+    progressStatus.textContent = `Menyiapkan ${selected.length} lagu untuk dikirim…`;
+    const preventProgressDismiss = (event) => event.preventDefault();
+    progressDialog.addEventListener('cancel', preventProgressDismiss);
+    progressDialog.showModal();
     try {
       const songs = await Promise.all(selected.map(buildDatabaseSongPayload));
       mySongsStatus.textContent = `Mengirim ${songs.length} lagu sementara…`;
+      progressStatus.textContent = `Mengirim ${songs.length} lagu ke koleksi…`;
       const result = await postScheduleApi('submitTemporarySongs', { code: accessCode, uploaderName, songs }, 120000);
+      progressDialog.close();
       selected.forEach((song) => selectedMySongUploadIds.delete(song.id));
       setMySongUploadMode(false);
       mySongsStatus.textContent = `${result.count || songs.length} lagu berhasil dikirim oleh ${uploaderName} ke New Song Temporary.`;
@@ -2083,9 +2091,11 @@
       });
       document.getElementById('my-song-upload-success-dialog').showModal();
     } catch (error) {
+      progressDialog.close();
       renderMySongs();
       mySongsStatus.textContent = `Request gagal: ${error.message || 'Terjadi kesalahan.'}`;
     } finally {
+      progressDialog.removeEventListener('cancel', preventProgressDismiss);
       uploadMySongsButton.disabled = false;
       cancelMySongUploadButton.disabled = false;
     }
