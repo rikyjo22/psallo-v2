@@ -2,7 +2,7 @@
   'use strict';
 
   // Gunakan URL deployment Web App yang sama dengan song-manager.
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzOWUvFz1gSQQ9yLDXJiSEj0aOUlCjN_zlRrbk8-ZGe7lL6NZCxMimUDbKJ1SbZOhHq7g/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzRzDZqxwH5V8DyAOFmiuFls_9T9vbY3Rs0agmAa2NQx2eTL5MLtwhzeemx8KfaDHMNcA/exec';
   const CACHE_KEY = 'song-book:songs:v1';
   const SCHEDULE_KEY = 'song-book:worship-schedules:v1';
   const SCHEDULE_IMAGE_DB_NAME = 'song-book:schedule-images:v1';
@@ -384,7 +384,7 @@
     });
   }
 
-  function loadSongs() {
+  function loadSongs(forceFresh = false) {
     if (isLoadingSongs) return;
     isLoadingSongs = true;
     setSyncStatus('Mengambil data terbaru dari database...');
@@ -438,6 +438,10 @@
     script.onerror = () => finish(new Error('Tidak dapat mengakses API Apps Script. Periksa akses deployment dan URL /exec.'));
     const url = new URL(API_URL);
     url.searchParams.set('action', 'songs');
+    if (forceFresh) {
+      url.searchParams.set('fresh', '1');
+      url.searchParams.set('_refresh', callbackName);
+    }
     url.searchParams.set('callback', `SongBookCallbacks.${callbackName}`);
     script.src = url.toString();
     document.head.append(script);
@@ -3614,7 +3618,7 @@
       openRequiredProfile('memperbarui koleksi lagu');
       return;
     }
-    loadSongs();
+    loadSongs(true);
   });
   const aboutProgramDialog = document.getElementById('about-program-dialog');
   document.getElementById('about-program-open').addEventListener('click', () => aboutProgramDialog.showModal());
