@@ -110,6 +110,7 @@
   let currentSongIndex = -1;
   let currentPreviewSongs = [];
   let currentPreviewSong = null;
+  let currentPreviewFromCollection = false;
   let previewZoom = 1;
   let pinchStart = null;
   let sourcePreviewKey = 'C';
@@ -1894,7 +1895,7 @@
       openButton.className = 'song-card-main';
       openButton.setAttribute('aria-label', `Buka ${song.category} ${displaySongNumber(song.number)}, ${song.title}`);
       openButton.innerHTML = `<span class="song-index">${number || '&#9835;'}</span><span class="song-details"><span class="song-title">${escapeText(song.title)}</span><span class="song-subtitle"><span class="song-category">${escapeText(song.category)} &#183; ${escapeText(categoryLabel ? categoryLabel.label : '')}</span>${song.key ? `<span class="song-key">${escapeText(song.key)}</span>` : ''}${extra}</span></span><span class="song-open" aria-hidden="true">&#8250;</span>`;
-      openButton.addEventListener('click', () => openSong(song));
+      openButton.addEventListener('click', () => openSong(song, songs, undefined, true, true));
       card.append(openButton);
       const quickActions = document.createElement('span');
       quickActions.className = 'song-card-quick-actions';
@@ -2733,12 +2734,18 @@
     return safeSongFragment(normalizeSongContentHtml(contentHtml));
   }
 
-  function openSong(song, queue = songs, queueIndex, showPreview = true) {
+  function openSong(song, queue = songs, queueIndex, showPreview = true, fromCollection = false) {
     currentPreviewSongs = queue;
+    currentPreviewFromCollection = fromCollection;
     currentSongIndex = Number.isInteger(queueIndex)
       ? queueIndex
       : queue.findIndex((item) => item === song || item.id === song.id);
     currentPreviewSong = song;
+    const collectionActions = document.getElementById('collection-preview-actions');
+    const addToScheduleButton = document.getElementById('preview-add-to-schedule');
+    collectionActions.hidden = !currentPreviewFromCollection;
+    addToScheduleButton.disabled = !activeScheduleId;
+    addToScheduleButton.title = activeScheduleId ? 'Tambahkan ke jadwal aktif' : 'Pilih jadwal aktif terlebih dahulu';
     const introButton = document.getElementById('schedule-intro-preview-button');
     const previewIntro = song.scheduleIntro || null;
     introButton.hidden = !previewIntro;
@@ -2992,13 +2999,13 @@
     const song = currentPreviewSongs[index];
     const instrument = findDefaultScoreInstrument(song);
     if (!song) return;
-    openSong(song, currentPreviewSongs, index, dialog.open);
+    openSong(song, currentPreviewSongs, index, dialog.open, currentPreviewFromCollection);
     introGeneralSongIndex = index;
     // Follow the schedule order exactly. A song without a score returns the
     // reader to its lyric/chord preview instead of being skipped.
     if (!instrument) {
       scoreImageDialog.close();
-      if (!dialog.open) openSong(song, currentPreviewSongs, index, true);
+      if (!dialog.open) openSong(song, currentPreviewSongs, index, true, currentPreviewFromCollection);
       return;
     }
     activeScheduleIntro = song.scheduleIntro || activeScheduleIntro;
@@ -3494,8 +3501,16 @@
 
   function openPreviewAt(index) {
     if (index < 0 || index >= currentPreviewSongs.length) return;
-    openSong(currentPreviewSongs[index], currentPreviewSongs, index);
+    openSong(currentPreviewSongs[index], currentPreviewSongs, index, true, currentPreviewFromCollection);
   }
+
+  document.getElementById('preview-add-to-schedule').addEventListener('click', () => {
+    if (!currentPreviewSong || !activeScheduleId) return;
+    addSongToSchedule(currentPreviewSong.id);
+  });
+  document.getElementById('preview-add-to-my-songs').addEventListener('click', () => {
+    if (currentPreviewSong) addSongToMySongs(currentPreviewSong, currentPreviewSong.id);
+  });
 
   document.getElementById('close-dialog').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => document.body.classList.remove('song-reader-open'));
@@ -3556,7 +3571,7 @@
       const queue = currentPreviewSongs;
       const index = currentSongIndex;
       scoreImageDialog.close();
-      openSong(song, queue, index);
+      openSong(song, queue, index, true, currentPreviewFromCollection);
     }
   });
   scoreNextGeneralSongButton.addEventListener('click', openNextGeneralSong);
