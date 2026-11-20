@@ -157,6 +157,11 @@
   let scoreImageReturnTarget = 'lyrics';
   let scoreControlsHideTimer = 0;
   let scoreSwipeStart = null;
+  let scoreImageZoom = 1;
+  let scoreImagePanX = 0;
+  let scoreImagePanY = 0;
+  let scoreImagePinchStart = null;
+  let scoreImagePanStart = null;
   let resolveIntroRemovalConfirmation = null;
   let pendingScheduleDeletionId = '';
   const shareDialog = document.getElementById('schedule-share-dialog');
@@ -3387,6 +3392,39 @@
     return true;
   }
 
+  function clampScoreImagePan(x, y, zoom = scoreImageZoom) {
+    const viewportWidth = scoreImageDialog.clientWidth || window.innerWidth;
+    const viewportHeight = scoreImageDialog.clientHeight || window.innerHeight;
+    const imageWidth = fullScoreImage.offsetWidth || fullScoreImage.naturalWidth || 0;
+    const imageHeight = fullScoreImage.offsetHeight || fullScoreImage.naturalHeight || 0;
+    const maxX = Math.max(0, (imageWidth * zoom - viewportWidth) / 2);
+    const maxY = Math.max(0, (imageHeight * zoom - viewportHeight) / 2);
+    return {
+      x: Math.max(-maxX, Math.min(maxX, x)),
+      y: Math.max(-maxY, Math.min(maxY, y))
+    };
+  }
+
+  function setScoreImageZoom(zoom, panX = scoreImagePanX, panY = scoreImagePanY) {
+    scoreImageZoom = Math.max(1, Math.min(5, zoom));
+    const pan = clampScoreImagePan(panX, panY, scoreImageZoom);
+    scoreImagePanX = pan.x;
+    scoreImagePanY = pan.y;
+    fullScoreImage.style.setProperty('--score-image-zoom', String(scoreImageZoom));
+    fullScoreImage.style.setProperty('--score-image-pan-x', `${scoreImagePanX}px`);
+    fullScoreImage.style.setProperty('--score-image-pan-y', `${scoreImagePanY}px`);
+  }
+
+  function resetScoreImageZoom() {
+    scoreImageZoom = 1;
+    scoreImagePanX = 0;
+    scoreImagePanY = 0;
+    scoreImagePinchStart = null;
+    scoreImagePanStart = null;
+    scoreSwipeStart = null;
+    setScoreImageZoom(1, 0, 0);
+  }
+
   function setScoreImageControlsHidden(hidden) {
     scoreImageDialog.classList.toggle('controls-hidden', Boolean(hidden));
     window.clearTimeout(scoreControlsHideTimer);
@@ -3413,6 +3451,7 @@
     const file = activeScoreFiles[activeScoreIndex];
     const urls = scoreImageCandidates(file);
     if (!urls.length) return;
+    resetScoreImageZoom();
     fullScoreImage.dataset.candidates = JSON.stringify(urls);
     fullScoreImage.dataset.attempt = '0';
     fullScoreImage.src = urls[0];
@@ -3467,6 +3506,9 @@
       renderFullScoreImage();
       return;
     }
+    // A zoomed image can be panned freely; crossing into another song is
+    // reserved for the explicit previous/next song buttons at the top.
+    if (scoreImageZoom > 1.001) return;
     if (direction > 0 && scoreImageMode === 'score' && nextIndex >= activeScoreFiles.length) {
       const nextSongIndex = findNextGeneralSongIndex();
       if (nextSongIndex >= 0) {
@@ -4586,15 +4628,86 @@
   fullScoreImage.addEventListener('click', showScoreImageControls);
   scoreImageDialog.addEventListener('touchstart', (event) => {
     showScoreImageControls();
-    if (event.touches.length === 1) scoreSwipeStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-  }, { passive: true });
+    if (event.target.closest('button, .score-image-instruments')) return;
+    if (event.touches.length === 2) {
+      event.preventDefault();
+      const first = event.touches[0];
+      const second = event.touches[1];
+      scoreImagePinchStart = {
+        distance: Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY),
+        zoom: scoreImageZoom,
+        panX: scoreImagePanX,
+        panY: scoreImagePanY,
+        focusX: (first.clientX + second.clientX) / 2,
+        focusY: (first.clientY + second.clientY) / 2
+      };
+      scoreImagePanStart = null;
+      scoreSwipeStart = null;
+      return;
+    }
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    if (scoreImageZoom > 1.001 && event.target === fullScoreImage) {
+      event.preventDefault();
+      scoreImagePanStart = { x: touch.clientX, y: touch.clientY, panX: scoreImagePanX, panY: scoreImagePanY };
+      scoreSwipeStart = null;
+    } else if (scoreImageZoom <= 1.001) {
+      scoreSwipeStart = { x: touch.clientX, y: touch.clientY };
+    }
+  }, { passive: false });
+  scoreImageDialog.addEventListener('touchmove', (event) => {
+    if (scoreImagePinchStart && event.touches.length === 2) {
+      event.preventDefault();
+      const first = event.touches[0];
+      const second = event.touches[1];
+      const distance = Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+      const centerX = (first.clientX + second.clientX) / 2;
+      const centerY = (first.clientY + second.clientY) / 2;
+      const start = scoreImagePinchStart;
+      const zoom = Math.max(1, Math.min(5, start.zoom * distance / Math.max(start.distance, 1)));
+      const viewportWidth = scoreImageDialog.clientWidth || window.innerWidth;
+      const viewportHeight = scoreImageDialog.clientHeight || window.innerHeight;
+      const imageFocusX = (start.focusX - viewportWidth / 2 - start.panX) / start.zoom;
+      const imageFocusY = (start.focusY - viewportHeight / 2 - start.panY) / start.zoom;
+      setScoreImageZoom(
+        zoom,
+        centerX - viewportWidth / 2 - imageFocusX * zoom,
+        centerY - viewportHeight / 2 - imageFocusY * zoom
+      );
+      return;
+    }
+    if (scoreImagePanStart && event.touches.length === 1 && scoreImageZoom > 1.001) {
+      event.preventDefault();
+      const touch = event.touches[0];
+      setScoreImageZoom(scoreImageZoom, scoreImagePanStart.panX + touch.clientX - scoreImagePanStart.x, scoreImagePanStart.panY + touch.clientY - scoreImagePanStart.y);
+    }
+  }, { passive: false });
   scoreImageDialog.addEventListener('click', showScoreImageControls);
   scoreImageDialog.addEventListener('touchend', (event) => {
-    if (!scoreSwipeStart || !event.changedTouches.length) return;
+    if (scoreImagePinchStart) {
+      if (event.touches.length < 2) {
+        scoreImagePinchStart = null;
+        scoreSwipeStart = null;
+        scoreImagePanStart = event.touches.length === 1 && scoreImageZoom > 1.001
+          ? { x: event.touches[0].clientX, y: event.touches[0].clientY, panX: scoreImagePanX, panY: scoreImagePanY }
+          : null;
+      }
+      return;
+    }
+    if (scoreImagePanStart) {
+      if (!event.touches.length) scoreImagePanStart = null;
+      return;
+    }
+    if (!scoreSwipeStart || !event.changedTouches.length || scoreImageZoom > 1.001) return;
     const dx = event.changedTouches[0].clientX - scoreSwipeStart.x;
     const dy = event.changedTouches[0].clientY - scoreSwipeStart.y;
     scoreSwipeStart = null;
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.25) moveFullScoreImage(dx < 0 ? 1 : -1);
+  }, { passive: false });
+  scoreImageDialog.addEventListener('touchcancel', () => {
+    scoreSwipeStart = null;
+    scoreImagePinchStart = null;
+    scoreImagePanStart = null;
   }, { passive: true });
   scoreImageDialog.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') showScoreImageControls();
