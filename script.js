@@ -17,6 +17,7 @@
   const THEME_CHOICE_KEY = 'song-book:theme-choice:v1';
   const FONT_STYLE_KEY = 'song-book:font-style:v1';
   const FONT_SIZE_KEY = 'song-book:font-size:v1';
+  const KEY_WATERMARK_SETTINGS_KEY = 'song-book:key-watermark-settings:v1';
   // Use the same picker in every browser; native date controls differ widely.
   const DATE_INPUT_TYPE = 'text';
   const CATEGORIES = [
@@ -107,6 +108,11 @@
   const scoreImageInstruments = document.getElementById('score-image-instruments');
   const scoreImageReferenceButton = document.getElementById('score-image-reference-button');
   const scoreImagePosition = document.getElementById('score-image-position');
+  const scoreKeyWatermark = document.getElementById('score-key-watermark');
+  const scoreKeyWatermarkValue = document.getElementById('score-key-watermark-value');
+  const keyWatermarkDialog = document.getElementById('key-watermark-dialog');
+  const keyWatermarkForm = document.getElementById('key-watermark-form');
+  const keyWatermarkPreview = document.getElementById('key-watermark-preview');
   const scoreIntroBackButton = document.getElementById('score-intro-back-button');
   const scorePreviousGeneralSongButton = document.getElementById('score-previous-general-song-button');
   const scoreGeneralSongPosition = document.getElementById('score-general-song-position');
@@ -155,6 +161,9 @@
   let activeScoreIndex = 0;
   let scoreImageMode = 'score';
   let activeScheduleIntro = null;
+  let activeWorshipKeyWatermarkEnabled = false;
+  let activeWorshipKeyWatermarkSettings = null;
+  let preferredKeyWatermarkSettings = readKeyWatermarkSettings();
   let scoreImageReturnTarget = 'lyrics';
   let scoreControlsHideTimer = 0;
   let scoreSwipeStart = null;
@@ -191,6 +200,8 @@
   const fontStyleSelect = document.getElementById('font-style-select');
   const fontSizeSelect = document.getElementById('font-size-select');
   const fontSizeValue = document.getElementById('font-size-value');
+  const keyWatermarkSettingsButton = document.getElementById('open-key-watermark-settings');
+  const scheduleKeyWatermarkEnabledInput = document.getElementById('schedule-key-watermark-enabled');
   const themeChoiceField = document.getElementById('theme-choice-field');
   let profileSaveFeedbackTimer = 0;
   const fontSizeBaselines = new WeakMap();
@@ -415,7 +426,7 @@
     fontSizeScaledElements.clear();
     // Scale the actual text-bearing elements instead of only the first layer of
     // each screen. This also covers dialogs and content rendered after startup.
-    const excluded = 'script, style, svg, path, circle, ellipse, line, polyline, polygon, rect, use, .song-content pre, .my-song-add-action, #song-list .add-to-schedule';
+    const excluded = 'script, style, svg, path, circle, ellipse, line, polyline, polygon, rect, use, .song-content pre, .my-song-add-action, #song-list .add-to-schedule, #score-key-watermark, #score-key-watermark-value, #key-watermark-preview, #key-watermark-preview *';
     const scalableElements = [];
     document.querySelectorAll('body *').forEach((element) => {
       if (element.matches(excluded) || element.closest(excluded)) return;
@@ -760,6 +771,34 @@
     } catch (error) { return {}; }
   }
 
+  function defaultKeyWatermarkSettings() {
+    return { fontSize: 19, transparency: 45, color: '#176b4b', outlineWidth: 0, outlineColor: '#000000', shadowWidth: 2, shadowColor: '#000000', shadowX: 0, shadowY: 2, shadowBlur: 9 };
+  }
+
+  function readKeyWatermarkSettings() {
+    try { return normalizeKeyWatermarkSettings(JSON.parse(localStorage.getItem(KEY_WATERMARK_SETTINGS_KEY) || 'null')); }
+    catch (error) { return defaultKeyWatermarkSettings(); }
+  }
+
+  function saveKeyWatermarkSettings(value) {
+    preferredKeyWatermarkSettings = normalizeKeyWatermarkSettings(value);
+    try { localStorage.setItem(KEY_WATERMARK_SETTINGS_KEY, JSON.stringify(preferredKeyWatermarkSettings)); }
+    catch (error) { console.warn('Pengaturan watermark tidak dapat disimpan di perangkat ini:', error); }
+    return preferredKeyWatermarkSettings;
+  }
+
+  function normalizeKeyWatermarkSettings(value) {
+    const defaults = defaultKeyWatermarkSettings();
+    const source = value && typeof value === 'object' ? value : {};
+    const normalized = Object.fromEntries(Object.entries(defaults).map(([name, fallback]) => {
+      if (name === 'color' || name === 'outlineColor' || name === 'shadowColor') return [name, /^#[0-9a-f]{6}$/i.test(String(source[name] || '')) ? String(source[name]) : fallback];
+      const number = Number(source[name]);
+      return [name, Number.isFinite(number) ? number : fallback];
+    }));
+    normalized.transparency = Math.max(0, Math.min(100, normalized.transparency));
+    return normalized;
+  }
+
   function persistScheduleIntroCache() {
     try { localStorage.setItem(SCHEDULE_INTRO_CACHE_KEY, JSON.stringify(scheduleIntros)); }
     catch (error) { console.warn('Cache intro jadwal tidak dapat disimpan:', error); }
@@ -788,6 +827,8 @@
         title: String(item.title || 'Ibadah Baru'),
         date: String(item.date || ''),
         compactView: item.compactView === undefined ? true : Boolean(item.compactView),
+        keyWatermarkEnabled: item.keyWatermarkEnabled === undefined ? true : Boolean(item.keyWatermarkEnabled),
+        keyWatermarkSettings: normalizeKeyWatermarkSettings(item.keyWatermarkSettings),
         isOpen: Boolean(item.isOpen),
         sharedIntro: item.sharedIntro && typeof item.sharedIntro === 'object' ? item.sharedIntro : null,
         pulledBy: Array.isArray(item.pulledBy) ? item.pulledBy.map((name) => String(name || '').trim()).filter(Boolean) : [],
@@ -1080,7 +1121,7 @@
       const rawSharerName = String(received.sharedByName || '').trim() || 'Pengguna';
       const sharerName = `${rawSharerName.charAt(0).toLocaleUpperCase('id')}${rawSharerName.slice(1)}`;
       const sourceTitle = String(received.title || 'Jadwal ibadah').replace(/\s*\(salinan(?:\s+dari[^)]*)?\)\s*$/i, '').trim() || 'Jadwal ibadah';
-      const imported = { ...received, id: `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, title: `${sourceTitle} (salinan dari ${sharerName})`, compactView: true, sharedIntro: received.intro && typeof received.intro === 'object' ? received.intro : null, songs: Array.isArray(received.songs) ? received.songs.map((song, index) => ({ ...song, entryId: `entry_${Date.now()}_${index}`, overrides: song.overrides && typeof song.overrides === 'object' ? song.overrides : {} })) : [] };
+      const imported = { ...received, id: `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, title: `${sourceTitle} (salinan dari ${sharerName})`, compactView: true, keyWatermarkEnabled: received.keyWatermarkEnabled === undefined ? true : Boolean(received.keyWatermarkEnabled), keyWatermarkSettings: normalizeKeyWatermarkSettings(received.keyWatermarkSettings), sharedIntro: received.intro && typeof received.intro === 'object' ? received.intro : null, songs: Array.isArray(received.songs) ? received.songs.map((song, index) => ({ ...song, entryId: `entry_${Date.now()}_${index}`, overrides: song.overrides && typeof song.overrides === 'object' ? song.overrides : {} })) : [] };
       schedules.unshift(imported);
       schedulesDisabled = false;
       activeScheduleId = imported.id;
@@ -1155,6 +1196,8 @@
     compactButton.setAttribute('aria-pressed', String(Boolean(schedule.compactView)));
     compactButton.setAttribute('aria-label', schedule.compactView ? 'Tampilan lengkap' : 'Tampilan ringkas');
     compactButton.title = schedule.compactView ? 'Tampilan lengkap' : 'Tampilan ringkas';
+    const keyWatermarkEnabled = Boolean(schedule.keyWatermarkEnabled);
+    scheduleKeyWatermarkEnabledInput.checked = keyWatermarkEnabled;
     document.getElementById('schedule-view-dialog').classList.toggle('is-compact', Boolean(schedule.compactView));
     const startButton = document.getElementById('start-worship');
     startButton.disabled = schedule.songs.length === 0;
@@ -1293,7 +1336,9 @@
       currentPreviewSongs = scheduleContext.songs.map((item) => ({
         ...getEffectiveScheduledSong(item),
         preWorship: Boolean(item.preWorship),
-        scheduleIntro: intro
+        scheduleIntro: intro,
+        scheduleKeyWatermark: Boolean(scheduleContext.keyWatermarkEnabled),
+        scheduleKeyWatermarkSettings: preferredKeyWatermarkSettings || normalizeKeyWatermarkSettings(scheduleContext.keyWatermarkSettings)
       }));
       const activeIndex = activeEntryId
         ? currentPreviewSongs.findIndex((song) => song.entryId === activeEntryId && findDefaultScoreInstrument(song))
@@ -1545,7 +1590,7 @@
 
   function addSchedule() {
     const date = todayString();
-    const schedule = { id: `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, title: 'Ibadah Baru', date, compactView: true, songs: [] };
+    const schedule = { id: `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, title: 'Ibadah Baru', date, compactView: true, keyWatermarkEnabled: true, keyWatermarkSettings: defaultKeyWatermarkSettings(), songs: [] };
     schedules.unshift(schedule);
     schedulesDisabled = false;
     activeScheduleId = schedule.id;
@@ -1776,6 +1821,8 @@
   }
 
   async function openScheduledSong(schedule, entry, startImmediately = false) {
+    activeWorshipKeyWatermarkEnabled = Boolean(schedule.keyWatermarkEnabled);
+    activeWorshipKeyWatermarkSettings = preferredKeyWatermarkSettings || normalizeKeyWatermarkSettings(schedule.keyWatermarkSettings);
     let intro = schedule.sharedIntro || (Object.prototype.hasOwnProperty.call(scheduleIntros, schedule.id) ? scheduleIntros[schedule.id] : undefined);
     if (intro === undefined) {
       try {
@@ -1785,7 +1832,7 @@
         persistScheduleIntroCache();
       } catch (error) { console.warn('Intro jadwal tidak dapat dimuat:', error); }
     }
-    const queue = schedule.songs.map((item) => ({ ...getEffectiveScheduledSong(item), preWorship: Boolean(item.preWorship), scheduleIntro: intro }));
+    const queue = schedule.songs.map((item) => ({ ...getEffectiveScheduledSong(item), preWorship: Boolean(item.preWorship), scheduleIntro: intro, scheduleKeyWatermark: Boolean(schedule.keyWatermarkEnabled), scheduleKeyWatermarkSettings: preferredKeyWatermarkSettings || normalizeKeyWatermarkSettings(schedule.keyWatermarkSettings) }));
     const index = schedule.songs.findIndex((item) => item.entryId === entry.entryId);
     if (index >= 0) {
       if (startImmediately) {
@@ -3395,6 +3442,7 @@
     else {
       setScoreImageControlsHidden(false);
       scoreImageDialog.classList.toggle('instrument-controls-hidden', !hasOtherInstruments);
+      updateScoreKeyWatermark();
       scheduleScoreControlsHide();
     }
   }
@@ -3453,6 +3501,65 @@
     scoreImageReferenceButton.title = count ? `${count} referensi untuk ${currentPreviewSong?.title || 'lagu ini'}` : '';
   }
 
+  function formatKeyWatermark(key) {
+    const value = String(key || '').trim();
+    if (!value) return '';
+    return /=\s*1\s*$/i.test(value) ? value : `${value}=1`;
+  }
+
+  function updateScoreKeyWatermark() {
+    const watermark = formatKeyWatermark(currentPreviewSong?.key);
+    const settings = normalizeKeyWatermarkSettings(activeWorshipKeyWatermarkSettings || currentPreviewSong?.scheduleKeyWatermarkSettings);
+    const enabled = scoreImageMode === 'score'
+      && Boolean(currentPreviewSong?.scheduleKeyWatermark || activeWorshipKeyWatermarkEnabled)
+      && Boolean(watermark);
+    const controlsHidden = scoreImageDialog.classList.contains('controls-hidden');
+    scoreKeyWatermark.hidden = !enabled || controlsHidden;
+    scoreKeyWatermarkValue.style.setProperty('font-size', `clamp(42px, ${settings.fontSize}vw, 34vw)`, 'important');
+    scoreKeyWatermarkValue.style.setProperty('font-weight', '900', 'important');
+    const textOpacity = Math.max(0, Math.min(1, (100 - settings.transparency) / 100));
+    scoreKeyWatermarkValue.style.setProperty('color', settings.color, 'important');
+    scoreKeyWatermarkValue.style.setProperty('opacity', String(textOpacity), 'important');
+    scoreKeyWatermarkValue.style.setProperty('-webkit-text-fill-color', settings.color, 'important');
+    scoreKeyWatermarkValue.style.setProperty('-webkit-text-stroke', `${settings.outlineWidth}px ${settings.outlineColor}`, 'important');
+    scoreKeyWatermarkValue.style.setProperty('text-shadow', `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`, 'important');
+    scoreKeyWatermarkValue.textContent = enabled ? watermark : '';
+  }
+
+  const keyWatermarkControlIds = ['font-size', 'transparency', 'color', 'outline-width', 'outline-color', 'shadow-width', 'shadow-color', 'shadow-x', 'shadow-y', 'shadow-blur'];
+  function keyWatermarkSettingsFromForm() {
+    const settings = {};
+    keyWatermarkControlIds.forEach((name) => { settings[name.replace(/-/g, '')] = Number(document.getElementById(`key-watermark-${name}`).value); });
+    return normalizeKeyWatermarkSettings({
+      fontSize: settings.fontsize, transparency: settings.transparency, color: document.getElementById('key-watermark-color').value, outlineWidth: settings.outlinewidth, outlineColor: document.getElementById('key-watermark-outline-color').value,
+      shadowWidth: settings.shadowwidth, shadowColor: document.getElementById('key-watermark-shadow-color').value, shadowX: settings.shadowx, shadowY: settings.shadowy, shadowBlur: settings.shadowblur
+    });
+  }
+
+  function updateKeyWatermarkPreview() {
+    const settings = keyWatermarkSettingsFromForm();
+    const preview = keyWatermarkPreview;
+    preview.style.setProperty('font-size', `${Math.max(30, Math.min(110, settings.fontSize * 4.5))}px`, 'important');
+    preview.style.setProperty('color', settings.color, 'important');
+    preview.style.setProperty('opacity', String(Math.max(0, Math.min(1, (100 - settings.transparency) / 100))), 'important');
+    preview.style.setProperty('-webkit-text-fill-color', settings.color, 'important');
+    preview.style.setProperty('-webkit-text-stroke', `${settings.outlineWidth}px ${settings.outlineColor}`, 'important');
+    preview.style.setProperty('text-shadow', `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`, 'important');
+    const labels = {
+      fontSize: `${settings.fontSize}%`, transparency: `${settings.transparency}%`, color: settings.color.toUpperCase(), outlineWidth: `${settings.outlineWidth} px`, outlineColor: settings.outlineColor.toUpperCase(),
+      shadowWidth: `${settings.shadowWidth} px`, shadowColor: settings.shadowColor.toUpperCase(), shadowX: `${settings.shadowX} px`, shadowY: `${settings.shadowY} px`, shadowBlur: `${settings.shadowBlur} px`
+    };
+    Object.entries(labels).forEach(([name, value]) => { document.getElementById(`key-watermark-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}-value`).textContent = value; });
+  }
+
+  function openKeyWatermarkSettings() {
+    const settings = preferredKeyWatermarkSettings || defaultKeyWatermarkSettings();
+    const values = { 'font-size': settings.fontSize, transparency: settings.transparency, color: settings.color, 'outline-width': settings.outlineWidth, 'outline-color': settings.outlineColor, 'shadow-width': settings.shadowWidth, 'shadow-color': settings.shadowColor, 'shadow-x': settings.shadowX, 'shadow-y': settings.shadowY, 'shadow-blur': settings.shadowBlur };
+    Object.entries(values).forEach(([name, value]) => { document.getElementById(`key-watermark-${name}`).value = String(value); });
+    updateKeyWatermarkPreview();
+    if (!keyWatermarkDialog.open) keyWatermarkDialog.showModal();
+  }
+
   function clampScoreImagePan(x, y, zoom = scoreImageZoom) {
     const viewportWidth = scoreImageDialog.clientWidth || window.innerWidth;
     const viewportHeight = scoreImageDialog.clientHeight || window.innerHeight;
@@ -3488,6 +3595,7 @@
 
   function setScoreImageControlsHidden(hidden) {
     scoreImageDialog.classList.toggle('controls-hidden', Boolean(hidden));
+    updateScoreKeyWatermark();
     window.clearTimeout(scoreControlsHideTimer);
     scoreControlsHideTimer = 0;
   }
@@ -3504,6 +3612,7 @@
     scoreControlsHideTimer = window.setTimeout(() => {
       scoreImageDialog.classList.add('controls-hidden');
       scoreImageDialog.classList.add('instrument-controls-hidden');
+      updateScoreKeyWatermark();
       scoreControlsHideTimer = 0;
     }, 2800);
   }
@@ -3517,6 +3626,7 @@
     fullScoreImage.dataset.attempt = '0';
     fullScoreImage.src = urls[0];
     const showingIntro = scoreImageMode === 'intro';
+    updateScoreKeyWatermark();
     renderScoreImageReferenceButton();
     fullScoreImage.alt = showingIntro ? `Intro: ${activeScheduleIntro?.name || 'Intro'}` : `Partitur ${activeScoreInstrument}, halaman ${activeScoreIndex + 1}`;
     scoreImagePosition.textContent = `${activeScoreIndex + 1} / ${activeScoreFiles.length}`;
@@ -4644,7 +4754,11 @@
     scoreImageDialog.classList.remove('instrument-controls-hidden');
     scoreImageInstruments.hidden = true;
     scoreImageReferenceButton.hidden = true;
+    scoreKeyWatermark.hidden = true;
+    scoreKeyWatermarkValue.textContent = '';
     scoreImageMode = 'score';
+    activeWorshipKeyWatermarkEnabled = false;
+    activeWorshipKeyWatermarkSettings = null;
     scoreViewerFromList = false;
     activeScheduleIntro = null;
     scoreImageReturnTarget = 'lyrics';
@@ -4889,6 +5003,32 @@
     schedule.compactView = !schedule.compactView;
     saveSchedules();
     renderScheduleView(schedule.id);
+  });
+  keyWatermarkSettingsButton.addEventListener('click', openKeyWatermarkSettings);
+  scheduleKeyWatermarkEnabledInput.addEventListener('change', () => {
+    const schedule = schedules.find((item) => item.id === viewedScheduleId);
+    if (!schedule) return;
+    schedule.keyWatermarkEnabled = scheduleKeyWatermarkEnabledInput.checked;
+    saveSchedules();
+    activeWorshipKeyWatermarkEnabled = Boolean(schedule.keyWatermarkEnabled);
+    renderScheduleView(schedule.id);
+  });
+  keyWatermarkControlIds.forEach((name) => document.getElementById(`key-watermark-${name}`).addEventListener('input', updateKeyWatermarkPreview));
+  document.getElementById('close-key-watermark').addEventListener('click', () => keyWatermarkDialog.close());
+  keyWatermarkForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const settings = saveKeyWatermarkSettings(keyWatermarkSettingsFromForm());
+    activeWorshipKeyWatermarkSettings = settings;
+    if (viewedScheduleId) {
+      const schedule = schedules.find((item) => item.id === viewedScheduleId);
+      if (schedule) {
+        schedule.keyWatermarkSettings = settings;
+        saveSchedules();
+        renderScheduleView(schedule.id);
+      }
+    }
+    updateScoreKeyWatermark();
+    keyWatermarkDialog.close();
   });
   scheduleViewDialog.addEventListener('close', () => document.body.classList.remove('schedule-view-open'));
   document.getElementById('add-schedule-intro').addEventListener('click', openScheduleIntroForm);
