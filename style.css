@@ -1820,3 +1820,50 @@ button.my-song-upload-cancel[hidden]{display:none!important}
 
 .key-watermark-settings-button{grid-column:1/-1;justify-self:start;min-height:36px}
 @media(max-width:600px){.key-watermark-settings-button{width:100%;justify-self:stretch}}
+
+/* Watermark lines for key, music type, and schedule note. */
+.score-key-watermark-value{display:grid;justify-items:center;gap:.08em;white-space:normal;overflow:visible}
+.score-key-watermark-key,.score-key-watermark-genre,.score-key-watermark-note{display:block;max-width:84vw;overflow-wrap:anywhere}
+.score-key-watermark-genre,.score-key-watermark-note{font-weight:800;letter-spacing:0;line-height:1.1}
+.key-watermark-preview{display:flex;flex-direction:column;gap:5px;line-height:1}
+.key-watermark-preview-key,.key-watermark-preview-genre,.key-watermark-preview-note{display:block;line-height:1.05}
+.schedule-note-button{font-weight:900!important;color:#a64b42!important}
+.schedule-note-button.has-note{border-color:#e2bd6f!important;background:#fff5dc!important;color:#855b0c!important}
+.schedule-note-editor{grid-column:1/-1;display:grid;gap:7px;margin:2px 0 5px;padding:9px;border:1px solid #dfe8df;border-radius:9px;background:#fff}
+.schedule-note-editor[hidden]{display:none!important}
+.schedule-note-editor>label{display:flex;justify-content:space-between;gap:8px;color:#526258;font-size:10px;font-weight:800}
+.schedule-note-count{color:#839087;font-size:9px;font-weight:600}
+.schedule-note-editor textarea{width:100%;min-height:48px;resize:vertical;border:1px solid #dce5dc;border-radius:7px;background:#fbfcfa;padding:8px;color:#28372d;font:12px/1.5 "DM Sans",sans-serif}
+.schedule-note-editor textarea:focus{outline:0;border-color:#80af8d;box-shadow:0 0 0 3px #176b4b13}
+.schedule-note-actions{display:flex;justify-content:flex-end;gap:6px}
+.schedule-note-actions button{min-width:63px!important;width:auto!important;height:29px!important;padding:0 9px!important;font-size:9px!important}
+.schedule-note-actions .schedule-note-save{border-color:var(--green);background:var(--green);color:#fff}
+:root[data-theme="dark"] .schedule-note-editor{border-color:var(--line);background:var(--surface-soft)}
+:root[data-theme="dark"] .schedule-note-editor>label{color:var(--ink)}
+:root[data-theme="dark"] .schedule-note-editor textarea{border-color:var(--line);background:var(--surface);color:var(--ink)}
+@media(max-width:600px){.schedule-note-editor{padding:8px}.schedule-note-editor textarea{font-size:11px}.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-actions,.schedule-view-dialog.is-compact .schedule-view-list .schedule-note-button{display:none!important}}
+
+.key-watermark-visibility{display:flex;flex-wrap:wrap;gap:9px 18px;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.key-watermark-visibility legend{padding:0 5px;color:var(--muted);font-size:10px;font-weight:800}
+.key-watermark-visibility label{display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-size:11px;font-weight:700;cursor:pointer}
+.key-watermark-visibility input{width:16px;height:16px;margin:0;accent-color:var(--green)}
+.score-key-watermark-key[hidden],.score-key-watermark-genre[hidden],.score-key-watermark-note[hidden],.key-watermark-preview-key[hidden],.key-watermark-preview-genre[hidden],.key-watermark-preview-note[hidden]{display:none!important}
+:root[data-theme="dark"] .key-watermark-visibility{border-color:var(--line)}
+
+.schedule-song-actions .remove-scheduled-song svg{display:block;width:15px;height:15px;margin:auto;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}
+.schedule-view-list .schedule-song-row{grid-template-columns:25px 20px minmax(0,1fr) auto}
+.schedule-view-list .schedule-song-name{grid-column:3;grid-row:1;width:100%;min-height:0;padding:5px 0}
+.schedule-view-list .schedule-song-actions{grid-column:4;grid-row:1;align-self:center}
+.schedule-view-list .schedule-note-button{grid-column:3/-1;grid-row:2;justify-self:end;align-self:start;min-width:58px;height:25px;margin-top:-1px;border:1px solid #d8e5da;border-radius:7px;background:#f5faf5;padding:0 8px;color:var(--green);font:700 9px "DM Sans",sans-serif;white-space:nowrap}
+.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-name{grid-column:1;grid-row:1;width:100%;padding:0;font-size:10px}
+.schedule-view-dialog.is-compact .schedule-view-list .schedule-song-actions,.schedule-view-dialog.is-compact .schedule-view-list .schedule-note-button{display:none!important}
+
+:root[data-theme="dark"] .schedule-view-list .schedule-note-button{border-color:var(--line);background:var(--surface-soft);color:var(--green)}
+
+@media(max-width:600px){.schedule-view-list .schedule-song-row{grid-template-columns:21px 17px minmax(0,1fr) auto}}
+
+.schedule-view-dialog.is-compact .schedule-song-compact-name{gap:0}
+.schedule-song-compact-copy{display:flex;min-width:0;flex:1 1 auto;overflow:hidden;white-space:nowrap}
+.schedule-song-compact-text{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.schedule-song-compact-note{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;font-style:italic!important;font-weight:400!important;white-space:nowrap}
+.schedule-song-pre-label{margin-left:16px}
