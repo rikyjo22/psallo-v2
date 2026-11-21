@@ -250,6 +250,12 @@
   requiredProfileDialog.addEventListener('click', (event) => {
     if (event.target === requiredProfileDialog) event.preventDefault();
   });
+  requiredProfileDialog.addEventListener('close', () => {
+    if (readProfileUserName()) return;
+    window.setTimeout(() => {
+      if (!requiredProfileDialog.open && !readProfileUserName()) openRequiredProfile();
+    }, 0);
+  });
   function setStatus(message) { status.textContent = message; }
   function setSyncStatus(message) { syncStatus.textContent = message; if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'collection' && typeof updateHeaderIdentity === 'function') updateHeaderIdentity('collection'); }
   function formatTempo(value) {
@@ -505,6 +511,12 @@
       }
       songs = Array.isArray(result.songs) ? result.songs : [];
       songs.sort(compareSongs);
+      if (forceFresh && readProfileUserName()) {
+        trackSuccessfulAction('collection_refresh_success', {
+          collection: 'Koleksi Lagu',
+          action: 'Perbarui koleksi lagu'
+        });
+      }
       const updatedAt = new Date().toISOString();
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, songs }));
@@ -3145,6 +3157,19 @@
   }
 
   function openSongFromList(song, queue = songs, queueIndex, fromCollection = false) {
+    if (fromCollection && !readProfileUserName()) {
+      openRequiredProfile('membuka lagu dari koleksi');
+      return;
+    }
+    if (fromCollection) {
+      trackSuccessfulAction('song_open_success', {
+        collection: 'Koleksi Lagu',
+        action: 'Buka lagu',
+        songTitle: displaySongTitle(song),
+        songCategory: String(song.category || ''),
+        songNumber: String(song.number || '')
+      });
+    }
     const index = Number.isInteger(queueIndex)
       ? queueIndex
       : queue.findIndex((item) => item === song || item.id === song.id);
