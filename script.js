@@ -2,7 +2,7 @@
   'use strict';
 
   // Pemutaran file Drive memakai endpoint media yang tersedia di backend manager.
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxYErAtW6biQjLZBcp08NPl3CVV67hSHkWlHiMhpsbabTUKNOdeqx1zJpJRuwULKVfRuQ/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbz3aMkgQWSpfnkuMoViwicrNYJ69OQuTbNGcWosrT7j5_shw6BvhoV6KM3RibjjRMc_YQ/exec';
   const CACHE_KEY = 'song-book:songs:v4';
   const SCHEDULE_KEY = 'song-book:worship-schedules:v1';
   const SCHEDULE_IMAGE_DB_NAME = 'song-book:schedule-images:v1';
@@ -2144,7 +2144,7 @@
   }
 
   function songInputTime(song) {
-    const value = song.createdAt || song.created_at || song.storedAt || song.localUpdatedAt || 0;
+    const value = song.updatedAt || song.updated_at || song.localUpdatedAt || song.createdAt || song.created_at || song.storedAt || 0;
     const timestamp = typeof value === 'number' ? value : Date.parse(value);
     return Number.isFinite(timestamp) ? timestamp : 0;
   }
