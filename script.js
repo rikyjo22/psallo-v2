@@ -139,6 +139,7 @@
   let instrumentOptionsLoaded = false;
   let mySongInstrumentNames = [];
   let cacheAvailable = false;
+  let cachedSongsUpdatedAt = null;
   let isLoadingSongs = false;
   let schedules = [];
   let schedulesDisabled = false;
@@ -489,7 +490,7 @@
     });
   }
 
-  function loadSongs(forceFresh = false) {
+  function loadSongs(forceFresh = false, trackRefresh = true) {
     if (isLoadingSongs) return;
     isLoadingSongs = true;
     setSyncStatus('Mengambil data terbaru dari database...');
@@ -523,13 +524,14 @@
       }
       songs = Array.isArray(result.songs) ? result.songs : [];
       songs.sort(compareSongs);
-      if (forceFresh && readProfileUserName()) {
+      if (forceFresh && trackRefresh && readProfileUserName()) {
         trackSuccessfulAction('collection_refresh_success', {
           collection: 'Koleksi Lagu',
           action: 'Perbarui koleksi lagu'
         });
       }
       const updatedAt = new Date().toISOString();
+      cachedSongsUpdatedAt = updatedAt;
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ updatedAt, songs }));
         cacheAvailable = true;
@@ -639,6 +641,7 @@
       if (!cached || !Array.isArray(cached.songs)) return;
       songs = cached.songs;
       songs.sort(compareSongs);
+      cachedSongsUpdatedAt = cached.updatedAt || null;
       cacheAvailable = true;
       count.textContent = String(songs.length);
       if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'collection') updateHeaderIdentity('collection');
@@ -651,6 +654,11 @@
       cacheAvailable = false;
     }
     return false;
+  }
+
+  function isSongCacheOlderThanOneDay(updatedAt) {
+    const timestamp = Date.parse(updatedAt || '');
+    return !Number.isFinite(timestamp) || Date.now() - timestamp >= 24 * 60 * 60 * 1000;
   }
 
   function formatUpdatedAt(value) {
@@ -3185,7 +3193,7 @@
     if (view === 'settings') activateLibraryTab(instrumentProfileButton);
     if (view === 'collection' && !hasOpenedCollectionView) {
       hasOpenedCollectionView = true;
-      if (!songs.length) loadSongs(true);
+      if (!songs.length) loadSongs(true, false);
     }
     closeSidebar();
   }
@@ -5454,6 +5462,7 @@
     setStatus('Belum ada data lokal. Tekan "Perbarui data" untuk memuat lagu dari database.');
     setSyncStatus('Belum disinkronkan');
   }
+  if (hasCache && isSongCacheOlderThanOneDay(cachedSongsUpdatedAt)) loadSongs(true, false);
   activateAppView(currentSidebarOrder()[0] || 'collection');
 })();
 
