@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=sidebar-order-22">
   <script defer src="analytics.js?v=7"></script>
-  <script defer src="script.js?v=score-watermark-pinch-24"></script>
+  <script defer src="script.js?v=sidebar-floating-drag-25"></script>
 </head>
 <body>
   <main class="app-shell">
@@ -124,10 +124,10 @@
       <form id="sidebar-settings-form" class="sidebar-settings-card">
         <header class="key-watermark-header"><div><p class="eyebrow">PREFERENSI NAVIGASI</p><h2 id="sidebar-settings-title">Pengaturan sidebar</h2></div><button id="close-sidebar-settings" class="close-button" type="button" aria-label="Tutup pengaturan">&#215;</button></header>
         <div class="sidebar-settings-body"><p>Seret menu untuk mengubah urutan tampilannya.</p><ol id="sidebar-settings-list" class="sidebar-settings-list">
-          <li class="sidebar-settings-item" draggable="true" data-sidebar-order="collection"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Koleksi Lagu</span></li>
-          <li class="sidebar-settings-item" draggable="true" data-sidebar-order="schedule"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Jadwal Ibadah</span></li>
-          <li class="sidebar-settings-item" draggable="true" data-sidebar-order="my-songs"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Laguku</span></li>
-          <li class="sidebar-settings-item" draggable="true" data-sidebar-order="settings"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Pengaturan</span></li>
+          <li class="sidebar-settings-item" data-sidebar-order="collection"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Koleksi Lagu</span></li>
+          <li class="sidebar-settings-item" data-sidebar-order="schedule"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Jadwal Ibadah</span></li>
+          <li class="sidebar-settings-item" data-sidebar-order="my-songs"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Laguku</span></li>
+          <li class="sidebar-settings-item" data-sidebar-order="settings"><span class="sidebar-settings-grip" aria-hidden="true">&#8942;&#8942;</span><span>Pengaturan</span></li>
         </ol><div class="sidebar-settings-actions"><button id="cancel-sidebar-settings" class="edit-cancel" type="button">Batal</button><button id="save-sidebar-settings" class="create-schedule-button" type="submit">Simpan urutan</button></div></div>
       </form>
     </dialog>

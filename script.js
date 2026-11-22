@@ -3063,17 +3063,49 @@
   const appViewButtons = [...document.querySelectorAll('.sidebar-nav-item')];
   const appViewPanels = [...document.querySelectorAll('.app-view')];
   let draggedSidebarItem = null;
+  let sidebarDragPlaceholder = null;
+  let sidebarDragGhost = null;
   let sidebarPointerDragId = null;
-  function placeSidebarSettingsItem(draggedItem, target, clientY) {
-    if (!draggedItem || !target || target === draggedItem) return;
-    const before = clientY < target.getBoundingClientRect().top + target.offsetHeight / 2;
-    sidebarOrderItems.insertBefore(draggedItem, before ? target : target.nextSibling);
+  let sidebarDragPointerOffset = { x: 0, y: 0 };
+  function moveSidebarSettingsPlaceholder(clientY) {
+    if (!sidebarDragPlaceholder) return;
+    const siblings = [...sidebarOrderItems.children].filter((item) => item !== sidebarDragPlaceholder);
+    const nextItem = siblings.find((item) => clientY < item.getBoundingClientRect().top + item.offsetHeight / 2);
+    sidebarOrderItems.insertBefore(sidebarDragPlaceholder, nextItem || null);
   }
-  function clearSidebarSettingsDrag() {
-    draggedSidebarItem?.classList.remove('is-dragging');
+  function finishSidebarSettingsDrag() {
+    if (!draggedSidebarItem) return;
+    if (sidebarDragPlaceholder?.isConnected) sidebarDragPlaceholder.replaceWith(draggedSidebarItem);
+    sidebarDragGhost?.remove();
+    sidebarDragPlaceholder?.remove();
     draggedSidebarItem = null;
+    sidebarDragPlaceholder = null;
+    sidebarDragGhost = null;
     sidebarPointerDragId = null;
-    sidebarOrderItems.querySelectorAll('.is-drop-target').forEach((item) => item.classList.remove('is-drop-target'));
+    sidebarDragPointerOffset = { x: 0, y: 0 };
+  }
+  function startSidebarSettingsDrag(item, event) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+    const rect = item.getBoundingClientRect();
+    draggedSidebarItem = item;
+    sidebarDragPlaceholder = document.createElement('li');
+    sidebarDragPlaceholder.className = 'sidebar-settings-placeholder';
+    sidebarDragPlaceholder.setAttribute('aria-hidden', 'true');
+    sidebarDragPlaceholder.style.height = `${rect.height}px`;
+    sidebarDragPlaceholder.style.width = `${rect.width}px`;
+    item.replaceWith(sidebarDragPlaceholder);
+    sidebarDragGhost = item.cloneNode(true);
+    sidebarDragGhost.classList.add('sidebar-settings-floating');
+    sidebarDragGhost.setAttribute('aria-hidden', 'true');
+    sidebarDragGhost.style.width = `${rect.width}px`;
+    sidebarDragGhost.style.height = `${rect.height}px`;
+    sidebarDragGhost.style.left = `${rect.left}px`;
+    sidebarDragGhost.style.top = `${rect.top}px`;
+    sidebarSettingsDialog.append(sidebarDragGhost);
+    sidebarDragPointerOffset = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    sidebarPointerDragId = event.pointerId;
+    sidebarOrderItems.setPointerCapture(event.pointerId);
   }
   function renderSidebarSettingsOrder(order = currentSidebarOrder()) {
     const itemsByView = new Map([...sidebarOrderItems.children].map((item) => [item.dataset.sidebarOrder, item]));
@@ -3088,44 +3120,26 @@
   });
   document.getElementById('close-sidebar-settings').addEventListener('click', () => sidebarSettingsDialog.close());
   document.getElementById('cancel-sidebar-settings').addEventListener('click', () => sidebarSettingsDialog.close());
-  sidebarOrderItems.addEventListener('dragstart', (event) => {
-    const item = event.target.closest('.sidebar-settings-item');
-    if (!item) return;
-    draggedSidebarItem = item;
-    item.classList.add('is-dragging');
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', item.dataset.sidebarOrder);
-  });
-  sidebarOrderItems.addEventListener('dragend', () => {
-    if (sidebarPointerDragId === null) clearSidebarSettingsDrag();
-  });
-  sidebarOrderItems.addEventListener('dragover', (event) => {
-    if (!draggedSidebarItem) return;
-    event.preventDefault();
-    const target = event.target.closest('.sidebar-settings-item');
-    placeSidebarSettingsItem(draggedSidebarItem, target, event.clientY);
-  });
   sidebarOrderItems.addEventListener('pointerdown', (event) => {
-    if (!['touch', 'pen'].includes(event.pointerType) || !event.target.closest('.sidebar-settings-grip')) return;
+    if (!event.target.closest('.sidebar-settings-grip')) return;
     const item = event.target.closest('.sidebar-settings-item');
     if (!item) return;
-    draggedSidebarItem = item;
-    sidebarPointerDragId = event.pointerId;
-    item.classList.add('is-dragging');
-    event.target.setPointerCapture?.(event.pointerId);
+    startSidebarSettingsDrag(item, event);
   });
   sidebarOrderItems.addEventListener('pointermove', (event) => {
     if (sidebarPointerDragId !== event.pointerId || !draggedSidebarItem) return;
     event.preventDefault();
-    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.sidebar-settings-item');
-    placeSidebarSettingsItem(draggedSidebarItem, target, event.clientY);
+    sidebarDragGhost.style.left = `${event.clientX - sidebarDragPointerOffset.x}px`;
+    sidebarDragGhost.style.top = `${event.clientY - sidebarDragPointerOffset.y}px`;
+    moveSidebarSettingsPlaceholder(event.clientY);
   });
   sidebarOrderItems.addEventListener('pointerup', (event) => {
-    if (sidebarPointerDragId === event.pointerId) clearSidebarSettingsDrag();
+    if (sidebarPointerDragId === event.pointerId) finishSidebarSettingsDrag();
   });
   sidebarOrderItems.addEventListener('pointercancel', (event) => {
-    if (sidebarPointerDragId === event.pointerId) clearSidebarSettingsDrag();
+    if (sidebarPointerDragId === event.pointerId) finishSidebarSettingsDrag();
   });
+  sidebarSettingsDialog.addEventListener('close', finishSidebarSettingsDrag);
   sidebarSettingsForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const order = [...sidebarOrderItems.children].map((item) => item.dataset.sidebarOrder);
