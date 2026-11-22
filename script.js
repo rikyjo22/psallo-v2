@@ -18,6 +18,7 @@
   const FONT_STYLE_KEY = 'song-book:font-style:v1';
   const FONT_SIZE_KEY = 'song-book:font-size:v1';
   const KEY_WATERMARK_SETTINGS_KEY = 'song-book:key-watermark-settings:v1';
+  const SIDEBAR_ORDER_KEY = 'song-book:sidebar-order:v1';
   // Use the same picker in every browser; native date controls differ widely.
   const DATE_INPUT_TYPE = 'text';
   const CATEGORIES = [
@@ -121,8 +122,8 @@
   let songs = [];
   let mySongs = [];
   let activeCategory = 'ALL';
-  let collectionSort = 'number-asc';
-  let mySongsSort = 'number-asc';
+  let collectionSort = 'title-asc';
+  let mySongsSort = 'title-asc';
   let preferredInstrument = readInstrumentProfile();
   let preferredUserName = readProfileUserName();
   let preferredUserId = readProfileUserId();
@@ -2285,7 +2286,7 @@
     renderMySongs();
   });
   mySongsSortSelect.addEventListener('change', () => {
-    mySongsSort = mySongsSortSelect.value || 'number-asc';
+    mySongsSort = mySongsSortSelect.value || 'title-asc';
     renderMySongs();
   });
   collectionCategoryFilter.addEventListener('change', () => {
@@ -2294,7 +2295,7 @@
     renderList();
   });
   collectionSortSelect.addEventListener('change', () => {
-    collectionSort = collectionSortSelect.value || 'number-asc';
+    collectionSort = collectionSortSelect.value || 'title-asc';
     renderList();
   });
   [collectionActiveSchedule, mySongsActiveSchedule].filter(Boolean).forEach((container) => {
@@ -3034,8 +3035,105 @@
   const appSidebar = document.getElementById('app-sidebar');
   const sidebarToggle = document.getElementById('sidebar-menu-toggle');
   const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  const sidebarNav = document.querySelector('.sidebar-nav');
+  const sidebarOrderItems = document.getElementById('sidebar-settings-list');
+  const sidebarSettingsDialog = document.getElementById('sidebar-settings-dialog');
+  const sidebarSettingsForm = document.getElementById('sidebar-settings-form');
+  const defaultSidebarOrder = ['collection', 'schedule', 'my-songs', 'settings'];
+  function normalizeSidebarOrder(order) {
+    const validViews = new Set(defaultSidebarOrder);
+    const normalized = Array.isArray(order) ? order.filter((view, index) => validViews.has(view) && order.indexOf(view) === index) : [];
+    return [...normalized, ...defaultSidebarOrder.filter((view) => !normalized.includes(view))];
+  }
+  function applySidebarOrder(order) {
+    const normalized = normalizeSidebarOrder(order);
+    normalized.forEach((view) => {
+      const button = sidebarNav.querySelector(`[data-app-view="${view}"]`);
+      if (button) sidebarNav.append(button);
+    });
+    return normalized;
+  }
+  function currentSidebarOrder() {
+    return [...sidebarNav.querySelectorAll('.sidebar-nav-item')].map((button) => button.dataset.appView);
+  }
+  try {
+    const storedSidebarOrder = JSON.parse(localStorage.getItem(SIDEBAR_ORDER_KEY) || 'null');
+    if (Array.isArray(storedSidebarOrder)) applySidebarOrder(storedSidebarOrder);
+  } catch (error) { /* Keep the default menu order if local settings are unavailable. */ }
   const appViewButtons = [...document.querySelectorAll('.sidebar-nav-item')];
   const appViewPanels = [...document.querySelectorAll('.app-view')];
+  let draggedSidebarItem = null;
+  let sidebarPointerDragId = null;
+  function placeSidebarSettingsItem(draggedItem, target, clientY) {
+    if (!draggedItem || !target || target === draggedItem) return;
+    const before = clientY < target.getBoundingClientRect().top + target.offsetHeight / 2;
+    sidebarOrderItems.insertBefore(draggedItem, before ? target : target.nextSibling);
+  }
+  function clearSidebarSettingsDrag() {
+    draggedSidebarItem?.classList.remove('is-dragging');
+    draggedSidebarItem = null;
+    sidebarPointerDragId = null;
+    sidebarOrderItems.querySelectorAll('.is-drop-target').forEach((item) => item.classList.remove('is-drop-target'));
+  }
+  function renderSidebarSettingsOrder(order = currentSidebarOrder()) {
+    const itemsByView = new Map([...sidebarOrderItems.children].map((item) => [item.dataset.sidebarOrder, item]));
+    normalizeSidebarOrder(order).forEach((view) => {
+      const item = itemsByView.get(view);
+      if (item) sidebarOrderItems.append(item);
+    });
+  }
+  document.getElementById('open-sidebar-settings').addEventListener('click', () => {
+    renderSidebarSettingsOrder();
+    sidebarSettingsDialog.showModal();
+  });
+  document.getElementById('close-sidebar-settings').addEventListener('click', () => sidebarSettingsDialog.close());
+  document.getElementById('cancel-sidebar-settings').addEventListener('click', () => sidebarSettingsDialog.close());
+  sidebarOrderItems.addEventListener('dragstart', (event) => {
+    const item = event.target.closest('.sidebar-settings-item');
+    if (!item) return;
+    draggedSidebarItem = item;
+    item.classList.add('is-dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', item.dataset.sidebarOrder);
+  });
+  sidebarOrderItems.addEventListener('dragend', () => {
+    if (sidebarPointerDragId === null) clearSidebarSettingsDrag();
+  });
+  sidebarOrderItems.addEventListener('dragover', (event) => {
+    if (!draggedSidebarItem) return;
+    event.preventDefault();
+    const target = event.target.closest('.sidebar-settings-item');
+    placeSidebarSettingsItem(draggedSidebarItem, target, event.clientY);
+  });
+  sidebarOrderItems.addEventListener('pointerdown', (event) => {
+    if (!['touch', 'pen'].includes(event.pointerType) || !event.target.closest('.sidebar-settings-grip')) return;
+    const item = event.target.closest('.sidebar-settings-item');
+    if (!item) return;
+    draggedSidebarItem = item;
+    sidebarPointerDragId = event.pointerId;
+    item.classList.add('is-dragging');
+    event.target.setPointerCapture?.(event.pointerId);
+  });
+  sidebarOrderItems.addEventListener('pointermove', (event) => {
+    if (sidebarPointerDragId !== event.pointerId || !draggedSidebarItem) return;
+    event.preventDefault();
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.sidebar-settings-item');
+    placeSidebarSettingsItem(draggedSidebarItem, target, event.clientY);
+  });
+  sidebarOrderItems.addEventListener('pointerup', (event) => {
+    if (sidebarPointerDragId === event.pointerId) clearSidebarSettingsDrag();
+  });
+  sidebarOrderItems.addEventListener('pointercancel', (event) => {
+    if (sidebarPointerDragId === event.pointerId) clearSidebarSettingsDrag();
+  });
+  sidebarSettingsForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const order = [...sidebarOrderItems.children].map((item) => item.dataset.sidebarOrder);
+    const normalized = applySidebarOrder(order);
+    try { localStorage.setItem(SIDEBAR_ORDER_KEY, JSON.stringify(normalized)); } catch (error) { /* The applied order remains active for this session. */ }
+    sidebarSettingsDialog.close();
+  });
+  let hasOpenedCollectionView = false;
   function closeSidebar() {
     appSidebar.classList.remove('is-open');
     sidebarToggle.setAttribute('aria-expanded', 'false');
@@ -3071,6 +3169,10 @@
     if (view === 'my-songs') activateLibraryTab(document.getElementById('my-songs-tab'));
     if (view === 'collection') activateLibraryTab(document.getElementById('all-songs-tab'));
     if (view === 'settings') activateLibraryTab(instrumentProfileButton);
+    if (view === 'collection' && !hasOpenedCollectionView) {
+      hasOpenedCollectionView = true;
+      if (!songs.length) loadSongs(true);
+    }
     closeSidebar();
   }
   sidebarToggle.addEventListener('click', () => {
@@ -3591,11 +3693,23 @@
     if (!scoreKeyWatermark || !scoreKeyWatermarkValue) return;
     const watermark = formatKeyWatermark(currentPreviewSong?.key);
     const settings = normalizeKeyWatermarkSettings(activeWorshipKeyWatermarkSettings || currentPreviewSong?.scheduleKeyWatermarkSettings);
+    const genre = String(currentPreviewSong?.genre || '').trim();
+    const note = normalizeScheduleNote(currentPreviewSong?.scheduleNote || currentPreviewSong?.note);
     const enabled = scoreImageMode === 'score'
       && Boolean(currentPreviewSong?.scheduleKeyWatermark || activeWorshipKeyWatermarkEnabled)
       && Boolean((settings.showKey && watermark) || (settings.showGenre && currentPreviewSong?.genre) || (settings.showNote && (currentPreviewSong?.scheduleNote || currentPreviewSong?.note)));
     const controlsHidden = scoreImageDialog.classList.contains('controls-hidden');
     scoreKeyWatermark.hidden = !enabled || controlsHidden;
+    const renderSignature = JSON.stringify([
+      scoreImageMode, enabled, watermark, genre, note,
+      settings.showKey, settings.showGenre, settings.showNote,
+      settings.fontSize, settings.genreFontSize, settings.noteFontSize, settings.transparency,
+      settings.color, settings.genreColor, settings.noteColor,
+      settings.outlineWidth, settings.outlinePosition, settings.outlineColor,
+      settings.shadowX, settings.shadowY, settings.shadowBlur, settings.shadowColor
+    ]);
+    if (scoreKeyWatermark.dataset.renderSignature === renderSignature) return;
+    scoreKeyWatermark.dataset.renderSignature = renderSignature;
     scoreKeyWatermarkValue.style.setProperty('font-size', `clamp(42px, ${settings.fontSize}vw, 34vw)`, 'important');
     scoreKeyWatermarkValue.style.setProperty('font-weight', '900', 'important');
     const textOpacity = Math.max(0, Math.min(1, (100 - settings.transparency) / 100));
@@ -3605,8 +3719,6 @@
     scoreKeyWatermarkValue.style.setProperty('-webkit-text-stroke', `${settings.outlineWidth}px ${settings.outlineColor}`, 'important');
     scoreKeyWatermarkValue.style.setProperty('paint-order', settings.outlinePosition === 'outer' ? 'stroke fill' : 'fill stroke', 'important');
     scoreKeyWatermarkValue.style.setProperty('text-shadow', `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`, 'important');
-    const genre = String(currentPreviewSong?.genre || '').trim();
-    const note = normalizeScheduleNote(currentPreviewSong?.scheduleNote || currentPreviewSong?.note);
     const ensureWatermarkLine = (className) => {
       let line = scoreKeyWatermarkValue.querySelector(`.${className}`);
       if (!line) {
@@ -4881,6 +4993,7 @@
     scoreImageReferenceButton.hidden = true;
     scoreKeyWatermark.hidden = true;
     scoreKeyWatermarkValue.textContent = '';
+    delete scoreKeyWatermark.dataset.renderSignature;
     scoreImageMode = 'score';
     activeWorshipKeyWatermarkEnabled = false;
     activeWorshipKeyWatermarkSettings = null;
@@ -5327,6 +5440,7 @@
     setStatus('Belum ada data lokal. Tekan "Perbarui data" untuk memuat lagu dari database.');
     setSyncStatus('Belum disinkronkan');
   }
+  activateAppView(currentSidebarOrder()[0] || 'collection');
 })();
 
 
