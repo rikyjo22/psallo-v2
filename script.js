@@ -134,6 +134,8 @@
   const collectionSearchTextCache = new WeakMap();
   const mySongSearchTextCache = new WeakMap();
   let collectionSearchRenderTimer = 0;
+  let collectionRenderGeneration = 0;
+  let mySongsRenderGeneration = 0;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
   let mySongsSort = 'title-asc';
@@ -146,6 +148,7 @@
   let currentPreviewSongs = [];
   let currentPreviewSong = null;
   let currentPreviewFromCollection = false;
+  let previewRenderGeneration = 0;
   let previewZoom = 1;
   let pinchStart = null;
   let sourcePreviewKey = 'C';
@@ -2237,11 +2240,11 @@
     }
 
     if (action === 'view-schedule') {
-      renderScheduleView(schedule.id);
       if (!scheduleViewDialog.open) {
         scheduleViewDialog.showModal();
         document.body.classList.add('schedule-view-open');
       }
+      window.requestAnimationFrame(() => renderScheduleView(schedule.id));
       return;
     } else if (action === 'delete-schedule') {
       confirmScheduleDeletion(schedule);
@@ -2599,7 +2602,7 @@
       if (!query) return true;
       return searchTextMatches(getCollectionSearchText(song), query);
     }), collectionSort);
-    if (renderLocalSongs) renderMySongs();
+    if (renderLocalSongs) window.requestAnimationFrame(() => renderMySongs());
     songList.replaceChildren();
     if (!songs.length) {
       setStatus('Belum ada lagu di database. Tambahkan lagu melalui Song Manager.');
@@ -2610,47 +2613,52 @@
       return;
     }
     setStatus('');
-    const fragment = document.createDocumentFragment();
-    visible.forEach((song) => {
-      const card = document.createElement('article');
-      card.className = 'song-card';
-      const songIndex = songIndexMarkup(song);
-      const songMeta = songListMetaMarkup(song);
-      const openButton = document.createElement('button');
-      openButton.type = 'button';
-      openButton.className = 'song-card-main';
-      const referenceCount = songReferenceCount(song);
-      openButton.setAttribute('aria-label', `Buka ${song.category} ${displaySongNumber(song.number)}, ${song.title}${referenceCount ? `, ${referenceCount} referensi` : ''}`);
-      openButton.innerHTML = `${songIndex}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span><span class="song-open" aria-hidden="true">&#8250;</span>`;
-      openButton.addEventListener('click', () => openSongFromList(song, songs, undefined, true));
-      card.append(openButton);
-      const quickActions = document.createElement('span');
-      quickActions.className = 'song-card-quick-actions';
-      // A song can only be added while there is an active schedule target.
-      // When all schedules are deactivated, remove this action from each
-      // collection item instead of leaving a button that cannot do anything.
-      if (schedules.length && activeScheduleId && !schedulesDisabled) {
-        const addButton = document.createElement('button');
-        addButton.type = 'button';
-        addButton.className = 'add-to-schedule';
-        addButton.dataset.addSong = song.id;
-        addButton.setAttribute('aria-label', `Tambahkan ${song.title} ke jadwal terpilih`);
-        addButton.title = 'Add to Jadwal';
-        addButton.textContent = 'Add to Jadwal';
-        quickActions.append(addButton);
+    const generation = ++collectionRenderGeneration;
+    const appendChunk = (start) => {
+      if (generation !== collectionRenderGeneration) return;
+      const fragment = document.createDocumentFragment();
+      const end = Math.min(visible.length, start + 40);
+      for (let index = start; index < end; index += 1) {
+        const song = visible[index];
+        const card = document.createElement('article');
+        card.className = 'song-card';
+        const songIndex = songIndexMarkup(song);
+        const songMeta = songListMetaMarkup(song);
+        const openButton = document.createElement('button');
+        openButton.type = 'button';
+        openButton.className = 'song-card-main';
+        const referenceCount = songReferenceCount(song);
+        openButton.setAttribute('aria-label', `Buka ${song.category} ${displaySongNumber(song.number)}, ${song.title}${referenceCount ? `, ${referenceCount} referensi` : ''}`);
+        openButton.innerHTML = `${songIndex}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span><span class="song-open" aria-hidden="true">&#8250;</span>`;
+        openButton.addEventListener('click', () => openSongFromList(song, songs, undefined, true));
+        card.append(openButton);
+        const quickActions = document.createElement('span');
+        quickActions.className = 'song-card-quick-actions';
+        if (schedules.length && activeScheduleId && !schedulesDisabled) {
+          const addButton = document.createElement('button');
+          addButton.type = 'button';
+          addButton.className = 'add-to-schedule';
+          addButton.dataset.addSong = song.id;
+          addButton.setAttribute('aria-label', `Tambahkan ${song.title} ke jadwal terpilih`);
+          addButton.title = 'Add to Jadwal';
+          addButton.textContent = 'Add to Jadwal';
+          quickActions.append(addButton);
+        }
+        const saveLocalButton = document.createElement('button');
+        saveLocalButton.type = 'button';
+        saveLocalButton.className = 'add-to-my-songs';
+        saveLocalButton.dataset.saveSongToMySongs = song.id;
+        saveLocalButton.textContent = 'Add to Laguku';
+        saveLocalButton.setAttribute('aria-label', `Add ${song.category} ${displaySongNumber(song.number)} ${song.title} to Laguku`);
+        saveLocalButton.title = 'Simpan salinan lagu ini ke Laguku di perangkat';
+        quickActions.append(saveLocalButton);
+        card.append(quickActions);
+        fragment.append(card);
       }
-      const saveLocalButton = document.createElement('button');
-      saveLocalButton.type = 'button';
-      saveLocalButton.className = 'add-to-my-songs';
-      saveLocalButton.dataset.saveSongToMySongs = song.id;
-      saveLocalButton.textContent = 'Add to Laguku';
-      saveLocalButton.setAttribute('aria-label', `Add ${song.category} ${displaySongNumber(song.number)} ${song.title} to Laguku`);
-      saveLocalButton.title = 'Simpan salinan lagu ini ke Laguku di perangkat';
-      quickActions.append(saveLocalButton);
-      card.append(quickActions);
-      fragment.append(card);
-    });
-    songList.append(fragment);
+      songList.append(fragment);
+      if (end < visible.length) window.requestAnimationFrame(() => appendChunk(end));
+    };
+    appendChunk(0);
   }
 
   function renderMySongs() {
@@ -2672,34 +2680,42 @@
       return;
     }
     mySongsStatus.textContent = '';
-    const fragment = document.createDocumentFragment();
-    visible.forEach((song, index) => {
-      const card = document.createElement('article');
-      card.className = 'song-card';
-      const songMeta = songListMetaMarkup(song);
-      if (isMySongUploadMode) {
-        const choice = document.createElement('label');
-        choice.className = 'my-song-upload-choice';
-        choice.innerHTML = `<input type="checkbox" data-upload-song-id="${escapeText(song.id)}" ${selectedMySongUploadIds.has(song.id) ? 'checked' : ''}>${songIndexMarkup(song)}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span>`;
-        card.append(choice);
+    const generation = ++mySongsRenderGeneration;
+    const appendChunk = (start) => {
+      if (generation !== mySongsRenderGeneration) return;
+      const fragment = document.createDocumentFragment();
+      const end = Math.min(visible.length, start + 40);
+      for (let index = start; index < end; index += 1) {
+        const song = visible[index];
+        const card = document.createElement('article');
+        card.className = 'song-card';
+        const songMeta = songListMetaMarkup(song);
+        if (isMySongUploadMode) {
+          const choice = document.createElement('label');
+          choice.className = 'my-song-upload-choice';
+          choice.innerHTML = `<input type="checkbox" data-upload-song-id="${escapeText(song.id)}" ${selectedMySongUploadIds.has(song.id) ? 'checked' : ''}>${songIndexMarkup(song)}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span>`;
+          card.append(choice);
+          fragment.append(card);
+          continue;
+        }
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'song-card-main';
+        const referenceCount = songReferenceCount(song);
+        button.setAttribute('aria-label', `Buka ${song.category} ${displaySongNumber(song.number)}, ${song.title}${referenceCount ? `, ${referenceCount} referensi` : ''}`);
+        button.innerHTML = `${songIndexMarkup(song)}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span><span class="song-open" aria-hidden="true">&#8250;</span>`;
+        button.addEventListener('click', () => openSongFromList(song, visible, index));
+        card.append(button);
+        const actions = document.createElement('span');
+        actions.className = 'my-song-list-actions';
+        actions.innerHTML = `<button class="add-to-schedule my-song-add-action" type="button" data-my-song-action="add" data-song-id="${escapeText(song.id)}" aria-label="Tambahkan ${escapeText(song.title)} ke jadwal aktif" title="Tambahkan ke jadwal aktif" ${activeScheduleId ? '' : 'disabled'}>Add to Jadwal</button><span class="my-song-edit-actions"><button type="button" data-my-song-action="edit" data-song-id="${escapeText(song.id)}" aria-label="Edit ${escapeText(song.title)}" title="Edit">&#9998;</button><button type="button" data-my-song-action="delete" data-song-id="${escapeText(song.id)}" aria-label="Hapus ${escapeText(song.title)}" title="Hapus"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></span>`;
+        card.append(actions);
         fragment.append(card);
-        return;
       }
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'song-card-main';
-      const referenceCount = songReferenceCount(song);
-      button.setAttribute('aria-label', `Buka ${song.category} ${displaySongNumber(song.number)}, ${song.title}${referenceCount ? `, ${referenceCount} referensi` : ''}`);
-      button.innerHTML = `${songIndexMarkup(song)}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span><span class="song-open" aria-hidden="true">&#8250;</span>`;
-      button.addEventListener('click', () => openSongFromList(song, visible, index));
-      card.append(button);
-      const actions = document.createElement('span');
-      actions.className = 'my-song-list-actions';
-      actions.innerHTML = `<button class="add-to-schedule my-song-add-action" type="button" data-my-song-action="add" data-song-id="${escapeText(song.id)}" aria-label="Tambahkan ${escapeText(song.title)} ke jadwal aktif" title="Tambahkan ke jadwal aktif" ${activeScheduleId ? '' : 'disabled'}>Add to Jadwal</button><span class="my-song-edit-actions"><button type="button" data-my-song-action="edit" data-song-id="${escapeText(song.id)}" aria-label="Edit ${escapeText(song.title)}" title="Edit">&#9998;</button><button type="button" data-my-song-action="delete" data-song-id="${escapeText(song.id)}" aria-label="Hapus ${escapeText(song.title)}" title="Hapus"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button></span>`;
-      card.append(actions);
-      fragment.append(card);
-    });
-    mySongsList.append(fragment);
+      mySongsList.append(fragment);
+      if (end < visible.length) window.requestAnimationFrame(() => appendChunk(end));
+    };
+    appendChunk(0);
   }
 
   function handleMySongsSearchInput() {
@@ -3649,19 +3665,27 @@
     sidebarSettingsDialog.close();
   });
   let hasOpenedCollectionView = false;
+  let navigationRenderFrame = 0;
   function closeSidebar() {
     appSidebar.classList.remove('is-open');
     sidebarToggle.setAttribute('aria-expanded', 'false');
     sidebarBackdrop.hidden = true;
   }
   function activateAppView(view, options = {}) {
+    if (view !== 'collection') collectionRenderGeneration += 1;
+    if (view !== 'my-songs') mySongsRenderGeneration += 1;
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
     appViewPanels.forEach((panel) => {
       const activePanel = panel.dataset.appViewPanel === panelView;
       panel.classList.toggle('is-active', activePanel);
       panel.removeAttribute('hidden');
     });
-    if (view === 'schedule') renderSchedules();
+    if (view === 'schedule') {
+      window.cancelAnimationFrame(navigationRenderFrame);
+      navigationRenderFrame = window.requestAnimationFrame(() => {
+        if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'schedule') renderSchedules();
+      });
+    }
     appViewButtons.forEach((button) => {
       const active = button.dataset.appView === view;
       button.classList.toggle('is-active', active);
@@ -3876,8 +3900,7 @@
     const displayNumber = displaySongNumber(song.number);
     document.getElementById('dialog-title').textContent = `${displayNumber ? `${displayNumber}. ` : ''}${song.title}`;
     if (!document.getElementById('reference-dialog').hidden) document.getElementById('reference-title').textContent = document.getElementById('dialog-title').textContent;
-    renderPreviewMetadata();
-    renderSongContent();
+    const renderGeneration = ++previewRenderGeneration;
     const readerPosition = document.getElementById('reader-position');
     const hasWorshipGrouping = queue.some((item) => typeof item.preWorship === 'boolean');
     if (hasWorshipGrouping) {
@@ -3895,10 +3918,15 @@
     document.getElementById('next-song').disabled = currentSongIndex < 0 || currentSongIndex >= queue.length - 1;
     if (showPreview && !dialog.open) dialog.showModal();
     if (dialog.open) document.body.classList.add('song-reader-open');
-    scheduleSongFit();
     preview.scrollTop = 0;
     preview.scrollLeft = 0;
     if (dialog.open) document.getElementById('close-dialog').focus();
+    if (showPreview || dialog.open) window.requestAnimationFrame(() => {
+      if (renderGeneration !== previewRenderGeneration) return;
+      renderPreviewMetadata();
+      renderSongContent();
+      scheduleSongFit();
+    });
   }
 
   function openSongFromList(song, queue = songs, queueIndex, fromCollection = false) {
@@ -5634,7 +5662,8 @@
     const returnTarget = scoreImageReturnTarget;
     scoreImageDialog.close();
     if (returnTarget === 'schedule' && viewedScheduleId) {
-      renderScheduleView(viewedScheduleId);
+      const scheduleId = viewedScheduleId;
+      window.requestAnimationFrame(() => renderScheduleView(scheduleId));
       if (!scheduleViewDialog.open) {
         scheduleViewDialog.showModal();
         document.body.classList.add('schedule-view-open');
@@ -5673,8 +5702,6 @@
     scoreNextGeneralSongButton.hidden = true;
     chordModeSelect.value = 'numbers';
     transposeControls.hidden = true;
-    renderPreviewMetadata();
-    renderSongContent();
     if (returnToLyrics && lyricSong) {
       scoreViewerFromList = false;
       openSong(lyricSong, lyricQueue, lyricIndex, true, lyricFromCollection);
