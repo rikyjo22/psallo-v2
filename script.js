@@ -925,8 +925,10 @@
       count.textContent = String(songs.length);
       if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'collection') updateHeaderIdentity('collection');
       buildFilters();
-      renderList();
-      renderSchedules();
+      window.requestAnimationFrame(() => {
+        renderList();
+        renderSchedules();
+      });
       if (offlineAppEnabled) void reconcileOfflineImageCache().finally(() => downloadAllOfflineImages());
     }
 
@@ -1031,8 +1033,10 @@
       if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'collection') updateHeaderIdentity('collection');
       setSyncStatus(`Update terakhir: ${formatUpdatedAt(cached.updatedAt)}`);
       buildFilters();
-      renderList();
-      renderSchedules();
+      window.requestAnimationFrame(() => {
+        renderList();
+        renderSchedules();
+      });
       if (offlineAppEnabled) window.setTimeout(() => { if (offlineAppEnabled) void downloadAllOfflineImages(); }, 900);
       return true;
     } catch (error) {
@@ -1935,6 +1939,7 @@
       activeScheduleId = '';
       try { localStorage.removeItem(ACTIVE_SCHEDULE_KEY); } catch (error) { /* Ignore unavailable storage. */ }
       updateScheduleDeactivateActionState();
+      refreshScheduleTargetControls();
       return;
     }
     if (!schedules.some((schedule) => schedule.id === activeScheduleId)) activeScheduleId = schedules[0] ? schedules[0].id : '';
@@ -1943,6 +1948,7 @@
       else localStorage.removeItem(ACTIVE_SCHEDULE_KEY);
     } catch (error) { console.warn('Jadwal aktif tidak dapat disimpan:', error); }
     updateScheduleDeactivateActionState();
+    refreshScheduleTargetControls();
   }
 
   function updateScheduleDeactivateActionState() {
@@ -1969,6 +1975,12 @@
       container.hidden = false;
       container.innerHTML = `<span class="active-schedule-info-icon" aria-hidden="true">&#128197;</span><span class="active-schedule-info-copy"><strong>Jadwal yang Aktif</strong><span>${escapeText(title)} <span aria-hidden="true">&#183;</span> ${escapeText(date)} <span aria-hidden="true">&#183;</span> ${songCount} lagu</span></span>`;
     });
+  }
+  function refreshScheduleTargetControls() {
+    const enabled = Boolean(activeScheduleId) && !schedulesDisabled && schedules.length > 0;
+    document.querySelectorAll('.song-list .add-to-schedule').forEach((button) => { button.hidden = !enabled; });
+    document.querySelectorAll('.my-song-add-action').forEach((button) => { button.disabled = !enabled; });
+    updateActiveScheduleInfo();
   }
 
   function showAppToast(message) {
@@ -2073,9 +2085,8 @@
     activeScheduleId = radio.value;
     schedulesDisabled = false;
     saveSchedules();
-    renderSchedules();
-    renderList();
-    renderMySongs();
+    refreshScheduleTargetControls();
+    window.requestAnimationFrame(() => renderSchedules());
     const selected = schedules.find((item) => item.id === activeScheduleId);
     scheduleStatus.textContent = `Jadwal aktif: ${selected.title || 'Jadwal tanpa nama'}.`;
   }
@@ -2084,9 +2095,8 @@
     schedulesDisabled = true;
     activeScheduleId = '';
     if (saveSchedules()) {
-      renderSchedules();
-      renderList();
-      renderMySongs();
+      refreshScheduleTargetControls();
+      window.requestAnimationFrame(() => renderSchedules());
       scheduleStatus.textContent = schedules.length
         ? 'Semua jadwal dinonaktifkan. Pilih jadwal untuk mengaktifkan kembali.'
         : 'Belum ada jadwal ibadah.';
@@ -2634,16 +2644,15 @@
         card.append(openButton);
         const quickActions = document.createElement('span');
         quickActions.className = 'song-card-quick-actions';
-        if (schedules.length && activeScheduleId && !schedulesDisabled) {
-          const addButton = document.createElement('button');
-          addButton.type = 'button';
-          addButton.className = 'add-to-schedule';
-          addButton.dataset.addSong = song.id;
-          addButton.setAttribute('aria-label', `Tambahkan ${song.title} ke jadwal terpilih`);
-          addButton.title = 'Add to Jadwal';
-          addButton.textContent = 'Add to Jadwal';
-          quickActions.append(addButton);
-        }
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.className = 'add-to-schedule';
+        addButton.dataset.addSong = song.id;
+        addButton.setAttribute('aria-label', `Tambahkan ${song.title} ke jadwal terpilih`);
+        addButton.title = 'Add to Jadwal';
+        addButton.textContent = 'Add to Jadwal';
+        addButton.hidden = !(schedules.length && activeScheduleId && !schedulesDisabled);
+        quickActions.append(addButton);
         const saveLocalButton = document.createElement('button');
         saveLocalButton.type = 'button';
         saveLocalButton.className = 'add-to-my-songs';
@@ -3691,8 +3700,6 @@
       button.classList.toggle('is-active', active);
       button.setAttribute('aria-current', active ? 'page' : 'false');
     });
-    updateHeaderActions(view);
-    updateHeaderIdentity(view);
     const appShell = document.querySelector('.app-shell');
     if (appShell) {
       appShell.classList.toggle('schedule-view-active', view === 'schedule');
@@ -3713,6 +3720,11 @@
       if (!songs.length && !options.skipInitialLoad) loadSongs(true, false);
     }
     closeSidebar();
+    window.requestAnimationFrame(() => {
+      if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView !== view) return;
+      updateHeaderActions(view);
+      updateHeaderIdentity(view);
+    });
   }
   sidebarToggle.addEventListener('click', () => {
     const open = !appSidebar.classList.contains('is-open');
