@@ -3655,7 +3655,7 @@
     sidebarToggle.setAttribute('aria-expanded', 'false');
     sidebarBackdrop.hidden = true;
   }
-  function activateAppView(view) {
+  function activateAppView(view, options = {}) {
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
     appViewPanels.forEach((panel) => {
       const activePanel = panel.dataset.appViewPanel === panelView;
@@ -3687,7 +3687,7 @@
     if (view === 'settings') activateLibraryTab(instrumentProfileButton);
     if (view === 'collection' && !hasOpenedCollectionView) {
       hasOpenedCollectionView = true;
-      if (!songs.length) loadSongs(true, false);
+      if (!songs.length && !options.skipInitialLoad) loadSongs(true, false);
     }
     closeSidebar();
   }
@@ -6105,6 +6105,8 @@
   document.addEventListener('visibilitychange', resumeOfflineDownload);
   window.addEventListener('online', resumeOfflineDownload);
   filters.replaceChildren();
+  const initialAppView = currentSidebarOrder()[0] || 'collection';
+  activateAppView(initialAppView, { skipInitialLoad: true });
   // Reveal the shell before parsing potentially large local caches so the sidebar
   // remains interactive while data is restored in the next task.
   document.documentElement.classList.remove('app-preload');
@@ -6123,9 +6125,10 @@
       count.textContent = '0';
       setStatus('Belum ada data lokal. Tekan "Perbarui data" untuk memuat lagu dari database.');
       setSyncStatus('Belum disinkronkan');
+      if (initialAppView === 'collection') loadSongs(true, false);
     }
     if (hasCache && isSongCacheOlderThanOneDay(cachedSongsUpdatedAt)) loadSongs(true, false);
-    activateAppView(currentSidebarOrder()[0] || 'collection');
+    activateAppView(initialAppView);
   }, 50);
 })();
 
