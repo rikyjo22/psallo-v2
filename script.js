@@ -3172,10 +3172,8 @@
       previewButton.className = 'my-song-existing-score-preview';
       previewButton.dataset.imageIndex = String(index);
       const image = document.createElement('img');
-      image.src = scoreImageCandidates(file)[0] || '';
-      const imageId = scoreImageId(file);
-      if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
-        if (offlineUrl && image.isConnected) image.src = offlineUrl;
+      void resolveScoreImageSource(file).then((resolved) => {
+        if (resolved && image.isConnected) image.src = resolved.url;
       });
       image.alt = `Gambar partitur tersimpan ${index + 1}`;
       const name = document.createElement('span');
@@ -3194,17 +3192,18 @@
     const instrument = name?.value === 'Others' ? row.querySelector('.my-song-other-instrument').value.trim() : name?.value;
     const selectedUrl = button.dataset.previewUrl;
     const file = selectedUrl ? null : editingMySong?.images?.[instrument]?.[Number(button.dataset.imageIndex)];
-    const url = selectedUrl || scoreImageCandidates(file)[0] || '';
-    if (!url) return;
     const dialog = document.getElementById('my-song-image-preview');
-    document.getElementById('my-song-image-preview-img').src = url;
-    const imageId = scoreImageId(file);
-    if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
-      const previewImage = document.getElementById('my-song-image-preview-img');
-      if (offlineUrl && previewImage.isConnected) previewImage.src = offlineUrl;
-    });
+    const previewImage = document.getElementById('my-song-image-preview-img');
+    previewImage.removeAttribute('src');
     document.getElementById('my-song-image-preview-name').textContent = button.dataset.previewName || file?.name || 'Gambar partitur';
     dialog.showModal();
+    if (selectedUrl) {
+      previewImage.src = selectedUrl;
+      return;
+    }
+    void resolveScoreImageSource(file).then((resolved) => {
+      if (resolved && dialog.open) previewImage.src = resolved.url;
+    });
   });
 
   function populateMySongInstrumentSelect(select, otherInput, selectedName) {
@@ -4067,8 +4066,8 @@
     });
     scorePages.replaceChildren();
     files.forEach((file, index) => {
-      const urls = scoreImageCandidates(file);
-      if (!urls.length) return;
+      const onlineUrls = scoreImageOnlineCandidates(file);
+      if (!scoreImageLocalUrl(file) && !scoreImageId(file) && !onlineUrls.length) return;
       const figure = document.createElement('figure');
       figure.className = 'score-page';
       const image = document.createElement('img');
@@ -4092,18 +4091,18 @@
       });
       const caption = document.createElement('figcaption');
       caption.textContent = file && typeof file === 'object' && file.name ? file.name : `${instrument} · ${index + 1}`;
-      let attempt = 0;
+      let attempt = -1;
       image.addEventListener('error', () => {
         attempt += 1;
-        if (attempt < urls.length) {
-          image.src = urls[attempt];
+        if (attempt < onlineUrls.length) {
+          image.src = onlineUrls[attempt];
           return;
         }
         image.remove();
         caption.textContent = 'Tidak dapat menampilkan gambar di halaman ini. ';
         const link = document.createElement('a');
         const fileId = scoreImageId(file);
-        link.href = fileId ? `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view` : urls[0];
+        link.href = fileId ? `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view` : (onlineUrls[0] || '#');
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
         link.textContent = 'Buka partitur di Google Drive';
@@ -4111,11 +4110,12 @@
       });
       figure.append(image, caption);
       scorePages.append(figure);
-      image.src = urls[0];
       const imageId = scoreImageId(file);
       image.dataset.offlineImageId = imageId;
-      if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
-        if (offlineUrl && image.isConnected && image.dataset.offlineImageId === imageId) image.src = offlineUrl;
+      void resolveScoreImageSource(file).then((resolved) => {
+        if (!resolved || !image.isConnected || image.dataset.offlineImageId !== imageId) return;
+        image.src = resolved.url;
+        if (resolved.candidates) image.dataset.onlineCandidates = JSON.stringify(resolved.candidates);
       });
     });
     scorePages.scrollLeft = 0;
@@ -4463,19 +4463,17 @@
 
   function renderFullScoreImage() {
     const file = activeScoreFiles[activeScoreIndex];
-    const urls = scoreImageCandidates(file);
-    if (!urls.length) return;
+    const onlineUrls = scoreImageOnlineCandidates(file);
+    if (!scoreImageLocalUrl(file) && !scoreImageId(file) && !onlineUrls.length) return;
     setScoreImageSource(file);
     resetScoreImageZoom();
-    fullScoreImage.dataset.candidates = JSON.stringify(urls);
-    fullScoreImage.dataset.attempt = '0';
-    fullScoreImage.src = urls[0];
-    const imageId = scoreImageId(file);
-    if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
-      if (offlineUrl && fullScoreImage.isConnected && activeScoreFiles[activeScoreIndex] === file) {
-        fullScoreImage.src = offlineUrl;
-        setScoreImageSource(file, 'Offline');
-      }
+    fullScoreImage.dataset.candidates = JSON.stringify(onlineUrls);
+    fullScoreImage.dataset.attempt = '-1';
+    void resolveScoreImageSource(file).then((resolved) => {
+      if (!resolved || !fullScoreImage.isConnected || activeScoreFiles[activeScoreIndex] !== file) return;
+      fullScoreImage.src = resolved.url;
+      setScoreImageSource(file, resolved.source);
+      if (resolved.candidates) fullScoreImage.dataset.candidates = JSON.stringify(resolved.candidates);
     });
     const showingIntro = scoreImageMode === 'intro';
     updateScoreKeyWatermark();
@@ -4682,6 +4680,8 @@
   }
 
   function scoreImageCandidates(file) {
+    const localUrl = scoreImageLocalUrl(file);
+    if (localUrl) return [localUrl];
     const id = scoreImageId(file);
     if (id) {
       const offlineUrl = offlineImageObjectUrls.get(id);
@@ -4703,11 +4703,43 @@
     ];
     return [...new Set(candidates.filter(Boolean))];
   }
+  function scoreImageLocalUrl(file) {
+    if (file && typeof file === 'object' && file.localCacheKey) {
+      const cachedUrl = scheduleImageObjectUrls.get(String(file.localCacheKey));
+      if (cachedUrl) return cachedUrl;
+    }
+    const source = typeof file === 'string' ? file : String((file && (file.url || file.dataUrl || file.data)) || '');
+    return /^(?:data:image\/|blob:)/i.test(source) ? source : '';
+  }
+  function scoreImageOnlineCandidates(file) {
+    const source = typeof file === 'string' ? file : String((file && (file.url || file.driveUrl)) || '');
+    const id = scoreImageId(file);
+    if (!id) return source && !/^(?:data:image\/|blob:)/i.test(source) ? [source] : [];
+    const encodedId = encodeURIComponent(id);
+    return [...new Set([
+      `https://drive.google.com/thumbnail?id=${encodedId}&sz=w2000`,
+      `https://lh3.googleusercontent.com/d/${encodedId}=w2000`,
+      `https://drive.google.com/uc?export=view&id=${encodedId}`,
+      source
+    ].filter(Boolean))];
+  }
+  async function resolveScoreImageSource(file) {
+    const localUrl = scoreImageLocalUrl(file);
+    if (localUrl) return { url: localUrl, source: 'Local' };
+    const id = scoreImageId(file);
+    if (id) {
+      const offlineUrl = await ensureOfflineImageObjectUrl(id);
+      if (offlineUrl) return { url: offlineUrl, source: 'Offline' };
+    }
+    const onlineUrls = scoreImageOnlineCandidates(file);
+    return onlineUrls.length ? { url: onlineUrls[0], source: 'Online', candidates: onlineUrls } : null;
+  }
   function scoreImageSourceType(file) {
+    const localUrl = scoreImageLocalUrl(file);
+    if (localUrl) return 'Local';
     const id = scoreImageId(file);
     if (id && (offlineImageObjectUrls.has(id) || offlineImageKeys.has(id))) return 'Offline';
     const source = typeof file === 'string' ? file : String((file && (file.url || file.dataUrl || file.data)) || '');
-    if (/^(?:data:image\/|blob:)/i.test(source)) return 'Local';
     return id || /^https?:\/\//i.test(source) ? 'Online' : 'Local';
   }
   function setScoreImageSource(file, source = scoreImageSourceType(file)) {
