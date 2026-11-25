@@ -781,7 +781,7 @@
   }
 
   function defaultKeyWatermarkSettings() {
-    return { showKey: true, showGenre: true, showNote: true, fontSize: 19, genreFontSize: 6, noteFontSize: 5, transparency: 45, color: '#176b4b', genreColor: '#176b4b', noteColor: '#176b4b', outlineWidth: 0, outlineColor: '#000000', outlinePosition: 'outer', shadowWidth: 2, shadowColor: '#000000', shadowX: 0, shadowY: 2, shadowBlur: 9 };
+    return { showKey: true, showGenre: true, showNote: true, textAlign: 'center', fontSize: 19, genreFontSize: 6, noteFontSize: 5, color: '#176b4b', genreColor: '#176b4b', noteColor: '#176b4b', keyTransparency: 45, genreTransparency: 45, noteTransparency: 45, keyOutlineWidth: 0, genreOutlineWidth: 0, noteOutlineWidth: 0, keyOutlineColor: '#000000', genreOutlineColor: '#000000', noteOutlineColor: '#000000', keyOutlinePosition: 'outer', genreOutlinePosition: 'outer', noteOutlinePosition: 'outer', keyShadowWidth: 2, genreShadowWidth: 2, noteShadowWidth: 2, keyShadowColor: '#000000', genreShadowColor: '#000000', noteShadowColor: '#000000', keyShadowX: 0, genreShadowX: 0, noteShadowX: 0, keyShadowY: 2, genreShadowY: 2, noteShadowY: 2, keyShadowBlur: 9, genreShadowBlur: 9, noteShadowBlur: 9 };
   }
 
   function readKeyWatermarkSettings() {
@@ -798,15 +798,22 @@
 
   function normalizeKeyWatermarkSettings(value) {
     const defaults = defaultKeyWatermarkSettings();
-    const source = value && typeof value === 'object' ? value : {};
+    const rawSource = value && typeof value === 'object' ? value : {};
+    // Migrate settings saved before per-line controls were introduced.
+    const source = { ...rawSource };
+    ['Transparency', 'OutlineWidth', 'OutlineColor', 'OutlinePosition', 'ShadowWidth', 'ShadowColor', 'ShadowX', 'ShadowY', 'ShadowBlur'].forEach((suffix) => {
+      const legacy = rawSource[suffix[0].toLowerCase() + suffix.slice(1)];
+      if (legacy !== undefined) ['key', 'genre', 'note'].forEach((prefix) => { if (source[`${prefix}${suffix}`] === undefined) source[`${prefix}${suffix}`] = legacy; });
+    });
     const normalized = Object.fromEntries(Object.entries(defaults).map(([name, fallback]) => {
-      if (name === 'color' || name === 'genreColor' || name === 'noteColor' || name === 'outlineColor' || name === 'shadowColor') return [name, /^#[0-9a-f]{6}$/i.test(String(source[name] || '')) ? String(source[name]) : fallback];
+      if (name.toLowerCase().includes('color')) return [name, /^#[0-9a-f]{6}$/i.test(String(source[name] || '')) ? String(source[name]) : fallback];
       if (name === 'showKey' || name === 'showGenre' || name === 'showNote') return [name, source[name] === undefined ? fallback : Boolean(source[name])];
-      if (name === 'outlinePosition') return [name, source[name] === 'inner' ? 'inner' : 'outer'];
+      if (name === 'textAlign') return [name, ['left', 'center', 'right'].includes(source[name]) ? source[name] : fallback];
+      if (name.toLowerCase().includes('position')) return [name, source[name] === 'inner' ? 'inner' : 'outer'];
       const number = Number(source[name]);
       return [name, Number.isFinite(number) ? number : fallback];
     }));
-    normalized.transparency = Math.max(0, Math.min(100, normalized.transparency));
+    ['keyTransparency', 'genreTransparency', 'noteTransparency'].forEach((name) => { normalized[name] = Math.max(0, Math.min(100, normalized[name])); });
     normalized.genreFontSize = Math.max(2, Math.min(20, normalized.genreFontSize));
     normalized.noteFontSize = Math.max(2, Math.min(20, normalized.noteFontSize));
     return normalized;
@@ -2211,7 +2218,10 @@
       card.append(openButton);
       const quickActions = document.createElement('span');
       quickActions.className = 'song-card-quick-actions';
-      if (schedules.length) {
+      // A song can only be added while there is an active schedule target.
+      // When all schedules are deactivated, remove this action from each
+      // collection item instead of leaving a button that cannot do anything.
+      if (schedules.length && activeScheduleId && !schedulesDisabled) {
         const addButton = document.createElement('button');
         addButton.type = 'button';
         addButton.className = 'add-to-schedule';
@@ -3724,23 +3734,13 @@
     scoreKeyWatermark.hidden = !enabled || controlsHidden;
     const renderSignature = JSON.stringify([
       scoreImageMode, enabled, watermark, genre, note,
-      settings.showKey, settings.showGenre, settings.showNote,
-      settings.fontSize, settings.genreFontSize, settings.noteFontSize, settings.transparency,
-      settings.color, settings.genreColor, settings.noteColor,
-      settings.outlineWidth, settings.outlinePosition, settings.outlineColor,
-      settings.shadowX, settings.shadowY, settings.shadowBlur, settings.shadowColor
+      settings
     ]);
     if (scoreKeyWatermark.dataset.renderSignature === renderSignature) return;
     scoreKeyWatermark.dataset.renderSignature = renderSignature;
     scoreKeyWatermarkValue.style.setProperty('font-size', `clamp(42px, ${settings.fontSize}vw, 34vw)`, 'important');
     scoreKeyWatermarkValue.style.setProperty('font-weight', '900', 'important');
-    const textOpacity = Math.max(0, Math.min(1, (100 - settings.transparency) / 100));
-    scoreKeyWatermarkValue.style.setProperty('color', settings.color, 'important');
-    scoreKeyWatermarkValue.style.setProperty('opacity', String(textOpacity), 'important');
-    scoreKeyWatermarkValue.style.setProperty('-webkit-text-fill-color', settings.color, 'important');
-    scoreKeyWatermarkValue.style.setProperty('-webkit-text-stroke', `${settings.outlineWidth}px ${settings.outlineColor}`, 'important');
-    scoreKeyWatermarkValue.style.setProperty('paint-order', settings.outlinePosition === 'outer' ? 'stroke fill' : 'fill stroke', 'important');
-    scoreKeyWatermarkValue.style.setProperty('text-shadow', `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`, 'important');
+    scoreKeyWatermarkValue.style.setProperty('text-align', settings.textAlign, 'important');
     const ensureWatermarkLine = (className) => {
       let line = scoreKeyWatermarkValue.querySelector(`.${className}`);
       if (!line) {
@@ -3753,56 +3753,85 @@
     const keyLine = ensureWatermarkLine('score-key-watermark-key');
     const genreLine = ensureWatermarkLine('score-key-watermark-genre');
     const noteLine = ensureWatermarkLine('score-key-watermark-note');
+    const styleWatermarkLine = (line, prefix, color) => {
+      line.style.color = color;
+      line.style.setProperty('-webkit-text-fill-color', color, 'important');
+      line.style.setProperty('opacity', String(Math.max(0, Math.min(1, (100 - settings[`${prefix}Transparency`]) / 100))), 'important');
+      line.style.setProperty('-webkit-text-stroke', `${settings[`${prefix}OutlineWidth`]}px ${settings[`${prefix}OutlineColor`]}`, 'important');
+      line.style.setProperty('paint-order', settings[`${prefix}OutlinePosition`] === 'outer' ? 'stroke fill' : 'fill stroke', 'important');
+      line.style.setProperty('text-shadow', `${settings[`${prefix}ShadowX`]}px ${settings[`${prefix}ShadowY`]}px ${settings[`${prefix}ShadowBlur`]}px ${settings[`${prefix}ShadowColor`]}`, 'important');
+    };
     keyLine.textContent = watermark;
-    keyLine.style.color = settings.color;
-    keyLine.style.setProperty('-webkit-text-fill-color', settings.color, 'important');
+    styleWatermarkLine(keyLine, 'key', settings.color);
     keyLine.hidden = !settings.showKey || !watermark;
     genreLine.textContent = genre ? `(${genre})` : '';
-    genreLine.style.color = settings.genreColor;
-    genreLine.style.setProperty('-webkit-text-fill-color', settings.genreColor, 'important');
-    noteLine.textContent = note ? `-> ${note}` : '';
-    noteLine.style.color = settings.noteColor;
-    noteLine.style.setProperty('-webkit-text-fill-color', settings.noteColor, 'important');
+    styleWatermarkLine(genreLine, 'genre', settings.genreColor);
+    noteLine.textContent = note;
+    styleWatermarkLine(noteLine, 'note', settings.noteColor);
     genreLine.style.fontSize = `clamp(18px, ${settings.genreFontSize}vw, 20vw)`;
     noteLine.style.fontSize = `clamp(16px, ${settings.noteFontSize}vw, 18vw)`;
     genreLine.hidden = !settings.showGenre || !genre;
     noteLine.hidden = !settings.showNote || !note;
+    genreLine.style.display = settings.showGenre && genre ? 'block' : 'none';
+    noteLine.style.display = settings.showNote && note ? 'block' : 'none';
   }
 
-  const keyWatermarkControlIds = ['font-size', 'genre-font-size', 'note-font-size', 'transparency', 'color', 'genre-color', 'note-color', 'outline-width', 'outline-color', 'shadow-width', 'shadow-color', 'shadow-x', 'shadow-y', 'shadow-blur'];
+  const keyWatermarkControlIds = ['font-size', 'genre-font-size', 'note-font-size', 'key-transparency', 'genre-transparency', 'note-transparency', 'color', 'genre-color', 'note-color', 'key-outline-width', 'genre-outline-width', 'note-outline-width', 'key-outline-color', 'genre-outline-color', 'note-outline-color', 'key-shadow-width', 'genre-shadow-width', 'note-shadow-width', 'key-shadow-color', 'genre-shadow-color', 'note-shadow-color', 'key-shadow-x', 'genre-shadow-x', 'note-shadow-x', 'key-shadow-y', 'genre-shadow-y', 'note-shadow-y', 'key-shadow-blur', 'genre-shadow-blur', 'note-shadow-blur'];
+  setupWatermarkSections();
   function keyWatermarkSettingsFromForm() {
-    const settings = {};
-    keyWatermarkControlIds.forEach((name) => { settings[name.replace(/-/g, '')] = Number(document.getElementById(`key-watermark-${name}`).value); });
+    const value = (name) => document.getElementById(`key-watermark-${name}`).value;
     return normalizeKeyWatermarkSettings({
-      showKey: document.getElementById('key-watermark-show-key').checked, showGenre: document.getElementById('key-watermark-show-genre').checked, showNote: document.getElementById('key-watermark-show-note').checked, outlinePosition: document.getElementById('key-watermark-outline-position').value, fontSize: settings.fontsize, genreFontSize: settings.genrefontsize, noteFontSize: settings.notefontsize, transparency: settings.transparency, color: document.getElementById('key-watermark-color').value, genreColor: document.getElementById('key-watermark-genre-color').value, noteColor: document.getElementById('key-watermark-note-color').value, outlineWidth: settings.outlinewidth, outlineColor: document.getElementById('key-watermark-outline-color').value,
-      shadowWidth: settings.shadowwidth, shadowColor: document.getElementById('key-watermark-shadow-color').value, shadowX: settings.shadowx, shadowY: settings.shadowy, shadowBlur: settings.shadowblur
+      showKey: document.getElementById('key-watermark-show-key').checked, showGenre: document.getElementById('key-watermark-show-genre').checked, showNote: document.getElementById('key-watermark-show-note').checked, textAlign: document.querySelector('input[name="key-watermark-text-align"]:checked')?.value || 'center', fontSize: Number(value('font-size')), genreFontSize: Number(value('genre-font-size')), noteFontSize: Number(value('note-font-size')), color: value('color'), genreColor: value('genre-color'), noteColor: value('note-color'),
+      keyTransparency: Number(value('key-transparency')), genreTransparency: Number(value('genre-transparency')), noteTransparency: Number(value('note-transparency')), keyOutlineWidth: Number(value('key-outline-width')), genreOutlineWidth: Number(value('genre-outline-width')), noteOutlineWidth: Number(value('note-outline-width')), keyOutlineColor: value('key-outline-color'), genreOutlineColor: value('genre-outline-color'), noteOutlineColor: value('note-outline-color'), keyOutlinePosition: value('key-outline-position'), genreOutlinePosition: value('genre-outline-position'), noteOutlinePosition: value('note-outline-position'), keyShadowWidth: Number(value('key-shadow-width')), genreShadowWidth: Number(value('genre-shadow-width')), noteShadowWidth: Number(value('note-shadow-width')), keyShadowColor: value('key-shadow-color'), genreShadowColor: value('genre-shadow-color'), noteShadowColor: value('note-shadow-color'), keyShadowX: Number(value('key-shadow-x')), genreShadowX: Number(value('genre-shadow-x')), noteShadowX: Number(value('note-shadow-x')), keyShadowY: Number(value('key-shadow-y')), genreShadowY: Number(value('genre-shadow-y')), noteShadowY: Number(value('note-shadow-y')), keyShadowBlur: Number(value('key-shadow-blur')), genreShadowBlur: Number(value('genre-shadow-blur')), noteShadowBlur: Number(value('note-shadow-blur'))
     });
   }
 
   function updateKeyWatermarkPreview() {
     const settings = keyWatermarkSettingsFromForm();
     const preview = keyWatermarkPreview;
-    preview.style.setProperty('font-size', `${Math.max(30, Math.min(110, settings.fontSize * 4.5))}px`, 'important');
-    preview.querySelector('.key-watermark-preview-key').hidden = !settings.showKey;
-    preview.querySelector('.key-watermark-preview-genre').hidden = !settings.showGenre;
-    preview.querySelector('.key-watermark-preview-note').hidden = !settings.showNote;
-    preview.querySelector('.key-watermark-preview-genre').style.fontSize = `${Math.max(12, Math.min(36, settings.genreFontSize * 4.5))}px`;
-    preview.querySelector('.key-watermark-preview-note').style.fontSize = `${Math.max(12, Math.min(36, settings.noteFontSize * 4.5))}px`;
-    preview.querySelector('.key-watermark-preview-key').style.color = settings.color;
-    preview.querySelector('.key-watermark-preview-genre').style.color = settings.genreColor;
-    preview.querySelector('.key-watermark-preview-note').style.color = settings.noteColor;
-    preview.querySelector('.key-watermark-preview-key').style.setProperty('-webkit-text-fill-color', settings.color, 'important');
-    preview.querySelector('.key-watermark-preview-genre').style.setProperty('-webkit-text-fill-color', settings.genreColor, 'important');
-    preview.querySelector('.key-watermark-preview-note').style.setProperty('-webkit-text-fill-color', settings.noteColor, 'important');
+    const previewKey = preview.querySelector('.key-watermark-preview-key');
+    const previewGenre = preview.querySelector('.key-watermark-preview-genre');
+    const previewNote = preview.querySelector('.key-watermark-preview-note');
+    const showKey = document.getElementById('key-watermark-show-key').checked;
+    const showGenre = document.getElementById('key-watermark-show-genre').checked;
+    const showNote = document.getElementById('key-watermark-show-note').checked;
+    // Keep all three preview lines present while toggling only their visibility.
+    previewKey.textContent = 'A=1';
+    previewGenre.textContent = '(Slow Beat)';
+    previewNote.textContent = 'Intro Biola';
+    preview.style.setProperty('text-align', settings.textAlign, 'important');
+    // Match the full-screen score watermark sizing exactly; do not cap the
+    // preview value so large settings remain visibly large here as well.
+    preview.style.setProperty('font-size', `clamp(42px, ${settings.fontSize}vw, 34vw)`, 'important');
+    previewKey.hidden = !showKey;
+    previewGenre.hidden = !showGenre;
+    previewNote.hidden = !showNote;
+    previewKey.style.display = showKey ? 'block' : 'none';
+    previewGenre.style.display = showGenre ? 'block' : 'none';
+    previewNote.style.display = showNote ? 'block' : 'none';
+    previewGenre.style.fontSize = `clamp(18px, ${settings.genreFontSize}vw, 20vw)`;
+    previewNote.style.fontSize = `clamp(16px, ${settings.noteFontSize}vw, 18vw)`;
+    previewKey.style.color = settings.color;
+    previewGenre.style.color = settings.genreColor;
+    previewNote.style.color = settings.noteColor;
+    previewKey.style.setProperty('-webkit-text-fill-color', settings.color, 'important');
+    previewGenre.style.setProperty('-webkit-text-fill-color', settings.genreColor, 'important');
+    previewNote.style.setProperty('-webkit-text-fill-color', settings.noteColor, 'important');
     preview.style.setProperty('color', settings.color, 'important');
-    preview.style.setProperty('opacity', String(Math.max(0, Math.min(1, (100 - settings.transparency) / 100))), 'important');
-    preview.style.setProperty('-webkit-text-fill-color', settings.color, 'important');
-    preview.style.setProperty('-webkit-text-stroke', `${settings.outlineWidth}px ${settings.outlineColor}`, 'important');
-    preview.style.setProperty('paint-order', settings.outlinePosition === 'outer' ? 'stroke fill' : 'fill stroke', 'important');
-    preview.style.setProperty('text-shadow', `${settings.shadowX}px ${settings.shadowY}px ${settings.shadowBlur}px ${settings.shadowColor}`, 'important');
+    const stylePreviewLine = (line, prefix, color) => {
+      line.style.color = color;
+      line.style.setProperty('text-align', settings.textAlign, 'important');
+      line.style.setProperty('-webkit-text-fill-color', color, 'important');
+      line.style.setProperty('opacity', String(Math.max(0, Math.min(1, (100 - settings[`${prefix}Transparency`]) / 100))), 'important');
+      line.style.setProperty('-webkit-text-stroke', `${settings[`${prefix}OutlineWidth`]}px ${settings[`${prefix}OutlineColor`]}`, 'important');
+      line.style.setProperty('paint-order', settings[`${prefix}OutlinePosition`] === 'outer' ? 'stroke fill' : 'fill stroke', 'important');
+      line.style.setProperty('text-shadow', `${settings[`${prefix}ShadowX`]}px ${settings[`${prefix}ShadowY`]}px ${settings[`${prefix}ShadowBlur`]}px ${settings[`${prefix}ShadowColor`]}`, 'important');
+    };
+    stylePreviewLine(previewKey, 'key', settings.color);
+    stylePreviewLine(previewGenre, 'genre', settings.genreColor);
+    stylePreviewLine(previewNote, 'note', settings.noteColor);
     const labels = {
-      fontSize: `${settings.fontSize}%`, genreFontSize: `${settings.genreFontSize}%`, noteFontSize: `${settings.noteFontSize}%`, transparency: `${settings.transparency}%`, color: settings.color.toUpperCase(), genreColor: settings.genreColor.toUpperCase(), noteColor: settings.noteColor.toUpperCase(), outlineWidth: `${settings.outlineWidth} px`, outlineColor: settings.outlineColor.toUpperCase(),
-      shadowWidth: `${settings.shadowWidth} px`, shadowColor: settings.shadowColor.toUpperCase(), shadowX: `${settings.shadowX} px`, shadowY: `${settings.shadowY} px`, shadowBlur: `${settings.shadowBlur} px`
+      fontSize: `${settings.fontSize}%`, genreFontSize: `${settings.genreFontSize}%`, noteFontSize: `${settings.noteFontSize}%`, keyTransparency: `${settings.keyTransparency}%`, genreTransparency: `${settings.genreTransparency}%`, noteTransparency: `${settings.noteTransparency}%`, color: settings.color.toUpperCase(), genreColor: settings.genreColor.toUpperCase(), noteColor: settings.noteColor.toUpperCase(), keyOutlineWidth: `${settings.keyOutlineWidth} px`, genreOutlineWidth: `${settings.genreOutlineWidth} px`, noteOutlineWidth: `${settings.noteOutlineWidth} px`, keyOutlineColor: settings.keyOutlineColor.toUpperCase(), genreOutlineColor: settings.genreOutlineColor.toUpperCase(), noteOutlineColor: settings.noteOutlineColor.toUpperCase(), keyShadowWidth: `${settings.keyShadowWidth} px`, genreShadowWidth: `${settings.genreShadowWidth} px`, noteShadowWidth: `${settings.noteShadowWidth} px`, keyShadowColor: settings.keyShadowColor.toUpperCase(), genreShadowColor: settings.genreShadowColor.toUpperCase(), noteShadowColor: settings.noteShadowColor.toUpperCase(), keyShadowX: `${settings.keyShadowX} px`, genreShadowX: `${settings.genreShadowX} px`, noteShadowX: `${settings.noteShadowX} px`, keyShadowY: `${settings.keyShadowY} px`, genreShadowY: `${settings.genreShadowY} px`, noteShadowY: `${settings.noteShadowY} px`, keyShadowBlur: `${settings.keyShadowBlur} px`, genreShadowBlur: `${settings.genreShadowBlur} px`, noteShadowBlur: `${settings.noteShadowBlur} px`
     };
     Object.entries(labels).forEach(([name, value]) => { document.getElementById(`key-watermark-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}-value`).textContent = value; });
   }
@@ -3812,11 +3841,76 @@
     document.getElementById('key-watermark-show-key').checked = settings.showKey;
     document.getElementById('key-watermark-show-genre').checked = settings.showGenre;
     document.getElementById('key-watermark-show-note').checked = settings.showNote;
-    document.getElementById('key-watermark-outline-position').value = settings.outlinePosition;
-    const values = { 'font-size': settings.fontSize, 'genre-font-size': settings.genreFontSize, 'note-font-size': settings.noteFontSize, transparency: settings.transparency, color: settings.color, 'genre-color': settings.genreColor, 'note-color': settings.noteColor, 'outline-width': settings.outlineWidth, 'outline-color': settings.outlineColor, 'shadow-width': settings.shadowWidth, 'shadow-color': settings.shadowColor, 'shadow-x': settings.shadowX, 'shadow-y': settings.shadowY, 'shadow-blur': settings.shadowBlur };
+    document.querySelectorAll('input[name="key-watermark-text-align"]').forEach((input) => { input.checked = input.value === settings.textAlign; });
+    document.getElementById('key-watermark-text-align-value').textContent = settings.textAlign[0].toUpperCase() + settings.textAlign.slice(1);
+    document.querySelectorAll('.key-watermark-status').forEach((status) => { const input = status.previousElementSibling; status.textContent = input.checked ? 'Aktif' : 'Tidak aktif'; });
+    const values = { 'font-size': settings.fontSize, 'genre-font-size': settings.genreFontSize, 'note-font-size': settings.noteFontSize, 'key-transparency': settings.keyTransparency, 'genre-transparency': settings.genreTransparency, 'note-transparency': settings.noteTransparency, color: settings.color, 'genre-color': settings.genreColor, 'note-color': settings.noteColor, 'key-outline-width': settings.keyOutlineWidth, 'genre-outline-width': settings.genreOutlineWidth, 'note-outline-width': settings.noteOutlineWidth, 'key-outline-color': settings.keyOutlineColor, 'genre-outline-color': settings.genreOutlineColor, 'note-outline-color': settings.noteOutlineColor, 'key-outline-position': settings.keyOutlinePosition, 'genre-outline-position': settings.genreOutlinePosition, 'note-outline-position': settings.noteOutlinePosition, 'key-shadow-width': settings.keyShadowWidth, 'genre-shadow-width': settings.genreShadowWidth, 'note-shadow-width': settings.noteShadowWidth, 'key-shadow-color': settings.keyShadowColor, 'genre-shadow-color': settings.genreShadowColor, 'note-shadow-color': settings.noteShadowColor, 'key-shadow-x': settings.keyShadowX, 'genre-shadow-x': settings.genreShadowX, 'note-shadow-x': settings.noteShadowX, 'key-shadow-y': settings.keyShadowY, 'genre-shadow-y': settings.genreShadowY, 'note-shadow-y': settings.noteShadowY, 'key-shadow-blur': settings.keyShadowBlur, 'genre-shadow-blur': settings.genreShadowBlur, 'note-shadow-blur': settings.noteShadowBlur };
     Object.entries(values).forEach(([name, value]) => { document.getElementById(`key-watermark-${name}`).value = String(value); });
+    document.querySelectorAll('.key-watermark-slider-toggle:not(.key-watermark-section-toggle):not(.key-watermark-align-toggle)').forEach((button) => {
+      button.setAttribute('aria-expanded', 'false');
+      button.classList.remove('is-expanded');
+      const indicator = button.querySelector('[aria-hidden="true"]');
+      if (indicator) indicator.textContent = '+';
+      const input = document.getElementById(button.getAttribute('aria-controls'));
+      if (input) input.hidden = true;
+    });
+    document.querySelectorAll('.key-watermark-section-toggle').forEach((button) => {
+      button.setAttribute('aria-expanded', 'false');
+      button.classList.remove('is-expanded');
+      const indicator = button.querySelector('[aria-hidden="true"]');
+      if (indicator) indicator.textContent = '+';
+      const content = document.getElementById(button.getAttribute('aria-controls'));
+      if (content) content.hidden = true;
+    });
+    const textAlignToggle = document.getElementById('key-watermark-text-align-toggle');
+    const textAlignOptions = document.getElementById('key-watermark-text-align-options');
+    textAlignToggle.setAttribute('aria-expanded', 'false');
+    textAlignToggle.classList.remove('is-expanded');
+    textAlignOptions.hidden = true;
     updateKeyWatermarkPreview();
     if (!keyWatermarkDialog.open) keyWatermarkDialog.showModal();
+  }
+
+  function setupWatermarkSections() {
+    document.querySelectorAll('.key-watermark-group').forEach((group, index) => {
+      const legend = group.querySelector('legend')?.textContent.trim() || `group-${index}`;
+      const prefix = legend === 'Nada Dasar' ? 'key' : legend === 'Jenis Musik' ? 'genre' : 'note';
+      ['outline', 'shadow'].forEach((section) => {
+        const controls = [...group.children].filter((element) => {
+          const id = element.querySelector?.('[id]')?.id || '';
+          return id.startsWith(`key-watermark-${prefix}-${section}-`);
+        });
+        if (!controls.length || group.querySelector(`[data-watermark-section-toggle="${prefix}-${section}"]`)) return;
+        const sectionId = `key-watermark-${prefix}-${section}-settings`;
+        const content = document.createElement('div');
+        content.id = sectionId;
+        content.className = 'key-watermark-section-content';
+        content.hidden = true;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'key-watermark-slider-toggle key-watermark-section-toggle';
+        button.dataset.section = `${prefix}-${section}`;
+        button.dataset.watermarkSectionToggle = `${prefix}-${section}`;
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', sectionId);
+        button.innerHTML = `<span>${section === 'outline' ? 'Outline' : 'Shadow'}</span><span aria-hidden="true">+</span>`;
+        const first = controls[0];
+        group.insertBefore(button, first);
+        group.insertBefore(content, first);
+        controls.forEach((element) => {
+          element.hidden = false;
+          element.dataset.watermarkSection = `${prefix}-${section}`;
+          content.append(element);
+        });
+        button.addEventListener('click', () => {
+          const expanded = button.getAttribute('aria-expanded') !== 'true';
+          button.setAttribute('aria-expanded', String(expanded));
+          button.classList.toggle('is-expanded', expanded);
+          button.querySelector('[aria-hidden="true"]').textContent = expanded ? '−' : '+';
+          content.hidden = !expanded;
+        });
+      });
+    });
   }
 
   function clampScoreImagePan(x, y, zoom = scoreImageZoom) {
@@ -5274,8 +5368,35 @@
     activeWorshipKeyWatermarkEnabled = Boolean(schedule.keyWatermarkEnabled);
   });
   keyWatermarkControlIds.forEach((name) => document.getElementById(`key-watermark-${name}`).addEventListener('input', updateKeyWatermarkPreview));
-  ['key-watermark-show-key', 'key-watermark-show-genre', 'key-watermark-show-note'].forEach((id) => document.getElementById(id).addEventListener('change', updateKeyWatermarkPreview));
-  document.getElementById('key-watermark-outline-position').addEventListener('change', updateKeyWatermarkPreview);
+  document.querySelectorAll('.key-watermark-slider-toggle:not(.key-watermark-section-toggle):not(.key-watermark-align-toggle)').forEach((button) => {
+    button.addEventListener('click', () => {
+      const input = document.getElementById(button.getAttribute('aria-controls'));
+      if (!input) return;
+      const expanded = input.hidden;
+      input.hidden = !expanded;
+      button.setAttribute('aria-expanded', String(expanded));
+      button.classList.toggle('is-expanded', expanded);
+      if (expanded) input.focus({ preventScroll: true });
+    });
+  });
+  const textAlignToggle = document.getElementById('key-watermark-text-align-toggle');
+  const textAlignOptions = document.getElementById('key-watermark-text-align-options');
+  textAlignToggle.addEventListener('click', () => {
+    const expanded = textAlignOptions.hidden;
+    textAlignOptions.hidden = !expanded;
+    textAlignToggle.setAttribute('aria-expanded', String(expanded));
+    textAlignToggle.classList.toggle('is-expanded', expanded);
+  });
+  document.querySelectorAll('input[name="key-watermark-text-align"]').forEach((input) => input.addEventListener('change', () => {
+    document.getElementById('key-watermark-text-align-value').textContent = input.value[0].toUpperCase() + input.value.slice(1);
+    updateKeyWatermarkPreview();
+  }));
+  ['key-watermark-show-key', 'key-watermark-show-genre', 'key-watermark-show-note'].forEach((id) => document.getElementById(id).addEventListener('change', (event) => {
+    const status = event.target.closest('.key-watermark-check')?.querySelector('.key-watermark-status');
+    if (status) status.textContent = event.target.checked ? 'Aktif' : 'Tidak aktif';
+    updateKeyWatermarkPreview();
+  }));
+  ['key', 'genre', 'note'].forEach((prefix) => document.getElementById(`key-watermark-${prefix}-outline-position`).addEventListener('change', updateKeyWatermarkPreview));
   document.getElementById('close-key-watermark').addEventListener('click', () => keyWatermarkDialog.close());
   keyWatermarkForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -5464,6 +5585,9 @@
   }
   if (hasCache && isSongCacheOlderThanOneDay(cachedSongsUpdatedAt)) loadSongs(true, false);
   activateAppView(currentSidebarOrder()[0] || 'collection');
+  // The initial HTML is kept hidden until the persisted theme and sidebar
+  // view have both been applied, preventing a default-theme/schedule flash.
+  document.documentElement.classList.remove('app-preload');
 })();
 
 
