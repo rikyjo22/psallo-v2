@@ -121,6 +121,9 @@
   const scoreNextGeneralSongLabel = document.getElementById('score-next-general-song-label');
   let songs = [];
   let mySongs = [];
+  const collectionSearchTextCache = new WeakMap();
+  const mySongSearchTextCache = new WeakMap();
+  let collectionSearchRenderTimer = 0;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
   let mySongsSort = 'title-asc';
@@ -344,6 +347,20 @@
     return title;
   }
   function normalize(value) { return String(value || '').toLocaleLowerCase('id').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function getCollectionSearchText(song) {
+    const cached = collectionSearchTextCache.get(song);
+    if (cached !== undefined) return cached;
+    const text = normalize([song.category, song.number, song.title, song.key, song.genre, song.songCreator, song.dateCreate, song.tempo, stripHtml(song.contentHtml)].join(' '));
+    collectionSearchTextCache.set(song, text);
+    return text;
+  }
+  function getMySongSearchText(song) {
+    const cached = mySongSearchTextCache.get(song);
+    if (cached !== undefined) return cached;
+    const text = normalize([song.number, song.title, stripHtml(song.contentHtml)].join(' '));
+    mySongSearchTextCache.set(song, text);
+    return text;
+  }
   function readInstrumentProfile() {
     try { return String(localStorage.getItem(INSTRUMENT_PROFILE_KEY) || '').trim(); }
     catch (error) { return ''; }
@@ -409,6 +426,22 @@
       localStorage.setItem(FONT_STYLE_KEY, fontStyle);
       localStorage.setItem(FONT_SIZE_KEY, fontSize);
     } catch (error) { /* Theme still applies for this page view. */ }
+    syncNativeSystemBars();
+  }
+  function syncNativeSystemBars(forceScoreBackground = null) {
+    const bridge = window.AndroidSystemBars;
+    if (!bridge || typeof bridge.setSystemBars !== 'function') return;
+    const scoreIsOpen = forceScoreBackground === null ? Boolean(scoreImageDialog?.open) : Boolean(forceScoreBackground);
+    const activeTheme = document.documentElement.dataset.theme || 'light';
+    const computedStyle = getComputedStyle(document.documentElement);
+    const pageBackground = computedStyle.getPropertyValue('--page-bg').trim() || '#f5f7f3';
+    const barColor = scoreIsOpen ? '#000000' : pageBackground;
+    const darkIcons = !scoreIsOpen && activeTheme !== 'dark';
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) themeColorMeta.setAttribute('content', barColor);
+    try {
+      bridge.setSystemBars(barColor, darkIcons);
+    } catch (error) { /* The web app remains usable outside the Android wrapper. */ }
   }
   function applyUserFontScale(percent) {
     const multiplier = Math.max(1, Math.min(1.3, Number(percent) / 100 || 1));
@@ -1399,6 +1432,7 @@
     if (closeLabel) closeLabel.textContent = returnLabel;
     document.getElementById('close-score-image').setAttribute('aria-label', `Tutup gambar dan ${returnLabel.toLowerCase()}`);
     if (!scoreImageDialog.open) scoreImageDialog.showModal();
+    syncNativeSystemBars(true);
     renderFullScoreImage();
     showScoreImageControls();
   }
@@ -2093,7 +2127,11 @@
   }
 
   function handleSearchInput() {
-    renderList();
+    if (collectionSearchRenderTimer) window.clearTimeout(collectionSearchRenderTimer);
+    collectionSearchRenderTimer = window.setTimeout(() => {
+      collectionSearchRenderTimer = 0;
+      renderList({ renderLocalSongs: false });
+    }, 60);
   }
   function handleScheduleNoteInput(event) {
     const textarea = event.target.closest('textarea[data-note-entry-id]');
@@ -2186,15 +2224,16 @@
     });
   }
 
-  function renderList() {
+  function renderList(options = {}) {
+    const renderLocalSongs = options.renderLocalSongs !== false;
     updateActiveScheduleInfo();
     const query = normalize(search.value.trim());
     const visible = sortSongsForDisplay(songs.filter((song) => {
       if (!matchesSongCategoryFilter(song, activeCategory)) return false;
       if (!query) return true;
-      return normalize([song.category, song.number, song.title, song.key, song.genre, song.songCreator, song.dateCreate, song.tempo, stripHtml(song.contentHtml)].join(' ')).includes(query);
+      return getCollectionSearchText(song).includes(query);
     }), collectionSort);
-    renderMySongs();
+    if (renderLocalSongs) renderMySongs();
     songList.replaceChildren();
     if (!songs.length) {
       setStatus('Belum ada lagu di database. Tambahkan lagu melalui Song Manager.');
@@ -2253,7 +2292,7 @@
     const query = normalize(mySongsSearch.value.trim());
     const selectedCategory = mySongsCategoryFilter.value || 'ALL';
     const visibleSongs = mySongs.filter((song) => matchesSongCategoryFilter(song, selectedCategory)
-      && (!query || normalize([song.number, song.title, stripHtml(song.contentHtml)].join(' ')).includes(query)));
+      && (!query || getMySongSearchText(song).includes(query)));
     const visible = sortSongsForDisplay(visibleSongs, mySongsSort);
     mySongsCount.textContent = String(mySongs.length);
     mySongsList.classList.toggle('is-upload-request-mode', isMySongUploadMode);
@@ -3655,6 +3694,7 @@
     const hasOtherInstruments = renderScoreImageInstrumentButtons();
     renderFullScoreImage();
     if (!scoreImageDialog.open) scoreImageDialog.showModal();
+    syncNativeSystemBars(true);
     if (showControlsInitially) showScoreImageControls();
     else {
       setScoreImageControlsHidden(false);
@@ -5099,6 +5139,7 @@
   });
   scoreImageDialog.addEventListener('cancel', (event) => event.preventDefault());
   scoreImageDialog.addEventListener('close', () => {
+    syncNativeSystemBars(false);
     const returnToLyrics = scoreViewerFromList && currentPreviewSong;
     const lyricSong = currentPreviewSong;
     const lyricQueue = currentPreviewSongs;
