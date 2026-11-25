@@ -136,6 +136,11 @@
   let collectionSearchRenderTimer = 0;
   let collectionRenderGeneration = 0;
   let mySongsRenderGeneration = 0;
+  // Keep hidden library panels out of the render path. A schedule refresh or
+  // an IndexedDB completion can happen while the user is changing tabs; doing
+  // both song lists synchronously there makes the next sidebar click wait.
+  let collectionRenderPending = true;
+  let mySongsRenderPending = true;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
   let mySongsSort = 'title-asc';
@@ -1978,8 +1983,16 @@
   }
   function refreshScheduleTargetControls() {
     const enabled = Boolean(activeScheduleId) && !schedulesDisabled && schedules.length > 0;
-    document.querySelectorAll('.song-list .add-to-schedule').forEach((button) => { button.hidden = !enabled; });
-    document.querySelectorAll('.my-song-add-action').forEach((button) => { button.disabled = !enabled; });
+    // Only touch controls in the visible library. The other list can contain
+    // hundreds of cards; scanning it whenever a schedule is activated was
+    // blocking the next sidebar navigation. Mark the hidden list dirty so it
+    // is rendered with the current schedule when opened.
+    if (isSidebarViewActive('collection')) {
+      document.querySelectorAll('#song-list .add-to-schedule').forEach((button) => { button.hidden = !enabled; });
+    } else collectionRenderPending = true;
+    if (isSidebarViewActive('my-songs')) {
+      document.querySelectorAll('#my-songs-list .my-song-add-action').forEach((button) => { button.disabled = !enabled; });
+    } else mySongsRenderPending = true;
     updateActiveScheduleInfo();
   }
 
@@ -2603,8 +2616,22 @@
     });
   }
 
+  function activeSidebarView() {
+    return document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView || '';
+  }
+
+  function isSidebarViewActive(view) {
+    return activeSidebarView() === view;
+  }
+
   function renderList(options = {}) {
     const renderLocalSongs = options.renderLocalSongs !== false;
+    if (!isSidebarViewActive('collection')) {
+      collectionRenderPending = true;
+      if (renderLocalSongs) mySongsRenderPending = true;
+      return;
+    }
+    collectionRenderPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(search.value);
     const visible = sortSongsForDisplay(songs.filter((song) => {
@@ -2612,7 +2639,10 @@
       if (!query) return true;
       return searchTextMatches(getCollectionSearchText(song), query);
     }), collectionSort);
-    if (renderLocalSongs) window.requestAnimationFrame(() => renderMySongs());
+    if (renderLocalSongs) {
+      if (isSidebarViewActive('my-songs')) window.requestAnimationFrame(() => renderMySongs());
+      else mySongsRenderPending = true;
+    }
     songList.replaceChildren();
     if (!songs.length) {
       setStatus('Belum ada lagu di database. Tambahkan lagu melalui Song Manager.');
@@ -2671,6 +2701,11 @@
   }
 
   function renderMySongs() {
+    if (!isSidebarViewActive('my-songs')) {
+      mySongsRenderPending = true;
+      return;
+    }
+    mySongsRenderPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(mySongsSearch.value);
     const selectedCategory = mySongsCategoryFilter.value || 'ALL';
@@ -3679,6 +3714,7 @@
   function closeSidebar() {
     window.clearTimeout(sidebarBackdropHideTimer);
     appSidebar.classList.remove('is-open');
+    sidebarToggle.classList.remove('is-hidden');
     sidebarToggle.setAttribute('aria-expanded', 'false');
     sidebarBackdrop.classList.remove('is-visible');
     // Keep the backdrop in the stacking context until the short fade-out is
@@ -3723,6 +3759,19 @@
     if (view === 'my-songs') activateLibraryTab(document.getElementById('my-songs-tab'));
     if (view === 'collection') activateLibraryTab(document.getElementById('all-songs-tab'));
     if (view === 'settings') activateLibraryTab(instrumentProfileButton);
+    // Switch the visible panel first. Render only the panel the user just
+    // opened, on the next frame, so a large hidden list cannot block the
+    // sidebar transition or require a second tap.
+    if (view === 'my-songs' && mySongsRenderPending) {
+      window.requestAnimationFrame(() => {
+        if (isSidebarViewActive('my-songs')) renderMySongs();
+      });
+    }
+    if (view === 'collection' && collectionRenderPending) {
+      window.requestAnimationFrame(() => {
+        if (isSidebarViewActive('collection')) renderList({ renderLocalSongs: false });
+      });
+    }
     if (view === 'collection' && !hasOpenedCollectionView) {
       hasOpenedCollectionView = true;
       if (!songs.length && !options.skipInitialLoad) loadSongs(true, false);
@@ -3744,6 +3793,7 @@
         if (appSidebar.classList.contains('is-open')) sidebarBackdrop.classList.add('is-visible');
       });
       appSidebar.classList.add('is-open');
+      sidebarToggle.classList.add('is-hidden');
       sidebarToggle.setAttribute('aria-expanded', 'true');
     } else {
       closeSidebar();

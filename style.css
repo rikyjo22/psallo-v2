@@ -2033,7 +2033,11 @@ body{font-size:16px}
 .app-sidebar{z-index:70;transform:translate3d(-105%,0,0);will-change:transform;backface-visibility:hidden}
 .app-sidebar.is-open{transform:translate3d(0,0,0)}
 .sidebar-menu-toggle{position:relative;z-index:80}
-.app-header .sidebar-menu-toggle{position:relative;z-index:80}
+.app-header .sidebar-menu-toggle{position:relative;z-index:80;top:auto;left:auto}
+.sidebar-menu-toggle{display:grid;place-items:center;padding:0;transition:opacity .12s ease,visibility .12s ease,transform .12s ease}
+.sidebar-menu-toggle.is-hidden{opacity:0;visibility:hidden;pointer-events:none;transform:scale(.85)}
+.sidebar-menu-icon{display:grid;place-items:center;width:24px;height:24px;transform:translateY(-2px)}
+.sidebar-menu-icon svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .sidebar-backdrop{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .14s ease;will-change:opacity}
 .sidebar-backdrop.is-visible{opacity:1;visibility:visible;pointer-events:auto}
 
