@@ -5,6 +5,7 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbz3aMkgQWSpfnkuMoViwicrNYJ69OQuTbNGcWosrT7j5_shw6BvhoV6KM3RibjjRMc_YQ/exec';
   const CACHE_KEY = 'song-book:songs:v4';
   const SCHEDULE_KEY = 'song-book:worship-schedules:v1';
+  // Dedicated database for score/partitur images. Reference audio/video uses a separate DB.
   const SCHEDULE_IMAGE_DB_NAME = 'song-book:schedule-images:v1';
   const ACTIVE_SCHEDULE_KEY = 'song-book:active-worship-schedule:v1';
   const SCHEDULES_DISABLED_KEY = 'song-book:worship-schedules-disabled:v1';
@@ -19,6 +20,8 @@
   const FONT_SIZE_KEY = 'song-book:font-size:v1';
   const KEY_WATERMARK_SETTINGS_KEY = 'song-book:key-watermark-settings:v1';
   const SIDEBAR_ORDER_KEY = 'song-book:sidebar-order:v1';
+  const OFFLINE_APP_ENABLED_KEY = 'song-book:offline-app-enabled:v1';
+  const OFFLINE_DOWNLOAD_STATE_KEY = 'song-book:offline-image-download:v1';
   // Use the same picker in every browser; native date controls differ widely.
   const DATE_INPUT_TYPE = 'text';
   const CATEGORIES = [
@@ -36,6 +39,11 @@
   const instrumentFilterSelect = document.getElementById('instrument-filter-select');
   const profileUserNameInput = document.getElementById('profile-user-name');
   const instrumentFilterStatus = document.getElementById('instrument-filter-status');
+  const offlineSettingsButton = document.getElementById('open-offline-settings');
+  const offlineSettingsLabel = document.getElementById('offline-settings-label');
+  const offlineStorageUsage = document.getElementById('offline-storage-usage');
+  const offlineSettingsWarning = document.getElementById('offline-settings-warning');
+  const offlineSettingsStatus = document.getElementById('offline-settings-status');
   const search = document.getElementById('search-input');
   const clearSearchButton = document.getElementById('clear-search');
   const mySongsSearch = document.getElementById('my-songs-search');
@@ -109,6 +117,7 @@
   const scoreImageInstruments = document.getElementById('score-image-instruments');
   const scoreImageReferenceButton = document.getElementById('score-image-reference-button');
   const scoreImagePosition = document.getElementById('score-image-position');
+  const scoreImageSource = document.getElementById('score-image-source');
   const scoreKeyWatermark = document.getElementById('score-key-watermark');
   const scoreKeyWatermarkValue = document.getElementById('score-key-watermark-value');
   const keyWatermarkDialog = document.getElementById('key-watermark-dialog');
@@ -121,6 +130,7 @@
   const scoreNextGeneralSongLabel = document.getElementById('score-next-general-song-label');
   let songs = [];
   let mySongs = [];
+  let mySongsLoaded = false;
   const collectionSearchTextCache = new WeakMap();
   const mySongSearchTextCache = new WeakMap();
   let collectionSearchRenderTimer = 0;
@@ -130,6 +140,8 @@
   let preferredInstrument = readInstrumentProfile();
   let preferredUserName = readProfileUserName();
   let preferredUserId = readProfileUserId();
+  let offlineAppEnabled = readOfflineAppEnabled();
+  let offlineStorageUsageRequestId = 0;
   let currentSongIndex = -1;
   let currentPreviewSongs = [];
   let currentPreviewSong = null;
@@ -186,6 +198,12 @@
   let lastSharePullerSyncAt = 0;
   let activeScheduleShare = readActiveScheduleShare();
   const scheduleImageObjectUrls = new Map();
+  const offlineImageObjectUrls = new Map();
+  const offlineImageKeys = new Set();
+  const offlineImageSources = new Map();
+  let offlineImageCacheLoaded = false;
+  let offlineImageCacheLoadPromise = null;
+  let offlineImageDownloadInFlight = false;
   let shareExpiresAt = activeScheduleShare ? activeScheduleShare.expiresAt : 0;
 
   const instrumentProfileButton = document.getElementById('instrument-filter-open');
@@ -383,6 +401,311 @@
     try { return String(localStorage.getItem(INSTRUMENT_PROFILE_KEY) || '').trim(); }
     catch (error) { return ''; }
   }
+  function readOfflineAppEnabled() {
+    try { return localStorage.getItem(OFFLINE_APP_ENABLED_KEY) === '1'; }
+    catch (error) { return false; }
+  }
+  function saveOfflineAppEnabled(enabled) {
+    try { localStorage.setItem(OFFLINE_APP_ENABLED_KEY, enabled ? '1' : '0'); }
+    catch (error) { /* Keep the current session state when storage is unavailable. */ }
+  }
+  function imageDataBytes(value) {
+    if (typeof Blob !== 'undefined' && value instanceof Blob) return value.size;
+    if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) return value.byteLength;
+    const source = typeof value === 'string'
+      ? value
+      : value && typeof value === 'object'
+        ? String(value.url || value.dataUrl || value.data || '')
+        : '';
+    if (!/^data:image\/[^;,]+;base64,/i.test(source)) return 0;
+    const base64 = source.slice(source.indexOf(',') + 1).replace(/\s/g, '');
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    return Math.max(0, Math.floor(base64.length * 3 / 4) - padding);
+  }
+  function imageCollectionBytes(images) {
+    return Object.values(images || {}).reduce((total, files) => total + (Array.isArray(files)
+      ? files.reduce((sum, file) => sum + imageDataBytes(file), 0)
+      : 0), 0);
+  }
+  function localImageBytes() {
+    const mySongBytes = mySongs.reduce((total, song) => total + imageCollectionBytes(song.images), 0);
+    const scheduleBytes = schedules.reduce((total, schedule) => total + (schedule.songs || []).reduce((sum, entry) => sum + imageCollectionBytes(entry.images), 0), 0);
+    return mySongBytes + scheduleBytes;
+  }
+  function imageFileId(file) {
+    return scoreImageId(file);
+  }
+  function allScoreImageFiles() {
+    const result = new Map();
+    const collect = (song) => {
+      Object.values(song?.images || {}).forEach((files) => (Array.isArray(files) ? files : []).forEach((file) => {
+        const id = imageFileId(file);
+        if (!id || result.has(id)) return;
+        const source = typeof file === 'string' ? file : String(file?.url || file?.driveUrl || '');
+        if (source && !/^data:image\//i.test(source)) result.set(id, { id, source, name: file?.name || id, mimeType: file?.mimeType || 'image/jpeg' });
+      }));
+    };
+    songs.forEach(collect);
+    mySongs.forEach(collect);
+    schedules.forEach((schedule) => (schedule.songs || []).forEach(collect));
+    Object.values(scheduleIntros || {}).forEach((intro) => {
+      const id = imageFileId(intro);
+      const source = String(intro?.url || intro?.driveUrl || '');
+      if (id && source && !result.has(id)) result.set(id, { id, source, name: intro?.name || id, mimeType: intro?.mimeType || 'image/jpeg' });
+    });
+    return [...result.values()];
+  }
+  async function readOfflineImageMetadata() {
+    const db = await openScheduleImageDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['images', 'metadata'], 'readonly');
+      const metadataRequest = transaction.objectStore('metadata').getAll();
+      let metadata = null;
+      let keys = null;
+      const finish = () => {
+        if (!metadata || !keys) return;
+        db.close();
+        resolve({ metadata, keys });
+      };
+      metadataRequest.onsuccess = () => {
+        metadata = metadataRequest.result || [];
+        if (metadata.length) {
+          keys = metadata.map((entry) => entry.key || entry.fileId).filter(Boolean);
+          finish();
+          return;
+        }
+        const keysRequest = transaction.objectStore('images').getAllKeys();
+        keysRequest.onsuccess = () => { keys = keysRequest.result || []; finish(); };
+        keysRequest.onerror = () => { db.close(); reject(keysRequest.error); };
+      };
+      transaction.onerror = () => { db.close(); reject(transaction.error); };
+    });
+  }
+  async function loadOfflineImageCache() {
+    if (offlineImageCacheLoaded) return;
+    if (offlineImageCacheLoadPromise) return offlineImageCacheLoadPromise;
+    offlineImageCacheLoadPromise = (async () => {
+      try {
+        const { metadata, keys } = await readOfflineImageMetadata();
+        keys.forEach((key) => offlineImageKeys.add(String(key)));
+        metadata.forEach((entry) => {
+          const id = String(entry?.fileId || entry?.key || '');
+          if (id) {
+            offlineImageKeys.add(id);
+            offlineImageSources.set(id, String(entry.sourceUrl || ''));
+          }
+        });
+        offlineImageCacheLoaded = true;
+      } catch (error) {
+        console.warn('Cache gambar offline tidak dapat dimuat:', error);
+      }
+    })();
+    try { await offlineImageCacheLoadPromise; }
+    finally { offlineImageCacheLoadPromise = null; }
+  }
+  async function readOfflineImageBlob(id) {
+    const db = await openScheduleImageDatabase();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('images', 'readonly').objectStore('images').get(String(id));
+      request.onsuccess = () => { db.close(); resolve(request.result?.blob instanceof Blob ? request.result.blob : null); };
+      request.onerror = () => { db.close(); reject(request.error); };
+    });
+  }
+  async function ensureOfflineImageObjectUrl(id) {
+    const key = String(id || '');
+    if (!key) return '';
+    if (!offlineImageCacheLoaded) await loadOfflineImageCache();
+    const existing = offlineImageObjectUrls.get(key);
+    if (existing) return existing;
+    if (!offlineImageKeys.has(key)) return '';
+    try {
+      const blob = await readOfflineImageBlob(key);
+      if (!(blob instanceof Blob)) return '';
+      const url = URL.createObjectURL(blob);
+      offlineImageObjectUrls.set(key, url);
+      return url;
+    } catch (error) {
+      return '';
+    }
+  }
+  async function clearOfflineImageCache() {
+    try {
+      const db = await openScheduleImageDatabase();
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(['images', 'metadata'], 'readwrite');
+        transaction.objectStore('images').clear();
+        transaction.objectStore('metadata').clear();
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error || new Error('Gagal menghapus gambar offline.'));
+      });
+      db.close();
+    } finally {
+      offlineImageObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      offlineImageObjectUrls.clear();
+      offlineImageKeys.clear();
+      offlineImageSources.clear();
+      try { localStorage.removeItem(OFFLINE_DOWNLOAD_STATE_KEY); } catch (error) {}
+      offlineImageCacheLoaded = true;
+      scheduleImageObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      scheduleImageObjectUrls.clear();
+    }
+  }
+  async function downloadOfflineImage(file) {
+    const id = String(file?.id || '');
+    if (!id) return false;
+    if (offlineImageKeys.has(id) && offlineImageSources.get(id) === String(file.source || '')) return true;
+    const source = String(file.source || '');
+    const candidates = [
+      `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w2000`,
+      `https://lh3.googleusercontent.com/d/${encodeURIComponent(id)}=w2000`,
+      `https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`,
+      source
+    ].filter(Boolean);
+    let blob = null;
+    for (const url of [...new Set(candidates)]) {
+      try {
+        const response = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'no-store' });
+        const contentType = (response.headers.get('content-type') || '').toLowerCase();
+        if (!response.ok || !contentType.startsWith('image/')) continue;
+        blob = await response.blob();
+        if (blob.size) break;
+      } catch (error) {}
+    }
+    if (!blob) return false;
+    const db = await openScheduleImageDatabase();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(['images', 'metadata'], 'readwrite');
+      transaction.objectStore('images').put({ key: id, fileId: id, blob, mimeType: blob.type || file.mimeType || 'image/jpeg', sourceUrl: source, fileName: file.name || id, updatedAt: Date.now() });
+      transaction.objectStore('metadata').put({ key: id, fileId: id, sourceUrl: source, bytes: blob.size, mimeType: blob.type || file.mimeType || 'image/jpeg', updatedAt: Date.now() });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('Penyimpanan gambar offline penuh.'));
+    });
+    db.close();
+    const oldUrl = offlineImageObjectUrls.get(id);
+    if (oldUrl) URL.revokeObjectURL(oldUrl);
+    offlineImageKeys.add(id);
+    offlineImageSources.set(id, source);
+    offlineImageObjectUrls.delete(id);
+    return true;
+  }
+  async function downloadAllOfflineImages() {
+    if (offlineImageDownloadInFlight) return;
+    offlineImageDownloadInFlight = true;
+    try {
+      await loadOfflineImageCache();
+      const files = allScoreImageFiles();
+      let saved = 0;
+      const completed = new Set();
+      try {
+        const stored = JSON.parse(localStorage.getItem(OFFLINE_DOWNLOAD_STATE_KEY) || 'null');
+        (Array.isArray(stored?.completed) ? stored.completed : []).forEach((id) => completed.add(String(id)));
+      } catch (error) {}
+      const queue = files.map((file) => file.id);
+      try { localStorage.setItem(OFFLINE_DOWNLOAD_STATE_KEY, JSON.stringify({ queue, completed: [...completed], updatedAt: Date.now() })); } catch (error) {}
+      for (const file of files) {
+        if (completed.has(file.id) && offlineImageKeys.has(file.id) && offlineImageSources.get(file.id) === String(file.source || '')) { saved += 1; continue; }
+        if (offlineSettingsStatus) offlineSettingsStatus.textContent = `Mengunduh gambar ${saved + 1} dari ${files.length}…`;
+        if (offlineStorageUsage) { offlineStorageUsage.hidden = false; offlineStorageUsage.textContent = `(Mengunduh gambar ${saved + 1} dari ${files.length}…)`; }
+        if (await downloadOfflineImage(file)) {
+          saved += 1;
+          completed.add(file.id);
+          try { localStorage.setItem(OFFLINE_DOWNLOAD_STATE_KEY, JSON.stringify({ queue, completed: [...completed], updatedAt: Date.now() })); } catch (error) {}
+        }
+      }
+      try { localStorage.removeItem(OFFLINE_DOWNLOAD_STATE_KEY); } catch (error) {}
+      offlineImageCacheLoaded = true;
+      if (offlineSettingsStatus) offlineSettingsStatus.textContent = files.length ? `${saved} dari ${files.length} gambar disimpan offline.` : 'Belum ada gambar partitur untuk disimpan.';
+      renderList();
+      renderMySongs();
+      if (scoreImageDialog?.open) renderFullScoreImage();
+      void updateOfflineStorageUsage();
+    } catch (error) {
+      if (offlineSettingsStatus) offlineSettingsStatus.textContent = 'Unduhan gambar akan dilanjutkan saat aplikasi dibuka kembali.';
+      console.warn('Unduhan gambar offline terhenti:', error);
+    } finally {
+      offlineImageDownloadInFlight = false;
+    }
+  }
+  async function reconcileOfflineImageCache() {
+    if (!offlineAppEnabled) return;
+    await loadOfflineImageCache();
+    const current = new Map(allScoreImageFiles().map((file) => [file.id, String(file.source || '')]));
+    const removeIds = [...offlineImageKeys].filter((id) => !current.has(id) && mySongsLoaded);
+    const changedIds = [...offlineImageKeys].filter((id) => current.has(id) && offlineImageSources.get(id) !== current.get(id));
+    const idsToRemove = [...new Set([...removeIds, ...changedIds])];
+    if (idsToRemove.length) {
+      const db = await openScheduleImageDatabase();
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(['images', 'metadata'], 'readwrite');
+        idsToRemove.forEach((id) => { transaction.objectStore('images').delete(id); transaction.objectStore('metadata').delete(id); });
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+      });
+      db.close();
+      idsToRemove.forEach((id) => {
+        const url = offlineImageObjectUrls.get(id);
+        if (url) URL.revokeObjectURL(url);
+        offlineImageObjectUrls.delete(id);
+        offlineImageKeys.delete(id);
+        offlineImageSources.delete(id);
+      });
+    }
+    if (idsToRemove.length) void updateOfflineStorageUsage();
+  }
+  async function readScheduleImageBytes() {
+    try {
+      const db = await openScheduleImageDatabase();
+      const total = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(['images', 'metadata'], 'readonly');
+        const metadataRequest = transaction.objectStore('metadata').getAll();
+        metadataRequest.onsuccess = () => {
+          const metadata = metadataRequest.result || [];
+          const known = metadata.reduce((sum, entry) => sum + (Number(entry.bytes) || 0), 0);
+          if (metadata.length) { resolve(known); return; }
+          let bytes = 0;
+          const cursorRequest = transaction.objectStore('images').openCursor();
+          cursorRequest.onsuccess = () => {
+            const cursor = cursorRequest.result;
+            if (!cursor) { resolve(bytes); return; }
+            bytes += imageDataBytes(cursor.value?.blob || cursor.value?.file || cursor.value?.data);
+            cursor.continue();
+          };
+          cursorRequest.onerror = () => reject(cursorRequest.error);
+        };
+        transaction.onerror = () => reject(transaction.error);
+      });
+      db.close();
+      return total;
+    } catch (error) {
+      return 0;
+    }
+  }
+  function formatOfflineImageMemory(bytes) {
+    const megabytes = Math.max(0, Number(bytes) || 0) / (1024 * 1024);
+    return `${megabytes >= 10 ? megabytes.toFixed(0) : megabytes.toFixed(1)}Mb`;
+  }
+  async function updateOfflineStorageUsage() {
+    if (!offlineAppEnabled || !offlineStorageUsage) return;
+    const requestId = ++offlineStorageUsageRequestId;
+    offlineStorageUsage.hidden = false;
+    offlineStorageUsage.textContent = '(Memori gambar sedang dihitung…)';
+    await new Promise((resolve) => window.setTimeout(resolve, 350));
+    if (!offlineAppEnabled || requestId !== offlineStorageUsageRequestId) return;
+    const totalBytes = localImageBytes() + await readScheduleImageBytes();
+    if (!offlineAppEnabled || requestId !== offlineStorageUsageRequestId) return;
+    offlineStorageUsage.textContent = `(Memori yang digunakan untuk gambar ${formatOfflineImageMemory(totalBytes)})`;
+  }
+  function renderOfflineAppStatus() {
+    if (!offlineSettingsButton || !offlineSettingsLabel || !offlineStorageUsage) return;
+    offlineSettingsLabel.textContent = offlineAppEnabled ? 'Offline App' : 'Aktifkan Offline App';
+    offlineSettingsButton.title = offlineAppEnabled ? 'Offline App aktif' : 'Aktifkan Offline App';
+    offlineSettingsButton.setAttribute('aria-label', offlineSettingsButton.title);
+    offlineSettingsButton.classList.toggle('is-enabled', offlineAppEnabled);
+    offlineStorageUsage.hidden = !offlineAppEnabled;
+    if (offlineAppEnabled) void updateOfflineStorageUsage();
+  }
   function readProfileUserName() {
     try { return String(localStorage.getItem(PROFILE_USER_NAME_KEY) || '').trim(); }
     catch (error) { return ''; }
@@ -463,6 +786,7 @@
   }
   function applyUserFontScale(percent) {
     const multiplier = Math.max(1, Math.min(1.3, Number(percent) / 100 || 1));
+    if (multiplier === 1 && activeFontSizeMultiplier === 1 && fontSizeScaledElements.size === 0) return;
     activeFontSizeMultiplier = multiplier;
     // Remove only the declarations written by this feature before measuring
     // newly rendered elements. This prevents nested elements from inheriting a
@@ -522,8 +846,13 @@
     // used by scheduleSongFit has been created.
     if (typeof scheduleSongFit === 'function') window.requestAnimationFrame(() => scheduleSongFit());
   }
+  let fontScaleObserverFrame = 0;
   const fontSizeObserver = new MutationObserver(() => {
-    window.requestAnimationFrame(() => applyUserFontScale(Number(fontSizeSelect.value) || 100));
+    if (Number(fontSizeSelect.value) === 100 || fontScaleObserverFrame) return;
+    fontScaleObserverFrame = window.requestAnimationFrame(() => {
+      fontScaleObserverFrame = 0;
+      applyUserFontScale(Number(fontSizeSelect.value) || 100);
+    });
   });
   fontSizeObserver.observe(document.body, { childList: true, subtree: true });
   function escapeText(value) {
@@ -595,6 +924,7 @@
       buildFilters();
       renderList();
       renderSchedules();
+      if (offlineAppEnabled) void reconcileOfflineImageCache().finally(() => downloadAllOfflineImages());
     }
 
     window.SongBookCallbacks = window.SongBookCallbacks || {};
@@ -700,6 +1030,7 @@
       buildFilters();
       renderList();
       renderSchedules();
+      if (offlineAppEnabled) window.setTimeout(() => { if (offlineAppEnabled) void downloadAllOfflineImages(); }, 900);
       return true;
     } catch (error) {
       cacheAvailable = false;
@@ -1337,6 +1668,7 @@
       delete pendingScheduleIntroUpdates[scheduleId];
       scheduleIntros[scheduleId] = schedule.sharedIntro;
       showScheduleIntro(schedule.sharedIntro, false);
+      if (offlineAppEnabled) window.setTimeout(() => { if (offlineAppEnabled) void downloadAllOfflineImages(); }, 900);
       return;
     }
     const hasCachedIntro = Object.prototype.hasOwnProperty.call(scheduleIntros, scheduleId);
@@ -1368,6 +1700,7 @@
         scheduleIntros[scheduleId] = latestIntro;
         persistScheduleIntroCache();
         showScheduleIntro(latestIntro, false);
+        if (offlineAppEnabled) void downloadAllOfflineImages();
       }
     } catch (error) {
       console.warn('Intro jadwal tidak dapat dimuat:', error);
@@ -1575,9 +1908,10 @@
     try {
       const db = await openScheduleImageDatabase();
       await new Promise((resolve, reject) => {
-        const transaction = db.transaction('images', 'readwrite');
+        const transaction = db.transaction(['images', 'metadata'], 'readwrite');
         const store = transaction.objectStore('images');
-        keys.forEach((key) => store.delete(key));
+        const metadataStore = transaction.objectStore('metadata');
+        keys.forEach((key) => { store.delete(key); metadataStore.delete(key); });
         transaction.oncomplete = resolve;
         transaction.onerror = () => reject(transaction.error);
         transaction.onabort = () => reject(transaction.error || new Error('Gagal menghapus salinan gambar jadwal.'));
@@ -1792,9 +2126,21 @@
 
   function openScheduleImageDatabase() {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(SCHEDULE_IMAGE_DB_NAME, 1);
+      const request = indexedDB.open(SCHEDULE_IMAGE_DB_NAME, 2);
       request.onupgradeneeded = () => {
         if (!request.result.objectStoreNames.contains('images')) request.result.createObjectStore('images', { keyPath: 'key' });
+        if (!request.result.objectStoreNames.contains('metadata')) request.result.createObjectStore('metadata', { keyPath: 'key' });
+        if (request.transaction && request.transaction.objectStoreNames.contains('images')) {
+          const images = request.transaction.objectStore('images');
+          const metadata = request.transaction.objectStore('metadata');
+          images.openCursor().onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (!cursor) return;
+            const value = cursor.value || {};
+            metadata.put({ key: String(value.fileId || value.key || cursor.key), fileId: String(value.fileId || value.key || cursor.key), sourceUrl: String(value.sourceUrl || ''), bytes: Number(value.blob?.size) || 0, mimeType: value.mimeType || value.blob?.type || 'image/jpeg', updatedAt: value.updatedAt || Date.now() });
+            cursor.continue();
+          };
+        }
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error || new Error('Penyimpanan gambar jadwal tidak tersedia.'));
@@ -2614,6 +2960,7 @@
       db.close();
       mySongs.unshift(localSong);
       renderMySongs();
+      if (offlineAppEnabled) void updateOfflineStorageUsage();
       const message = `${[localSong.category, displaySongNumber(localSong.number), localSong.title].filter(Boolean).join(' ')} berhasil ditambahkan ke Laguku.`;
       mySongsStatus.textContent = message;
       setStatus(message);
@@ -2628,14 +2975,29 @@
   async function loadMySongs() {
     try {
       const db = await openMySongDatabase();
-      const records = await new Promise((resolve, reject) => {
-        const request = db.transaction(MY_SONG_STORE, 'readonly').objectStore(MY_SONG_STORE).getAll();
-        request.onsuccess = () => resolve(request.result || []);
-        request.onerror = () => reject(request.error);
-      });
+      const records = [];
+      let lowerKey;
+      while (true) {
+        const batch = await new Promise((resolve, reject) => {
+          const store = db.transaction(MY_SONG_STORE, 'readonly').objectStore(MY_SONG_STORE);
+          const request = lowerKey === undefined
+            ? store.getAll(undefined, 8)
+            : store.getAll(IDBKeyRange.lowerBound(lowerKey, true), 8);
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => reject(request.error);
+        });
+        if (!batch.length) break;
+        records.push(...batch);
+        lowerKey = batch[batch.length - 1].id;
+        if (batch.length < 8) break;
+        await new Promise((resolve) => window.setTimeout(resolve, 0));
+      }
       db.close();
       mySongs = records.sort(compareSongs);
+      mySongsLoaded = true;
       renderMySongs();
+      if (offlineAppEnabled) void updateOfflineStorageUsage();
+      if (offlineAppEnabled) window.setTimeout(() => { if (offlineAppEnabled) void downloadAllOfflineImages(); }, 900);
     } catch (error) {
       mySongsStatus.textContent = 'Penyimpanan lagu lokal tidak tersedia di browser ini.';
       console.warn('Daftar Laguku tidak dapat dimuat:', error);
@@ -2810,7 +3172,11 @@
       previewButton.className = 'my-song-existing-score-preview';
       previewButton.dataset.imageIndex = String(index);
       const image = document.createElement('img');
-      image.src = (file && typeof file === 'object' && (file.url || file.dataUrl || file.data)) || '';
+      image.src = scoreImageCandidates(file)[0] || '';
+      const imageId = scoreImageId(file);
+      if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
+        if (offlineUrl && image.isConnected) image.src = offlineUrl;
+      });
       image.alt = `Gambar partitur tersimpan ${index + 1}`;
       const name = document.createElement('span');
       name.textContent = file && typeof file === 'object' && file.name ? file.name : `Gambar tersimpan ${index + 1}`;
@@ -2828,10 +3194,15 @@
     const instrument = name?.value === 'Others' ? row.querySelector('.my-song-other-instrument').value.trim() : name?.value;
     const selectedUrl = button.dataset.previewUrl;
     const file = selectedUrl ? null : editingMySong?.images?.[instrument]?.[Number(button.dataset.imageIndex)];
-    const url = selectedUrl || (file && typeof file === 'object' ? (file.url || file.dataUrl || file.data) : '');
+    const url = selectedUrl || scoreImageCandidates(file)[0] || '';
     if (!url) return;
     const dialog = document.getElementById('my-song-image-preview');
     document.getElementById('my-song-image-preview-img').src = url;
+    const imageId = scoreImageId(file);
+    if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
+      const previewImage = document.getElementById('my-song-image-preview-img');
+      if (offlineUrl && previewImage.isConnected) previewImage.src = offlineUrl;
+    });
     document.getElementById('my-song-image-preview-name').textContent = button.dataset.previewName || file?.name || 'Gambar partitur';
     dialog.showModal();
   });
@@ -3005,6 +3376,7 @@
       else mySongs.push(localSong);
       mySongs.sort(compareSongs);
       renderMySongs();
+      if (offlineAppEnabled) void updateOfflineStorageUsage();
       mySongForm.reset();
       mySongReferenceList.replaceChildren();
       mySongInstrumentList.replaceChildren();
@@ -3071,6 +3443,7 @@
       db.close();
       mySongs = mySongs.filter((song) => song.id !== songId);
       renderMySongs();
+      if (offlineAppEnabled) void updateOfflineStorageUsage();
       mySongsStatus.textContent = 'Lagu berhasil dihapus dari perangkat ini.';
     } catch (error) {
       mySongsStatus.textContent = 'Lagu tidak dapat dihapus dari penyimpanan lokal.';
@@ -3124,6 +3497,10 @@
   const sidebarOrderItems = document.getElementById('sidebar-settings-list');
   const sidebarSettingsDialog = document.getElementById('sidebar-settings-dialog');
   const sidebarSettingsForm = document.getElementById('sidebar-settings-form');
+  const offlineSettingsDialog = document.getElementById('offline-settings-dialog');
+  const offlineSettingsForm = document.getElementById('offline-settings-form');
+  const offlineSettingsConsent = document.getElementById('offline-settings-consent');
+  const saveOfflineSettingsButton = document.getElementById('save-offline-settings');
   const defaultSidebarOrder = ['collection', 'schedule', 'my-songs', 'settings'];
   function normalizeSidebarOrder(order) {
     const validViews = new Set(defaultSidebarOrder);
@@ -3205,6 +3582,46 @@
   });
   document.getElementById('close-sidebar-settings').addEventListener('click', () => sidebarSettingsDialog.close());
   document.getElementById('cancel-sidebar-settings').addEventListener('click', () => sidebarSettingsDialog.close());
+  document.getElementById('open-offline-settings').addEventListener('click', () => {
+    offlineSettingsConsent.checked = offlineAppEnabled;
+    if (offlineSettingsWarning) offlineSettingsWarning.hidden = true;
+    if (offlineSettingsStatus) offlineSettingsStatus.textContent = '';
+    saveOfflineSettingsButton.disabled = !offlineAppEnabled;
+    offlineSettingsDialog.showModal();
+  });
+  document.getElementById('close-offline-settings').addEventListener('click', () => offlineSettingsDialog.close());
+  offlineSettingsConsent.addEventListener('change', () => {
+    const disabling = offlineAppEnabled && !offlineSettingsConsent.checked;
+    saveOfflineSettingsButton.disabled = !offlineSettingsConsent.checked && !offlineAppEnabled;
+    if (offlineSettingsWarning) offlineSettingsWarning.hidden = !disabling;
+  });
+  offlineSettingsForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (offlineImageDownloadInFlight) return;
+    saveOfflineSettingsButton.disabled = true;
+    if (!offlineSettingsConsent.checked) {
+      if (!offlineAppEnabled) return;
+      if (offlineSettingsStatus) offlineSettingsStatus.textContent = 'Menghapus gambar offline…';
+      try {
+        await clearOfflineImageCache();
+        offlineAppEnabled = false;
+        saveOfflineAppEnabled(false);
+        renderOfflineAppStatus();
+        offlineSettingsDialog.close();
+      } catch (error) {
+        if (offlineSettingsStatus) offlineSettingsStatus.textContent = error.message || 'Gambar offline gagal dihapus.';
+        saveOfflineSettingsButton.disabled = false;
+      }
+      return;
+    }
+    offlineAppEnabled = true;
+    saveOfflineAppEnabled(true);
+    renderOfflineAppStatus();
+    if (offlineSettingsStatus) offlineSettingsStatus.textContent = 'Unduhan gambar berjalan di latar belakang.';
+    offlineSettingsDialog.close();
+    void downloadAllOfflineImages().catch((error) => console.warn('Unduhan gambar offline gagal:', error));
+  });
+  renderOfflineAppStatus();
   sidebarOrderItems.addEventListener('pointerdown', (event) => {
     if (!event.target.closest('.sidebar-settings-grip')) return;
     const item = event.target.closest('.sidebar-settings-item');
@@ -3392,7 +3809,8 @@
   activateAppView('schedule');
   updateHeaderIdentity('schedule');
   loadMySongInstrumentOptions();
-  loadMySongs();
+  // Do not deserialize the local song database while the first screen is being wired up.
+  window.setTimeout(() => loadMySongs(), 300);
 
   function stripHtml(value) {
     const parsed = new DOMParser().parseFromString(String(value || ''), 'text/html');
@@ -3694,6 +4112,11 @@
       figure.append(image, caption);
       scorePages.append(figure);
       image.src = urls[0];
+      const imageId = scoreImageId(file);
+      image.dataset.offlineImageId = imageId;
+      if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
+        if (offlineUrl && image.isConnected && image.dataset.offlineImageId === imageId) image.src = offlineUrl;
+      });
     });
     scorePages.scrollLeft = 0;
     scorePages.hidden = false;
@@ -4042,10 +4465,18 @@
     const file = activeScoreFiles[activeScoreIndex];
     const urls = scoreImageCandidates(file);
     if (!urls.length) return;
+    setScoreImageSource(file);
     resetScoreImageZoom();
     fullScoreImage.dataset.candidates = JSON.stringify(urls);
     fullScoreImage.dataset.attempt = '0';
     fullScoreImage.src = urls[0];
+    const imageId = scoreImageId(file);
+    if (imageId) void ensureOfflineImageObjectUrl(imageId).then((offlineUrl) => {
+      if (offlineUrl && fullScoreImage.isConnected && activeScoreFiles[activeScoreIndex] === file) {
+        fullScoreImage.src = offlineUrl;
+        setScoreImageSource(file, 'Offline');
+      }
+    });
     const showingIntro = scoreImageMode === 'intro';
     updateScoreKeyWatermark();
     renderScoreImageReferenceButton();
@@ -4245,19 +4676,23 @@
   }
 
   function scoreImageId(file) {
-    if (file && typeof file === 'object' && file.id) return String(file.id);
+    if (file && typeof file === 'object' && (file.id || file.fileId)) return String(file.id || file.fileId);
     const url = typeof file === 'string' ? file : String((file && file.url) || '');
     return url.match(/[?&]id=([^&]+)/)?.[1] || url.match(/\/d\/([^/]+)/)?.[1] || '';
   }
 
   function scoreImageCandidates(file) {
+    const id = scoreImageId(file);
+    if (id) {
+      const offlineUrl = offlineImageObjectUrls.get(id);
+      if (offlineUrl) return [offlineUrl];
+    }
     if (file && typeof file === 'object' && file.localCacheKey) {
       const cachedUrl = scheduleImageObjectUrls.get(file.localCacheKey);
       if (cachedUrl) return [cachedUrl];
     }
     const source = typeof file === 'string' ? file : String((file && (file.url || file.dataUrl || file.data)) || '');
     if (/^data:image\//i.test(source)) return [source];
-    const id = scoreImageId(file);
     if (!id) return source ? [source] : [];
     const encodedId = encodeURIComponent(id);
     const candidates = [
@@ -4267,6 +4702,18 @@
       source
     ];
     return [...new Set(candidates.filter(Boolean))];
+  }
+  function scoreImageSourceType(file) {
+    const id = scoreImageId(file);
+    if (id && (offlineImageObjectUrls.has(id) || offlineImageKeys.has(id))) return 'Offline';
+    const source = typeof file === 'string' ? file : String((file && (file.url || file.dataUrl || file.data)) || '');
+    if (/^(?:data:image\/|blob:)/i.test(source)) return 'Local';
+    return id || /^https?:\/\//i.test(source) ? 'Online' : 'Local';
+  }
+  function setScoreImageSource(file, source = scoreImageSourceType(file)) {
+    if (!scoreImageSource) return;
+    scoreImageSource.textContent = source;
+    scoreImageSource.dataset.source = source.toLowerCase();
   }
 
   function populateTransposeKeys() {
@@ -5176,6 +5623,7 @@
     scoreImageDialog.classList.remove('instrument-controls-hidden');
     scoreImageInstruments.hidden = true;
     scoreImageReferenceButton.hidden = true;
+    setScoreImageSource(null, 'Online');
     scoreKeyWatermark.hidden = true;
     scoreKeyWatermarkValue.textContent = '';
     delete scoreKeyWatermark.dataset.renderSignature;
@@ -5647,22 +6095,38 @@
     if (dialog.open && !scoreImageDialog.open && event.key === 'ArrowRight') openPreviewAt(currentSongIndex + 1);
     if (dialog.open && !scoreImageDialog.open && event.key === 'ArrowLeft') openPreviewAt(currentSongIndex - 1);
   });
+  const resumeOfflineDownload = () => {
+    if (!offlineAppEnabled || document.visibilityState !== 'visible') return;
+    const now = Date.now();
+    if (now - (resumeOfflineDownload.lastRun || 0) < 5000) return;
+    resumeOfflineDownload.lastRun = now;
+    void downloadAllOfflineImages();
+  };
+  document.addEventListener('visibilitychange', resumeOfflineDownload);
+  window.addEventListener('online', resumeOfflineDownload);
   filters.replaceChildren();
-  loadSchedules();
-  renderSchedules();
-  restoreActiveScheduleShare();
-  if (!preferredUserName) openRequiredProfile();
-  const hasCache = loadCachedSongs();
-  if (!hasCache) {
-    count.textContent = '0';
-    setStatus('Belum ada data lokal. Tekan "Perbarui data" untuk memuat lagu dari database.');
-    setSyncStatus('Belum disinkronkan');
-  }
-  if (hasCache && isSongCacheOlderThanOneDay(cachedSongsUpdatedAt)) loadSongs(true, false);
-  activateAppView(currentSidebarOrder()[0] || 'collection');
-  // The initial HTML is kept hidden until the persisted theme and sidebar
-  // view have both been applied, preventing a default-theme/schedule flash.
+  // Reveal the shell before parsing potentially large local caches so the sidebar
+  // remains interactive while data is restored in the next task.
   document.documentElement.classList.remove('app-preload');
+  if (offlineAppEnabled) window.setTimeout(() => {
+    if (!offlineAppEnabled) return;
+    void loadOfflineImageCache();
+    void updateOfflineStorageUsage();
+  }, 900);
+  if (!preferredUserName) openRequiredProfile();
+  window.setTimeout(() => {
+    loadSchedules();
+    renderSchedules();
+    restoreActiveScheduleShare();
+    const hasCache = loadCachedSongs();
+    if (!hasCache) {
+      count.textContent = '0';
+      setStatus('Belum ada data lokal. Tekan "Perbarui data" untuk memuat lagu dari database.');
+      setSyncStatus('Belum disinkronkan');
+    }
+    if (hasCache && isSongCacheOlderThanOneDay(cachedSongsUpdatedAt)) loadSongs(true, false);
+    activateAppView(currentSidebarOrder()[0] || 'collection');
+  }, 50);
 })();
 
 
