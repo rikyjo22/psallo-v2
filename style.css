@@ -2005,3 +2005,14 @@ button.my-song-upload-cancel[hidden]{display:none!important}
 
 @media (max-width: 600px){#schedule-view-dialog .schedule-intro-actions-group[hidden]{display:none}}
 
+
+@media (max-width: 600px){
+  #schedule-view-dialog .schedule-intro-actions>.schedule-key-watermark-check{
+    width:max-content;
+    justify-self:end;
+  }
+  #schedule-view-dialog .schedule-intro-actions:has(.schedule-intro-actions-group[hidden]){
+    grid-template-columns:auto auto;
+    justify-content:space-between;
+  }
+}
