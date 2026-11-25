@@ -347,17 +347,35 @@
     return title;
   }
   function normalize(value) { return String(value || '').toLocaleLowerCase('id').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function normalizeSearch(value) { return normalize(value).replace(/\s+/g, ' ').trim(); }
+  function compactBookNumberSpacing(value) {
+    return String(value || '').replace(/\b([a-z]{1,4})\s+(\d+)\b/g, '$1$2');
+  }
+  function searchTextMatches(text, query) {
+    if (!query) return true;
+    if (text.includes(query)) return true;
+    return compactBookNumberSpacing(text).includes(compactBookNumberSpacing(query));
+  }
+  function isBookNumberSearchQuery(query) {
+    const codes = CATEGORIES.filter(({ code }) => code !== 'ALL').map(({ code }) => code.toLowerCase()).join('|');
+    return new RegExp(`^(?:${codes})\\s*\\d+$`, 'i').test(String(query || '').trim());
+  }
+  function selectNumberSortForSearch(query, sortSelect) {
+    if (!isBookNumberSearchQuery(query)) return false;
+    sortSelect.value = 'number-asc';
+    return true;
+  }
   function getCollectionSearchText(song) {
     const cached = collectionSearchTextCache.get(song);
     if (cached !== undefined) return cached;
-    const text = normalize([song.category, song.number, song.title, song.key, song.genre, song.songCreator, song.dateCreate, song.tempo, stripHtml(song.contentHtml)].join(' '));
+    const text = normalizeSearch([song.category, song.number, song.title, song.key, song.genre, song.songCreator, song.dateCreate, song.tempo, stripHtml(song.contentHtml)].join(' '));
     collectionSearchTextCache.set(song, text);
     return text;
   }
   function getMySongSearchText(song) {
     const cached = mySongSearchTextCache.get(song);
     if (cached !== undefined) return cached;
-    const text = normalize([song.number, song.title, stripHtml(song.contentHtml)].join(' '));
+    const text = normalizeSearch([song.number, song.title, stripHtml(song.contentHtml)].join(' '));
     mySongSearchTextCache.set(song, text);
     return text;
   }
@@ -2127,6 +2145,8 @@
   }
 
   function handleSearchInput() {
+    const query = normalizeSearch(search.value);
+    if (selectNumberSortForSearch(query, collectionSortSelect)) collectionSort = 'number-asc';
     if (collectionSearchRenderTimer) window.clearTimeout(collectionSearchRenderTimer);
     collectionSearchRenderTimer = window.setTimeout(() => {
       collectionSearchRenderTimer = 0;
@@ -2227,11 +2247,11 @@
   function renderList(options = {}) {
     const renderLocalSongs = options.renderLocalSongs !== false;
     updateActiveScheduleInfo();
-    const query = normalize(search.value.trim());
+    const query = normalizeSearch(search.value);
     const visible = sortSongsForDisplay(songs.filter((song) => {
       if (!matchesSongCategoryFilter(song, activeCategory)) return false;
       if (!query) return true;
-      return getCollectionSearchText(song).includes(query);
+      return searchTextMatches(getCollectionSearchText(song), query);
     }), collectionSort);
     if (renderLocalSongs) renderMySongs();
     songList.replaceChildren();
@@ -2289,10 +2309,10 @@
 
   function renderMySongs() {
     updateActiveScheduleInfo();
-    const query = normalize(mySongsSearch.value.trim());
+    const query = normalizeSearch(mySongsSearch.value);
     const selectedCategory = mySongsCategoryFilter.value || 'ALL';
     const visibleSongs = mySongs.filter((song) => matchesSongCategoryFilter(song, selectedCategory)
-      && (!query || getMySongSearchText(song).includes(query)));
+      && searchTextMatches(getMySongSearchText(song), query));
     const visible = sortSongsForDisplay(visibleSongs, mySongsSort);
     mySongsCount.textContent = String(mySongs.length);
     mySongsList.classList.toggle('is-upload-request-mode', isMySongUploadMode);
@@ -2336,7 +2356,12 @@
     mySongsList.append(fragment);
   }
 
-  mySongsSearch.addEventListener('input', renderMySongs);
+  function handleMySongsSearchInput() {
+    const query = normalizeSearch(mySongsSearch.value);
+    if (selectNumberSortForSearch(query, mySongsSortSelect)) mySongsSort = 'number-asc';
+    renderMySongs();
+  }
+  mySongsSearch.addEventListener('input', handleMySongsSearchInput);
   mySongsCategoryFilter.addEventListener('change', () => {
     mySongsCategoryChips.querySelectorAll('[data-my-songs-category]').forEach((item) => {
       const selected = item.dataset.mySongsCategory === mySongsCategoryFilter.value;
