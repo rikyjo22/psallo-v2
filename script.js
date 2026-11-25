@@ -3553,6 +3553,7 @@
   let sidebarDragGhost = null;
   let sidebarPointerDragId = null;
   let sidebarDragPointerOffset = { x: 0, y: 0 };
+  let sidebarBackdropHideTimer = 0;
   function moveSidebarSettingsPlaceholder(clientY) {
     if (!sidebarDragPlaceholder) return;
     const siblings = [...sidebarOrderItems.children].filter((item) => item !== sidebarDragPlaceholder);
@@ -3676,9 +3677,16 @@
   let hasOpenedCollectionView = false;
   let navigationRenderFrame = 0;
   function closeSidebar() {
+    window.clearTimeout(sidebarBackdropHideTimer);
     appSidebar.classList.remove('is-open');
     sidebarToggle.setAttribute('aria-expanded', 'false');
-    sidebarBackdrop.hidden = true;
+    sidebarBackdrop.classList.remove('is-visible');
+    // Keep the backdrop in the stacking context until the short fade-out is
+    // complete. Removing [hidden] in the same frame as the sidebar transform
+    // causes a visible flash in Android WebView.
+    sidebarBackdropHideTimer = window.setTimeout(() => {
+      if (!appSidebar.classList.contains('is-open')) sidebarBackdrop.hidden = true;
+    }, 160);
   }
   function activateAppView(view, options = {}) {
     if (view !== 'collection') collectionRenderGeneration += 1;
@@ -3728,9 +3736,18 @@
   }
   sidebarToggle.addEventListener('click', () => {
     const open = !appSidebar.classList.contains('is-open');
-    appSidebar.classList.toggle('is-open', open);
-    sidebarToggle.setAttribute('aria-expanded', String(open));
-    sidebarBackdrop.hidden = !open;
+    window.clearTimeout(sidebarBackdropHideTimer);
+    if (open) {
+      sidebarBackdrop.hidden = false;
+      // Let the backdrop start from opacity 0 before enabling its transition.
+      window.requestAnimationFrame(() => {
+        if (appSidebar.classList.contains('is-open')) sidebarBackdrop.classList.add('is-visible');
+      });
+      appSidebar.classList.add('is-open');
+      sidebarToggle.setAttribute('aria-expanded', 'true');
+    } else {
+      closeSidebar();
+    }
   });
   sidebarBackdrop.addEventListener('click', closeSidebar);
   appViewButtons.forEach((button) => button.addEventListener('click', () => activateAppView(button.dataset.appView)));
@@ -4179,10 +4196,15 @@
     activeScoreInstrument = instrument;
     activeScoreFiles = files;
     activeScoreIndex = index;
+    // Open the viewer before resolving an IndexedDB/Drive image. Resolving a
+    // cached blob is asynchronous, and showing the dialog first makes the
+    // tap feel immediate while the image source is selected in the background.
+    if (!scoreImageDialog.open) {
+      scoreImageDialog.showModal();
+      syncNativeSystemBars(true);
+    }
     const hasOtherInstruments = renderScoreImageInstrumentButtons();
     renderFullScoreImage();
-    if (!scoreImageDialog.open) scoreImageDialog.showModal();
-    syncNativeSystemBars(true);
     if (showControlsInitially) showScoreImageControls();
     else {
       setScoreImageControlsHidden(false);

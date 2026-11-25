@@ -2024,6 +2024,19 @@ button.my-song-upload-cancel[hidden]{display:none!important}
 
 .app-sidebar{transition-duration:.14s}
 
+/* Android WebView must use the same CSS text metrics as the browser build.
+   The wrapper also pins WebView text zoom to 100%; this declaration prevents
+   platform text autosizing from changing individual controls. */
+html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%;font-size:16px}
+body{font-size:16px}
+.app-header{position:relative;z-index:auto}
+.app-sidebar{z-index:70;transform:translate3d(-105%,0,0);will-change:transform;backface-visibility:hidden}
+.app-sidebar.is-open{transform:translate3d(0,0,0)}
+.sidebar-menu-toggle{position:relative;z-index:80}
+.app-header .sidebar-menu-toggle{position:relative;z-index:80}
+.sidebar-backdrop{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .14s ease;will-change:opacity}
+.sidebar-backdrop.is-visible{opacity:1;visibility:visible;pointer-events:auto}
+
 
 .song-list .add-to-schedule[hidden]{display:none!important}
 
