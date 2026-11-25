@@ -1229,19 +1229,19 @@
       const visibleNumber = displaySongNumber(song.number || entry.number);
       const sourceClass = String(entry.id || '').startsWith('local_') ? ' is-local-song' : ' is-database-song';
       const localAttribution = entry.localSourceName ? `<span class="schedule-song-attribution">Diambil dari data lokal “${escapeText(entry.localSourceName)}”</span>` : '';
+      const songLabel = [song.category || entry.category, visibleNumber, displaySongTitle({ ...song, title: song.title || entry.title })].filter(Boolean).join(' ');
+      const scheduleNote = normalizeScheduleNote(entry.note);
+      const fullSongLabel = `${songLabel}${song.key ? ` (${song.key})` : ''}${song.genre ? ` - ${song.genre}` : ''}${scheduleNote ? ` - ${scheduleNote}` : ''}`;
       return `<li class="schedule-song-row${sourceClass}${entry.preWorship ? ' is-pre-worship' : ''}" data-entry-id="${escapeText(entry.entryId)}">
-        <button type="button" class="schedule-drag-handle" aria-label="Seret untuk mengurutkan lagu" title="Seret untuk mengatur urutan">&#8942;</button>
-        <span class="schedule-song-order">${index + 1}</span>
-        <button type="button" class="schedule-song-name" data-action="preview-song" title="Buka preview"><span class="schedule-song-full-name">${[song.category || entry.category, visibleNumber, displaySongTitle({ ...song, title: song.title || entry.title })].filter(Boolean).map(escapeText).join(' ')}</span><span class="schedule-song-compact-name"><span class="schedule-song-compact-copy"><span class="schedule-song-compact-text">${[song.category || entry.category, visibleNumber, displaySongTitle({ ...song, title: song.title || entry.title })].filter(Boolean).map(escapeText).join(' ')}${song.key ? ` (${escapeText(song.key)})` : ''}${song.genre ? ` - ${escapeText(song.genre)}` : ''}</span>${normalizeScheduleNote(entry.note) ? `<span class="schedule-song-compact-note"><em> - ${escapeText(normalizeScheduleNote(entry.note))}</em></span>` : ''}</span>${entry.preWorship ? '<span class="schedule-song-pre-label">(Pra)</span>' : ''}</span>${localAttribution}</button>
-        <span class="schedule-song-actions">
+        <div class="schedule-song-top-row"><span class="schedule-song-order">${index + 1}</span><button type="button" class="schedule-song-name" data-action="preview-song" title="Buka preview"><span class="schedule-song-full-name">${escapeText(fullSongLabel)}</span><span class="schedule-song-compact-name"><span class="schedule-song-compact-copy"><span class="schedule-song-compact-text">${escapeText(songLabel)}${song.key ? ` (${escapeText(song.key)})` : ''}${song.genre ? ` - ${escapeText(song.genre)}` : ''}</span>${scheduleNote ? `<span class="schedule-song-compact-note"><em> - ${escapeText(scheduleNote)}</em></span>` : ''}</span>${entry.preWorship ? '<span class="schedule-song-pre-label">(Pra)</span>' : ''}</span>${localAttribution}</button><button type="button" class="schedule-note-button${entry.note ? ' has-note' : ''}" data-action="edit-note" data-entry-id="${escapeText(entry.entryId)}" aria-label="${entry.note ? 'Edit catatan lagu' : 'Tambah catatan lagu'}" title="${entry.note ? 'Edit catatan' : 'Tambah catatan'}" aria-expanded="false">Catatan</button></div>
+        <div class="schedule-song-bottom-row"><button type="button" class="schedule-drag-handle" aria-label="Seret untuk mengurutkan lagu" title="Seret untuk mengatur urutan">&#8942;</button><span class="schedule-song-actions">
           <label class="pre-worship-toggle"><input type="checkbox" data-action="toggle-pre-worship" data-entry-id="${escapeText(entry.entryId)}" ${entry.preWorship ? 'checked' : ''}><span>Pra-ibadah</span></label>
           <button type="button" data-action="copy-to-my-songs" data-entry-id="${escapeText(entry.entryId)}" aria-label="Add to Laguku: ${escapeText(song.title || entry.title || '')}" title="Add to Laguku">Laguku</button>
           <button type="button" data-action="move-up" data-entry-id="${escapeText(entry.entryId)}" aria-label="Pindahkan lagu ke atas" ${index === 0 ? 'disabled' : ''}>&#8593;</button>
           <button type="button" data-action="move-down" data-entry-id="${escapeText(entry.entryId)}" aria-label="Pindahkan lagu ke bawah" ${index === schedule.songs.length - 1 ? 'disabled' : ''}>&#8595;</button>
           <button type="button" data-action="edit-song" data-entry-id="${escapeText(entry.entryId)}" aria-label="Edit lagu di jadwal">&#9998;</button>
           <button type="button" class="remove-scheduled-song" data-action="remove-song" data-entry-id="${escapeText(entry.entryId)}" aria-label="Hapus lagu dari jadwal" title="Hapus lagu"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button>
-        </span>
-        <button type="button" class="schedule-note-button${entry.note ? ' has-note' : ''}" data-action="edit-note" data-entry-id="${escapeText(entry.entryId)}" aria-label="${entry.note ? 'Edit catatan lagu' : 'Tambah catatan lagu'}" title="${entry.note ? 'Edit catatan' : 'Tambah catatan'}" aria-expanded="false">Catatan</button>
+        </span></div>
         <div class="schedule-note-editor" data-note-editor="${escapeText(entry.entryId)}" hidden><label for="schedule-note-${escapeText(entry.entryId)}">Catatan lagu <span class="schedule-note-count">${normalizeScheduleNote(entry.note).trim() ? normalizeScheduleNote(entry.note).trim().split(/\s+/).length : 0}/20 kata</span></label><textarea id="schedule-note-${escapeText(entry.entryId)}" data-note-entry-id="${escapeText(entry.entryId)}" maxlength="300" rows="2" placeholder="Contoh: Intro Biola">${escapeText(entry.note || '')}</textarea><div class="schedule-note-actions"><button type="button" data-action="cancel-note" data-entry-id="${escapeText(entry.entryId)}">Batal</button><button type="button" class="schedule-note-save" data-action="save-note" data-entry-id="${escapeText(entry.entryId)}">Simpan catatan</button></div></div>
       </li>`;
     }).join('');
@@ -2124,8 +2124,11 @@
       }
       if (display && DATE_INPUT_TYPE === 'date') display.textContent = formatWorshipDate(schedule.date) || 'Pilih tanggal';
     }
-    saveSchedules();
-    renderScheduleTargets();
+    // Keep typing local to the current input. Persist on `change` after the
+    // user finishes editing so each keystroke does not serialize all schedules
+    // and refresh related UI.
+    if (input.dataset.field === 'title') return;
+    if (input.dataset.field === 'date') return;
   }
 
   function compareSongs(a, b) {
@@ -5548,6 +5551,12 @@
     scheduleTitleBeforeEdit = null;
     if (!schedule || schedule.title === previousName) return;
     if (saveSchedules()) trackSuccessfulAction('schedule_rename_success', { previousName, scheduleName: schedule.title });
+  });
+  scheduleList.addEventListener('change', (event) => {
+    const dateInput = event.target.closest('input[data-field="date"]');
+    if (!dateInput) return;
+    saveSchedules();
+    renderScheduleTargets();
   });
   search.addEventListener('input', handleSearchInput);
   clearSearchButton.addEventListener('click', () => { search.value = ''; handleSearchInput(); search.focus(); });
