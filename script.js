@@ -143,6 +143,8 @@
   let collectionSortedCache = null;
   let collectionRenderTimer = 0;
   let collectionRenderActive = false;
+  let collectionFilterTimer = 0;
+  let collectionWorkGeneration = 0;
   let mySongsRenderGeneration = 0;
   // Keep hidden library panels out of the render path. A schedule refresh or
   // an IndexedDB completion can happen while the user is changing tabs; doing
@@ -2569,6 +2571,10 @@
   }
 
   function handleSearchInput() {
+    // Cancel an in-flight filter/list append immediately. This keeps a key
+    // press (and the following hamburger tap) from waiting behind stale
+    // search work.
+    cancelCollectionRender();
     const query = normalizeSearch(search.value);
     if (selectNumberSortForSearch(query, collectionSortSelect)) collectionSort = 'number-asc';
     if (collectionSearchRenderTimer) window.clearTimeout(collectionSearchRenderTimer);
@@ -2680,12 +2686,16 @@
     // If a chunked list was interrupted by navigation or the sidebar button,
     // remember that the visible DOM is incomplete and finish it when the
     // collection is opened again.
-    if (collectionRenderActive || collectionSearchRenderTimer) collectionRenderPending = true;
+    if (collectionRenderActive || collectionSearchRenderTimer || collectionFilterTimer) collectionRenderPending = true;
     collectionRenderGeneration += 1;
+    collectionWorkGeneration += 1;
     window.clearTimeout(collectionRenderTimer);
     window.clearTimeout(collectionSearchRenderTimer);
+    window.clearTimeout(collectionFilterTimer);
+    window.cancelAnimationFrame(collectionFilterTimer);
     collectionRenderTimer = 0;
     collectionSearchRenderTimer = 0;
+    collectionFilterTimer = 0;
     collectionRenderActive = false;
   }
 
@@ -2711,18 +2721,54 @@
       if (!collectionSortedCache
         || collectionSortedCache.source !== songs
         || collectionSortedCache.mode !== collectionSort) {
-        collectionSortedCache = {
-          source: songs,
-          mode: collectionSort,
-          value: sortSongsForDisplay(songs, collectionSort)
-        };
+        // Sorting can be costly on a large library. Leave a short input
+        // window before doing that work so a hamburger tap after navigation
+        // is handled first, then continue in a new task.
+        const workGeneration = collectionWorkGeneration;
+        setStatus('Menyiapkan koleksi lagu…');
+        collectionFilterTimer = window.setTimeout(() => {
+          collectionFilterTimer = 0;
+          if (workGeneration !== collectionWorkGeneration || !isSidebarViewActive('collection')) return;
+          collectionSortedCache = {
+            source: songs,
+            mode: collectionSort,
+            value: sortSongsForDisplay(songs, collectionSort)
+          };
+          renderList(options);
+        }, 80);
+        return;
       }
-      visible = collectionSortedCache.value.filter((song) => {
-        if (!matchesSongCategoryFilter(song, activeCategory)) return false;
-        if (!query) return true;
-        return searchTextMatches(getCollectionSearchText(song), query);
-      });
-      collectionVisibleCache = { source: songs, key: cacheKey, value: visible };
+      if (!query) {
+        visible = collectionSortedCache.value.filter((song) => matchesSongCategoryFilter(song, activeCategory));
+        collectionVisibleCache = { source: songs, key: cacheKey, value: visible };
+      } else {
+        // Searching previously called stripHtml/DOMParser for every song in
+        // one long task. Filter in small animation-frame batches so keyboard
+        // and sidebar pointer events remain responsive on mobile browsers.
+        const source = collectionSortedCache.value;
+        const filtered = [];
+        let index = 0;
+        const workGeneration = collectionWorkGeneration;
+        setStatus('Mencari lagu…');
+        const filterChunk = () => {
+          if (workGeneration !== collectionWorkGeneration || !isSidebarViewActive('collection')) return;
+          const end = Math.min(source.length, index + 12);
+          for (; index < end; index += 1) {
+            const song = source[index];
+            if (matchesSongCategoryFilter(song, activeCategory)
+              && searchTextMatches(getCollectionSearchText(song), query)) filtered.push(song);
+          }
+          if (index < source.length) {
+            collectionFilterTimer = window.requestAnimationFrame(filterChunk);
+            return;
+          }
+          collectionFilterTimer = 0;
+          collectionVisibleCache = { source: songs, key: cacheKey, value: filtered };
+          renderList(options);
+        };
+        collectionFilterTimer = window.requestAnimationFrame(filterChunk);
+        return;
+      }
     }
     if (renderLocalSongs) {
       if (isSidebarViewActive('my-songs')) window.requestAnimationFrame(() => renderMySongs());
@@ -3912,7 +3958,8 @@
       updateHeaderIdentity(view);
     });
   }
-  sidebarToggle.addEventListener('click', () => {
+  let sidebarPointerToggleHandled = false;
+  function toggleSidebar() {
     const open = !appSidebar.classList.contains('is-open');
     window.clearTimeout(sidebarBackdropHideTimer);
     if (open) {
@@ -3934,6 +3981,20 @@
     } else {
       closeSidebar();
     }
+  }
+  // On touch browsers, pointerdown runs before the delayed synthetic click.
+  // Open the drawer at that earliest point so a pending search update cannot
+  // make the user wait for the click event.
+  sidebarToggle.addEventListener('pointerdown', (event) => {
+    if (!['touch', 'pen'].includes(event.pointerType)) return;
+    event.preventDefault();
+    sidebarPointerToggleHandled = true;
+    toggleSidebar();
+    window.setTimeout(() => { sidebarPointerToggleHandled = false; }, 700);
+  }, { passive: false });
+  sidebarToggle.addEventListener('click', () => {
+    if (sidebarPointerToggleHandled) return;
+    toggleSidebar();
   });
   sidebarBackdrop.addEventListener('click', closeSidebar);
   appViewButtons.forEach((button) => button.addEventListener('click', () => activateAppView(button.dataset.appView)));
@@ -6352,7 +6413,17 @@
     renderScheduleTargets();
   });
   search.addEventListener('input', handleSearchInput);
-  clearSearchButton.addEventListener('click', () => { search.value = ''; handleSearchInput(); search.focus(); });
+  clearSearchButton.addEventListener('click', (event) => {
+    // The search field lives inside a label, so the browser may focus it as
+    // part of the same click. Focus first and give the mobile keyboard a
+    // chance to start its viewport transition before rebuilding the full
+    // collection list.
+    event.preventDefault();
+    cancelCollectionRender();
+    search.value = '';
+    search.focus({ preventScroll: true });
+    window.setTimeout(() => handleSearchInput(), 120);
+  });
   scheduleList.addEventListener('pointerdown', handleScheduleDragStart);
   scheduleList.addEventListener('pointermove', handleScheduleDragMove);
   scheduleList.addEventListener('pointerup', finishScheduleDrag);
