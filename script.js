@@ -135,6 +135,11 @@
   const mySongSearchTextCache = new WeakMap();
   let collectionSearchRenderTimer = 0;
   let collectionRenderGeneration = 0;
+  // Reusing the filtered/sorted array avoids repeating the most expensive
+  // part of collection navigation every time the user returns to the view.
+  // The source reference changes whenever fresh data is loaded, so stale
+  // entries are discarded automatically.
+  let collectionVisibleCache = null;
   let mySongsRenderGeneration = 0;
   // Keep hidden library panels out of the render path. A schedule refresh or
   // an IndexedDB completion can happen while the user is changing tabs; doing
@@ -933,6 +938,7 @@
       }
       songs = Array.isArray(result.songs) ? result.songs : [];
       songs.sort(compareSongs);
+      collectionVisibleCache = null;
       if (forceFresh && trackRefresh && readProfileUserName()) {
         trackSuccessfulAction('collection_refresh_success', {
           collection: 'Koleksi Lagu',
@@ -952,6 +958,7 @@
       if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'collection') updateHeaderIdentity('collection');
       buildFilters();
       window.requestAnimationFrame(() => {
+        if (isSidebarViewActive('collection')) cancelNavigationRender();
         renderList();
         renderSchedules();
       });
@@ -1053,6 +1060,7 @@
       if (!cached || !Array.isArray(cached.songs)) return;
       songs = cached.songs;
       songs.sort(compareSongs);
+      collectionVisibleCache = null;
       cachedSongsUpdatedAt = cached.updatedAt || null;
       cacheAvailable = true;
       count.textContent = String(songs.length);
@@ -1060,6 +1068,7 @@
       setSyncStatus(`Update terakhir: ${formatUpdatedAt(cached.updatedAt)}`);
       buildFilters();
       window.requestAnimationFrame(() => {
+        if (isSidebarViewActive('collection')) cancelNavigationRender();
         renderList();
         renderSchedules();
       });
@@ -2655,11 +2664,20 @@
     collectionRenderPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(search.value);
-    const visible = sortSongsForDisplay(songs.filter((song) => {
-      if (!matchesSongCategoryFilter(song, activeCategory)) return false;
-      if (!query) return true;
-      return searchTextMatches(getCollectionSearchText(song), query);
-    }), collectionSort);
+    const cacheKey = `${activeCategory}\u0000${collectionSort}\u0000${query}`;
+    let visible;
+    if (collectionVisibleCache
+      && collectionVisibleCache.source === songs
+      && collectionVisibleCache.key === cacheKey) {
+      visible = collectionVisibleCache.value;
+    } else {
+      visible = sortSongsForDisplay(songs.filter((song) => {
+        if (!matchesSongCategoryFilter(song, activeCategory)) return false;
+        if (!query) return true;
+        return searchTextMatches(getCollectionSearchText(song), query);
+      }), collectionSort);
+      collectionVisibleCache = { source: songs, key: cacheKey, value: visible };
+    }
     if (renderLocalSongs) {
       if (isSidebarViewActive('my-songs')) window.requestAnimationFrame(() => renderMySongs());
       else mySongsRenderPending = true;
@@ -2678,7 +2696,10 @@
     const appendChunk = (start) => {
       if (generation !== collectionRenderGeneration) return;
       const fragment = document.createDocumentFragment();
-      const end = Math.min(visible.length, start + 40);
+      // Smaller chunks keep pointer/touch events responsive on low-end
+      // Android WebViews while still filling the list over subsequent frames.
+      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 20 : 40;
+      const end = Math.min(visible.length, start + chunkSize);
       for (let index = start; index < end; index += 1) {
         const song = visible[index];
         const card = document.createElement('article');
@@ -3732,30 +3753,38 @@
   });
   let hasOpenedCollectionView = false;
   let navigationRenderFrame = 0;
-  let navigationRenderFrameAfterPaint = 0;
+  let navigationRenderIdle = 0;
+  let navigationRenderTimer = 0;
   function cancelNavigationRender() {
     window.cancelAnimationFrame(navigationRenderFrame);
-    window.cancelAnimationFrame(navigationRenderFrameAfterPaint);
+    if (navigationRenderIdle && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(navigationRenderIdle);
+    window.clearTimeout(navigationRenderTimer);
     navigationRenderFrame = 0;
-    navigationRenderFrameAfterPaint = 0;
+    navigationRenderIdle = 0;
+    navigationRenderTimer = 0;
   }
   function scheduleNavigationRender(view, render) {
     cancelNavigationRender();
     // Give the panel switch and sidebar transform one paint before building a
-    // potentially large list. This keeps the tap responsive while the first
-    // cards are rendered incrementally on following frames.
+    // potentially large list. Prefer an idle callback so a tap on the
+    // hamburger is handled before collection sorting starts.
     navigationRenderFrame = window.requestAnimationFrame(() => {
-      navigationRenderFrameAfterPaint = window.requestAnimationFrame(() => {
-        navigationRenderFrame = 0;
-        navigationRenderFrameAfterPaint = 0;
+      navigationRenderFrame = 0;
+      const run = () => {
+        navigationRenderIdle = 0;
+        navigationRenderTimer = 0;
         if (isSidebarViewActive(view)) render();
-      });
+      };
+      if (typeof window.requestIdleCallback === 'function') {
+        navigationRenderIdle = window.requestIdleCallback(run, { timeout: 250 });
+      } else {
+        navigationRenderTimer = window.setTimeout(() => window.requestAnimationFrame(run), 0);
+      }
     });
   }
   function closeSidebar() {
     window.clearTimeout(sidebarBackdropHideTimer);
     appSidebar.classList.remove('is-open');
-    sidebarToggle.classList.remove('is-hidden');
     sidebarToggle.setAttribute('aria-label', 'Buka menu');
     sidebarToggle.setAttribute('aria-expanded', 'false');
     sidebarBackdrop.classList.remove('is-visible');
@@ -3763,7 +3792,10 @@
     // complete. Removing [hidden] in the same frame as the sidebar transform
     // causes a visible flash in Android WebView.
     sidebarBackdropHideTimer = window.setTimeout(() => {
-      if (!appSidebar.classList.contains('is-open')) sidebarBackdrop.hidden = true;
+      if (!appSidebar.classList.contains('is-open')) {
+        sidebarBackdrop.hidden = true;
+        sidebarToggle.classList.remove('is-hidden');
+      }
     }, 160);
   }
   function activateAppView(view, options = {}) {
@@ -3829,10 +3861,9 @@
         if (appSidebar.classList.contains('is-open')) sidebarBackdrop.classList.add('is-visible');
       });
       appSidebar.classList.add('is-open');
-      // Keep the same button available as the close control. Hiding it makes
-      // repeated taps land on the backdrop and can look like an open/close
-      // glitch during the transition.
-      sidebarToggle.classList.remove('is-hidden');
+      // The toggle belongs to the page header. Hide it while the sidebar is
+      // open so it cannot remain visible above the drawer on mobile.
+      sidebarToggle.classList.add('is-hidden');
       sidebarToggle.setAttribute('aria-label', 'Tutup menu');
       sidebarToggle.setAttribute('aria-expanded', 'true');
     } else {
@@ -6271,6 +6302,11 @@
   document.getElementById('cancel-schedule-edit').addEventListener('click', () => { scheduleEditDialog.close(); editingEntry = null; });
   scheduleEditDialog.addEventListener('cancel', (event) => event.preventDefault());
   document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && appSidebar.classList.contains('is-open')) {
+      event.preventDefault();
+      closeSidebar();
+      return;
+    }
     if (event.key === '/' && !dialog.open && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
       event.preventDefault();
       search.focus();
