@@ -142,11 +142,17 @@
   let collectionVisibleCache = null;
   let collectionSortedCache = null;
   let collectionRenderTimer = 0;
+  let collectionRenderActive = false;
   let mySongsRenderGeneration = 0;
   // Keep hidden library panels out of the render path. A schedule refresh or
   // an IndexedDB completion can happen while the user is changing tabs; doing
   // both song lists synchronously there makes the next sidebar click wait.
   let collectionRenderPending = true;
+  // Schedule activation changes only affect the small action buttons on
+  // collection cards. Keep that invalidation separate from a full list
+  // render so returning to the collection does not sort and rebuild every
+  // song card again.
+  let collectionScheduleControlsPending = false;
   let mySongsRenderPending = true;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
@@ -172,6 +178,7 @@
   let cachedSongsUpdatedAt = null;
   let isLoadingSongs = false;
   let schedules = [];
+  let scheduleRenderPending = true;
   let schedulesDisabled = false;
   let scheduleTitleBeforeEdit = null;
   let activeScheduleId = '';
@@ -1284,6 +1291,8 @@
       })) : [];
       activeScheduleId = localStorage.getItem(ACTIVE_SCHEDULE_KEY) || '';
       schedulesDisabled = localStorage.getItem(SCHEDULES_DISABLED_KEY) === '1';
+      if (schedulesDisabled) activeScheduleId = '';
+      else if (!schedules.some((schedule) => schedule.id === activeScheduleId)) activeScheduleId = schedules[0]?.id || '';
     } catch (error) {
       schedules = [];
     }
@@ -1576,7 +1585,7 @@
       activeScheduleId = imported.id;
       const saved = saveSchedules();
       renderSchedules();
-      renderList();
+      refreshScheduleTargetControls();
       document.getElementById('pull-schedule-code').value = '';
       pullDialog.close();
       highlightNewSchedule(imported.id);
@@ -1586,6 +1595,14 @@
   }
 
   function renderSchedules() {
+    // The schedule editor is a separate screen. Rebuilding every schedule
+    // card while the user is browsing the collection only competes with
+    // pointer events; the next visit renders the latest state.
+    if (!isSidebarViewActive('schedule') && !scheduleViewDialog.open) {
+      scheduleRenderPending = true;
+      return;
+    }
+    scheduleRenderPending = false;
     if (typeof updateHeaderIdentity === 'function' && document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'schedule') updateHeaderIdentity('schedule');
     renderShareButtonState();
     renderScheduleTargets();
@@ -1937,7 +1954,7 @@
     schedules = schedules.filter((schedule) => schedule.id !== scheduleId);
     saveSchedules();
     renderSchedules();
-    renderList();
+    refreshScheduleTargetControls();
     if (viewedScheduleId === scheduleId && scheduleViewDialog.open) scheduleViewDialog.close();
   }
 
@@ -2023,7 +2040,8 @@
     // is rendered with the current schedule when opened.
     if (isSidebarViewActive('collection')) {
       document.querySelectorAll('#song-list .add-to-schedule').forEach((button) => { button.hidden = !enabled; });
-    } else collectionRenderPending = true;
+      collectionScheduleControlsPending = false;
+    } else collectionScheduleControlsPending = true;
     if (isSidebarViewActive('my-songs')) {
       document.querySelectorAll('#my-songs-list .my-song-add-action').forEach((button) => { button.disabled = !enabled; });
     } else mySongsRenderPending = true;
@@ -2069,7 +2087,7 @@
     activeScheduleId = schedule.id;
     if (saveSchedules()) trackSuccessfulAction('schedule_create_success', { scheduleName: schedule.title });
     renderSchedules();
-    renderList();
+    refreshScheduleTargetControls();
     highlightNewSchedule(schedule.id);
     const titleInput = scheduleList.querySelector('.schedule-card:first-child .schedule-title-input');
     if (titleInput) { titleInput.focus(); titleInput.select(); }
@@ -2329,7 +2347,7 @@
       if (schedules.some((item) => item.id === viewedScheduleId)) renderScheduleView(viewedScheduleId);
       else scheduleViewDialog.close();
     }
-    renderList();
+    refreshScheduleTargetControls();
   }
 
   function handleScheduleRowClick(event) {
@@ -2659,11 +2677,16 @@
   }
 
   function cancelCollectionRender() {
+    // If a chunked list was interrupted by navigation or the sidebar button,
+    // remember that the visible DOM is incomplete and finish it when the
+    // collection is opened again.
+    if (collectionRenderActive || collectionSearchRenderTimer) collectionRenderPending = true;
     collectionRenderGeneration += 1;
     window.clearTimeout(collectionRenderTimer);
     window.clearTimeout(collectionSearchRenderTimer);
     collectionRenderTimer = 0;
     collectionSearchRenderTimer = 0;
+    collectionRenderActive = false;
   }
 
   function renderList(options = {}) {
@@ -2675,6 +2698,7 @@
     }
     cancelCollectionRender();
     collectionRenderPending = false;
+    collectionScheduleControlsPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(search.value);
     const cacheKey = `${activeCategory}\u0000${collectionSort}\u0000${query}`;
@@ -2715,6 +2739,7 @@
     }
     setStatus('');
     const generation = collectionRenderGeneration;
+    collectionRenderActive = true;
     const appendChunk = (start) => {
       if (generation !== collectionRenderGeneration) return;
       const fragment = document.createDocumentFragment();
@@ -2767,6 +2792,8 @@
           collectionRenderTimer = 0;
           window.requestAnimationFrame(() => appendChunk(end));
         }, 16);
+      } else if (generation === collectionRenderGeneration) {
+        collectionRenderActive = false;
       }
     };
     appendChunk(0);
@@ -3822,6 +3849,9 @@
       if (!appSidebar.classList.contains('is-open')) {
         sidebarBackdrop.hidden = true;
         sidebarToggle.classList.remove('is-hidden');
+        if (isSidebarViewActive('collection') && collectionRenderPending) {
+          scheduleNavigationRender('collection', () => renderList({ renderLocalSongs: false }));
+        }
       }
     }, 160);
   }
@@ -3866,6 +3896,10 @@
     }
     if (view === 'collection' && collectionRenderPending) {
       scheduleNavigationRender('collection', () => renderList({ renderLocalSongs: false }));
+    } else if (view === 'collection' && collectionScheduleControlsPending) {
+      // The list DOM is still valid; update only the per-card schedule
+      // actions after the panel is visible. This keeps navigation work tiny.
+      scheduleNavigationRender('collection', () => refreshScheduleTargetControls());
     }
     if (view === 'collection' && !hasOpenedCollectionView) {
       hasOpenedCollectionView = true;
