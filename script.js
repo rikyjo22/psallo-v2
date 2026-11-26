@@ -46,6 +46,7 @@
   const offlineSettingsStatus = document.getElementById('offline-settings-status');
   const search = document.getElementById('search-input');
   const clearSearchButton = document.getElementById('clear-search');
+  const searchBox = search?.closest('.search-box');
   const mySongsSearch = document.getElementById('my-songs-search');
   const mySongsCategoryFilter = document.getElementById('my-songs-category-filter');
   const mySongsSortSelect = document.getElementById('my-songs-sort-select');
@@ -6417,6 +6418,13 @@
   });
   // Cancel list work on the initial touch, before focus/keyboard handling.
   // This prevents a pending card batch from delaying the input control.
+  searchBox?.addEventListener('pointerdown', (event) => {
+    cancelCollectionRender();
+    // Focus during pointerdown, before the delayed mobile click event.
+    if (event.target === search || event.target === clearSearchButton) {
+      search.focus({ preventScroll: true });
+    }
+  }, { capture: true, passive: true });
   search.addEventListener('pointerdown', () => cancelCollectionRender(), { passive: true });
   search.addEventListener('focus', () => cancelCollectionRender(), { passive: true });
   clearSearchButton.addEventListener('pointerdown', () => cancelCollectionRender(), { passive: true });
