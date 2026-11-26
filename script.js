@@ -133,6 +133,7 @@
   let mySongsLoaded = false;
   const collectionSearchTextCache = new WeakMap();
   const mySongSearchTextCache = new WeakMap();
+  const songReferencesCache = new WeakMap();
   let collectionSearchRenderTimer = 0;
   let collectionRenderGeneration = 0;
   // Reusing the filtered/sorted array avoids repeating the most expensive
@@ -333,6 +334,10 @@
     return selectedCategory === 'ALL' || song.category === selectedCategory;
   }
   function getSongReferences(song) {
+    if (song && typeof song === 'object') {
+      const cached = songReferencesCache.get(song);
+      if (cached) return cached;
+    }
     let references = song && (song.references ?? song.references_json ?? song.reference_json) || [];
     if (typeof references === 'string') {
       try { references = JSON.parse(references); } catch (error) { references = []; }
@@ -343,6 +348,7 @@
     if (legacyUrl && !references.some((reference) => reference.url === legacyUrl)) {
       references.push({ name: 'YouTube', type: 'link', url: legacyUrl });
     }
+    if (song && typeof song === 'object') songReferencesCache.set(song, references);
     return references;
   }
   function displaySongBookCode(song) {
@@ -2791,7 +2797,7 @@
       const fragment = document.createDocumentFragment();
       // Smaller chunks keep pointer/touch events responsive on low-end
       // Android WebViews while still filling the list over subsequent frames.
-      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 10 : 40;
+      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 5 : 32;
       const end = Math.min(visible.length, start + chunkSize);
       for (let index = start; index < end; index += 1) {
         const song = visible[index];
@@ -3868,18 +3874,14 @@
   }
   function scheduleNavigationRender(view, render) {
     cancelNavigationRender();
-    // Give the panel switch and sidebar transform one paint before building a
-    // potentially large list. A short timer keeps navigation prompt; waiting
-    // for an idle period can leave the collection blank for hundreds of ms on
-    // busy Android WebViews.
+    // Give the panel switch one paint before rendering. The collection render
+    // itself is chunked, so an extra timer/frame only adds visible navigation
+    // latency on mobile browsers.
     navigationRenderFrame = window.requestAnimationFrame(() => {
       navigationRenderFrame = 0;
-      const run = () => {
-        navigationRenderIdle = 0;
-        navigationRenderTimer = 0;
-        if (isSidebarViewActive(view)) render();
-      };
-      navigationRenderTimer = window.setTimeout(() => window.requestAnimationFrame(run), 0);
+      navigationRenderIdle = 0;
+      navigationRenderTimer = 0;
+      if (isSidebarViewActive(view)) render();
     });
   }
   function closeSidebar() {
@@ -3963,6 +3965,7 @@
     const open = !appSidebar.classList.contains('is-open');
     window.clearTimeout(sidebarBackdropHideTimer);
     if (open) {
+      if (document.activeElement === search) search.blur();
       // Stop any queued collection chunks before opening the drawer. The
       // current list remains visible underneath, but the tap gets the main
       // thread immediately.
@@ -6412,6 +6415,11 @@
     saveSchedules();
     renderScheduleTargets();
   });
+  // Cancel list work on the initial touch, before focus/keyboard handling.
+  // This prevents a pending card batch from delaying the input control.
+  search.addEventListener('pointerdown', () => cancelCollectionRender(), { passive: true });
+  search.addEventListener('focus', () => cancelCollectionRender(), { passive: true });
+  clearSearchButton.addEventListener('pointerdown', () => cancelCollectionRender(), { passive: true });
   search.addEventListener('input', handleSearchInput);
   clearSearchButton.addEventListener('click', (event) => {
     // The search field lives inside a label, so the browser may focus it as
@@ -6422,7 +6430,7 @@
     cancelCollectionRender();
     search.value = '';
     search.focus({ preventScroll: true });
-    window.setTimeout(() => handleSearchInput(), 120);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => handleSearchInput()));
   });
   scheduleList.addEventListener('pointerdown', handleScheduleDragStart);
   scheduleList.addEventListener('pointermove', handleScheduleDragMove);
