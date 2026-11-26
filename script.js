@@ -792,28 +792,39 @@
       bridge.setSystemBars(barColor, darkIcons);
     } catch (error) { /* The web app remains usable outside the Android wrapper. */ }
   }
-  function applyUserFontScale(percent) {
+  function applyUserFontScale(percent, addedRoots = null) {
     const multiplier = Math.max(1, Math.min(1.3, Number(percent) / 100 || 1));
     if (multiplier === 1 && activeFontSizeMultiplier === 1 && fontSizeScaledElements.size === 0) return;
-    activeFontSizeMultiplier = multiplier;
-    // Remove only the declarations written by this feature before measuring
-    // newly rendered elements. This prevents nested elements from inheriting a
-    // previously scaled parent and being scaled twice.
-    fontSizeScaledElements.forEach((element) => {
-      if (!element.isConnected) {
-        fontSizeScaledElements.delete(element);
-        return;
-      }
-      const original = fontSizeOriginalInlineStyles.get(element);
-      if (!original || !original.value) element.style.removeProperty('font-size');
-      else element.style.setProperty('font-size', original.value, original.priority);
-    });
-    fontSizeScaledElements.clear();
-    // Scale the actual text-bearing elements instead of only the first layer of
-    // each screen. This also covers dialogs and content rendered after startup.
+    const isIncremental = Array.isArray(addedRoots);
+    if (!isIncremental) {
+      activeFontSizeMultiplier = multiplier;
+      // Remove only declarations written by this feature before measuring the
+      // whole document. This prevents nested elements from inheriting a
+      // previously scaled parent and being scaled twice.
+      fontSizeScaledElements.forEach((element) => {
+        if (!element.isConnected) {
+          fontSizeScaledElements.delete(element);
+          return;
+        }
+        const original = fontSizeOriginalInlineStyles.get(element);
+        if (!original || !original.value) element.style.removeProperty('font-size');
+        else element.style.setProperty('font-size', original.value, original.priority);
+      });
+      fontSizeScaledElements.clear();
+    }
+    // Scale actual text-bearing elements. On DOM mutations, only inspect the
+    // newly inserted subtrees; walking the entire body for every song-list
+    // chunk was blocking taps in the Android WebView.
     const excluded = 'script, style, svg, path, circle, ellipse, line, polyline, polygon, rect, use, .song-content pre, .my-song-add-action, #song-list .add-to-schedule, #score-key-watermark, #score-key-watermark-value, #key-watermark-preview, #key-watermark-preview *';
     const scalableElements = [];
-    document.querySelectorAll('body *').forEach((element) => {
+    const roots = isIncremental ? addedRoots : [document.body];
+    const candidates = new Set();
+    roots.forEach((root) => {
+      if (!root || root.nodeType !== Node.ELEMENT_NODE || !root.isConnected) return;
+      candidates.add(root);
+      root.querySelectorAll('*').forEach((element) => candidates.add(element));
+    });
+    candidates.forEach((element) => {
       if (element.matches(excluded) || element.closest(excluded)) return;
       const hasDirectText = Array.from(element.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
       const isTextControl = element.matches('button,select,textarea,input:not([type="checkbox"]):not([type="radio"]):not([type="file"])');
@@ -849,17 +860,27 @@
         fontSizeScaledElements.add(element);
       }
     });
-    // Refit preformatted lyrics after the scale changes, once layout is ready.
-    // The deferred call also keeps initialisation safe before the resize state
-    // used by scheduleSongFit has been created.
-    if (typeof scheduleSongFit === 'function') window.requestAnimationFrame(() => scheduleSongFit());
+    // Refit preformatted lyrics after an explicit scale change. Incremental
+    // list updates do not contain lyric blocks and should not trigger a full
+    // layout pass.
+    if (!isIncremental && typeof scheduleSongFit === 'function') window.requestAnimationFrame(() => scheduleSongFit());
   }
   let fontScaleObserverFrame = 0;
-  const fontSizeObserver = new MutationObserver(() => {
-    if (Number(fontSizeSelect.value) === 100 || fontScaleObserverFrame) return;
+  const fontScaleObserverRoots = new Set();
+  const fontSizeObserver = new MutationObserver((mutations) => {
+    if (Number(fontSizeSelect.value) === 100) {
+      fontScaleObserverRoots.clear();
+      return;
+    }
+    mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) fontScaleObserverRoots.add(node);
+    }));
+    if (fontScaleObserverFrame || !fontScaleObserverRoots.size) return;
     fontScaleObserverFrame = window.requestAnimationFrame(() => {
       fontScaleObserverFrame = 0;
-      applyUserFontScale(Number(fontSizeSelect.value) || 100);
+      const roots = [...fontScaleObserverRoots];
+      fontScaleObserverRoots.clear();
+      applyUserFontScale(Number(fontSizeSelect.value) || 100, roots);
     });
   });
   fontSizeObserver.observe(document.body, { childList: true, subtree: true });
@@ -3711,10 +3732,31 @@
   });
   let hasOpenedCollectionView = false;
   let navigationRenderFrame = 0;
+  let navigationRenderFrameAfterPaint = 0;
+  function cancelNavigationRender() {
+    window.cancelAnimationFrame(navigationRenderFrame);
+    window.cancelAnimationFrame(navigationRenderFrameAfterPaint);
+    navigationRenderFrame = 0;
+    navigationRenderFrameAfterPaint = 0;
+  }
+  function scheduleNavigationRender(view, render) {
+    cancelNavigationRender();
+    // Give the panel switch and sidebar transform one paint before building a
+    // potentially large list. This keeps the tap responsive while the first
+    // cards are rendered incrementally on following frames.
+    navigationRenderFrame = window.requestAnimationFrame(() => {
+      navigationRenderFrameAfterPaint = window.requestAnimationFrame(() => {
+        navigationRenderFrame = 0;
+        navigationRenderFrameAfterPaint = 0;
+        if (isSidebarViewActive(view)) render();
+      });
+    });
+  }
   function closeSidebar() {
     window.clearTimeout(sidebarBackdropHideTimer);
     appSidebar.classList.remove('is-open');
     sidebarToggle.classList.remove('is-hidden');
+    sidebarToggle.setAttribute('aria-label', 'Buka menu');
     sidebarToggle.setAttribute('aria-expanded', 'false');
     sidebarBackdrop.classList.remove('is-visible');
     // Keep the backdrop in the stacking context until the short fade-out is
@@ -3725,6 +3767,7 @@
     }, 160);
   }
   function activateAppView(view, options = {}) {
+    cancelNavigationRender();
     if (view !== 'collection') collectionRenderGeneration += 1;
     if (view !== 'my-songs') mySongsRenderGeneration += 1;
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
@@ -3734,10 +3777,7 @@
       panel.removeAttribute('hidden');
     });
     if (view === 'schedule') {
-      window.cancelAnimationFrame(navigationRenderFrame);
-      navigationRenderFrame = window.requestAnimationFrame(() => {
-        if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'schedule') renderSchedules();
-      });
+      scheduleNavigationRender('schedule', renderSchedules);
     }
     appViewButtons.forEach((button) => {
       const active = button.dataset.appView === view;
@@ -3763,14 +3803,10 @@
     // opened, on the next frame, so a large hidden list cannot block the
     // sidebar transition or require a second tap.
     if (view === 'my-songs' && mySongsRenderPending) {
-      window.requestAnimationFrame(() => {
-        if (isSidebarViewActive('my-songs')) renderMySongs();
-      });
+      scheduleNavigationRender('my-songs', renderMySongs);
     }
     if (view === 'collection' && collectionRenderPending) {
-      window.requestAnimationFrame(() => {
-        if (isSidebarViewActive('collection')) renderList({ renderLocalSongs: false });
-      });
+      scheduleNavigationRender('collection', () => renderList({ renderLocalSongs: false }));
     }
     if (view === 'collection' && !hasOpenedCollectionView) {
       hasOpenedCollectionView = true;
@@ -3793,7 +3829,11 @@
         if (appSidebar.classList.contains('is-open')) sidebarBackdrop.classList.add('is-visible');
       });
       appSidebar.classList.add('is-open');
-      sidebarToggle.classList.add('is-hidden');
+      // Keep the same button available as the close control. Hiding it makes
+      // repeated taps land on the backdrop and can look like an open/close
+      // glitch during the transition.
+      sidebarToggle.classList.remove('is-hidden');
+      sidebarToggle.setAttribute('aria-label', 'Tutup menu');
       sidebarToggle.setAttribute('aria-expanded', 'true');
     } else {
       closeSidebar();
