@@ -140,6 +140,8 @@
   // The source reference changes whenever fresh data is loaded, so stale
   // entries are discarded automatically.
   let collectionVisibleCache = null;
+  let collectionSortedCache = null;
+  let collectionRenderTimer = 0;
   let mySongsRenderGeneration = 0;
   // Keep hidden library panels out of the render path. A schedule refresh or
   // an IndexedDB completion can happen while the user is changing tabs; doing
@@ -939,6 +941,7 @@
       songs = Array.isArray(result.songs) ? result.songs : [];
       songs.sort(compareSongs);
       collectionVisibleCache = null;
+      collectionSortedCache = null;
       if (forceFresh && trackRefresh && readProfileUserName()) {
         trackSuccessfulAction('collection_refresh_success', {
           collection: 'Koleksi Lagu',
@@ -1061,6 +1064,7 @@
       songs = cached.songs;
       songs.sort(compareSongs);
       collectionVisibleCache = null;
+      collectionSortedCache = null;
       cachedSongsUpdatedAt = cached.updatedAt || null;
       cacheAvailable = true;
       count.textContent = String(songs.length);
@@ -2654,6 +2658,14 @@
     return activeSidebarView() === view;
   }
 
+  function cancelCollectionRender() {
+    collectionRenderGeneration += 1;
+    window.clearTimeout(collectionRenderTimer);
+    window.clearTimeout(collectionSearchRenderTimer);
+    collectionRenderTimer = 0;
+    collectionSearchRenderTimer = 0;
+  }
+
   function renderList(options = {}) {
     const renderLocalSongs = options.renderLocalSongs !== false;
     if (!isSidebarViewActive('collection')) {
@@ -2661,6 +2673,7 @@
       if (renderLocalSongs) mySongsRenderPending = true;
       return;
     }
+    cancelCollectionRender();
     collectionRenderPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(search.value);
@@ -2671,11 +2684,20 @@
       && collectionVisibleCache.key === cacheKey) {
       visible = collectionVisibleCache.value;
     } else {
-      visible = sortSongsForDisplay(songs.filter((song) => {
+      if (!collectionSortedCache
+        || collectionSortedCache.source !== songs
+        || collectionSortedCache.mode !== collectionSort) {
+        collectionSortedCache = {
+          source: songs,
+          mode: collectionSort,
+          value: sortSongsForDisplay(songs, collectionSort)
+        };
+      }
+      visible = collectionSortedCache.value.filter((song) => {
         if (!matchesSongCategoryFilter(song, activeCategory)) return false;
         if (!query) return true;
         return searchTextMatches(getCollectionSearchText(song), query);
-      }), collectionSort);
+      });
       collectionVisibleCache = { source: songs, key: cacheKey, value: visible };
     }
     if (renderLocalSongs) {
@@ -2692,13 +2714,13 @@
       return;
     }
     setStatus('');
-    const generation = ++collectionRenderGeneration;
+    const generation = collectionRenderGeneration;
     const appendChunk = (start) => {
       if (generation !== collectionRenderGeneration) return;
       const fragment = document.createDocumentFragment();
       // Smaller chunks keep pointer/touch events responsive on low-end
       // Android WebViews while still filling the list over subsequent frames.
-      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 20 : 40;
+      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 10 : 40;
       const end = Math.min(visible.length, start + chunkSize);
       for (let index = start; index < end; index += 1) {
         const song = visible[index];
@@ -2737,7 +2759,15 @@
         fragment.append(card);
       }
       songList.append(fragment);
-      if (end < visible.length) window.requestAnimationFrame(() => appendChunk(end));
+      if (end < visible.length && generation === collectionRenderGeneration) {
+        // Yield a full turn to input handling between chunks. This is
+        // especially important after clearing search, when every song is
+        // visible again and the list may contain hundreds of cards.
+        collectionRenderTimer = window.setTimeout(() => {
+          collectionRenderTimer = 0;
+          window.requestAnimationFrame(() => appendChunk(end));
+        }, 16);
+      }
     };
     appendChunk(0);
   }
@@ -3766,8 +3796,9 @@
   function scheduleNavigationRender(view, render) {
     cancelNavigationRender();
     // Give the panel switch and sidebar transform one paint before building a
-    // potentially large list. Prefer an idle callback so a tap on the
-    // hamburger is handled before collection sorting starts.
+    // potentially large list. A short timer keeps navigation prompt; waiting
+    // for an idle period can leave the collection blank for hundreds of ms on
+    // busy Android WebViews.
     navigationRenderFrame = window.requestAnimationFrame(() => {
       navigationRenderFrame = 0;
       const run = () => {
@@ -3775,11 +3806,7 @@
         navigationRenderTimer = 0;
         if (isSidebarViewActive(view)) render();
       };
-      if (typeof window.requestIdleCallback === 'function') {
-        navigationRenderIdle = window.requestIdleCallback(run, { timeout: 250 });
-      } else {
-        navigationRenderTimer = window.setTimeout(() => window.requestAnimationFrame(run), 0);
-      }
+      navigationRenderTimer = window.setTimeout(() => window.requestAnimationFrame(run), 0);
     });
   }
   function closeSidebar() {
@@ -3800,7 +3827,7 @@
   }
   function activateAppView(view, options = {}) {
     cancelNavigationRender();
-    if (view !== 'collection') collectionRenderGeneration += 1;
+    if (view !== 'collection') cancelCollectionRender();
     if (view !== 'my-songs') mySongsRenderGeneration += 1;
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
     appViewPanels.forEach((panel) => {
@@ -3855,6 +3882,10 @@
     const open = !appSidebar.classList.contains('is-open');
     window.clearTimeout(sidebarBackdropHideTimer);
     if (open) {
+      // Stop any queued collection chunks before opening the drawer. The
+      // current list remains visible underneath, but the tap gets the main
+      // thread immediately.
+      cancelCollectionRender();
       sidebarBackdrop.hidden = false;
       // Let the backdrop start from opacity 0 before enabling its transition.
       window.requestAnimationFrame(() => {
