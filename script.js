@@ -2689,11 +2689,13 @@
     return activeSidebarView() === view;
   }
 
-  function cancelCollectionRender() {
-    // If a chunked list was interrupted by navigation or the sidebar button,
-    // remember that the visible DOM is incomplete and finish it when the
-    // collection is opened again.
-    if (collectionRenderActive || collectionSearchRenderTimer || collectionFilterTimer) collectionRenderPending = true;
+  function cancelCollectionRender(options = {}) {
+    // Navigation keeps the current collection DOM in place. Search changes
+    // still mark it for a later render so the visible result stays coherent.
+    if (options.preserveView && songList.childElementCount) collectionRenderPending = false;
+    if (!options.preserveView && (collectionRenderActive || collectionSearchRenderTimer || collectionFilterTimer)) {
+      collectionRenderPending = true;
+    }
     collectionRenderGeneration += 1;
     collectionWorkGeneration += 1;
     window.clearTimeout(collectionRenderTimer);
@@ -3906,7 +3908,7 @@
   }
   function activateAppView(view, options = {}) {
     cancelNavigationRender();
-    if (view !== 'collection') cancelCollectionRender();
+    if (view !== 'collection') cancelCollectionRender({ preserveView: true });
     if (view !== 'my-songs') mySongsRenderGeneration += 1;
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
     appViewPanels.forEach((panel) => {
@@ -3970,7 +3972,7 @@
       // Stop any queued collection chunks before opening the drawer. The
       // current list remains visible underneath, but the tap gets the main
       // thread immediately.
-      cancelCollectionRender();
+      cancelCollectionRender({ preserveView: true });
       sidebarBackdrop.hidden = false;
       // Let the backdrop start from opacity 0 before enabling its transition.
       window.requestAnimationFrame(() => {
