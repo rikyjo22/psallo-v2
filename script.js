@@ -2686,9 +2686,11 @@
   function cancelCollectionRender(options = {}) {
     // Navigation keeps a completed collection DOM in place while an
     // incomplete build is safely cancelled and rebuilt when the view opens.
-    if (options.preserveView && songList.childElementCount
-      && collectionCardSource === songs
-      && collectionCardRecords.length === songs.length) collectionRenderPending = false;
+    if (options.preserveView) {
+      collectionRenderPending = collectionCardSource !== songs
+        || collectionCardRecords.length !== songs.length
+        || !songList.childElementCount;
+    }
     if (!options.preserveView && (collectionRenderActive || collectionSearchRenderTimer)) {
       collectionRenderPending = true;
     }
@@ -2759,7 +2761,12 @@
   function renderList(options = {}) {
     const renderLocalSongs = options.renderLocalSongs !== false;
     if (!isSidebarViewActive('collection')) {
-      collectionRenderPending = true;
+      // Background work can call renderList while another screen is open
+      // (for example after offline image reconciliation). Keep the completed
+      // collection DOM reusable instead of forcing a full rebuild on return.
+      collectionRenderPending = collectionCardSource !== songs
+        || collectionCardRecords.length !== songs.length
+        || !songList.childElementCount;
       if (renderLocalSongs) mySongsRenderPending = true;
       return;
     }
