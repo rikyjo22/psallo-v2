@@ -977,7 +977,7 @@
       buildFilters();
       window.requestAnimationFrame(() => {
         if (isSidebarViewActive('collection')) cancelNavigationRender();
-        renderList();
+        renderList({ renderLocalSongs: false, allowInactive: true });
         renderSchedules();
       });
       if (offlineAppEnabled) void reconcileOfflineImageCache().finally(() => downloadAllOfflineImages());
@@ -1086,7 +1086,7 @@
       buildFilters();
       window.requestAnimationFrame(() => {
         if (isSidebarViewActive('collection')) cancelNavigationRender();
-        renderList();
+        renderList({ renderLocalSongs: false, allowInactive: true });
         renderSchedules();
       });
       if (offlineAppEnabled) window.setTimeout(() => { if (offlineAppEnabled) void downloadAllOfflineImages(); }, 900);
@@ -2755,7 +2755,7 @@
 
   function renderList(options = {}) {
     const renderLocalSongs = options.renderLocalSongs !== false;
-    if (!isSidebarViewActive('collection')) {
+    if (!isSidebarViewActive('collection') && !options.allowInactive) {
       // Background work can call renderList while another screen is open
       // (for example after offline image reconciliation). Keep the completed
       // collection DOM reusable instead of forcing a full rebuild on return.
@@ -2809,34 +2809,55 @@
     collectionCardSource = songs;
     collectionCardSort = collectionSort;
     collectionCardRecords = [];
-    songList.replaceChildren();
     if (!songs.length) {
+      songList.replaceChildren();
       updateCollectionCardVisibility();
       return;
     }
     const sorted = sortSongsForDisplay(songs, collectionSort);
     const generation = ++collectionRenderGeneration;
+    // Build replacements off-screen so a refresh never blanks the collection
+    // while the user is looking at another view (or returns mid-build).
+    const staging = document.createDocumentFragment();
+    let streamIntoVisibleList = songList.childElementCount === 0;
+    let streamedToVisibleList = false;
     collectionRenderActive = true;
     setStatus('Menyiapkan koleksi lagu…');
     const appendChunk = (start) => {
       if (generation !== collectionRenderGeneration) return;
       const fragment = document.createDocumentFragment();
-      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 5 : 32;
+      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 40 : 96;
       const end = Math.min(sorted.length, start + chunkSize);
       for (let index = start; index < end; index += 1) {
         const song = sorted[index];
         const record = { song, card: createCollectionCard(song), searchText: getCollectionSearchText(song) };
+        const visible = matchesSongCategoryFilter(song, activeCategory)
+          && searchTextMatches(record.searchText, normalizeSearch(search.value));
+        record.card.style.display = visible ? '' : 'none';
+        record.card.classList.toggle('is-filter-hidden', !visible);
         collectionCardRecords.push(record);
         fragment.append(record.card);
       }
-      songList.append(fragment);
-      updateCollectionCardVisibility();
+      if (streamIntoVisibleList && isSidebarViewActive('collection')) {
+        songList.append(staging, fragment);
+        streamIntoVisibleList = false;
+        streamedToVisibleList = true;
+      } else if (streamedToVisibleList) {
+        songList.append(fragment);
+      } else {
+        staging.append(fragment);
+      }
       if (end < sorted.length && generation === collectionRenderGeneration) {
         collectionRenderTimer = window.setTimeout(() => {
           collectionRenderTimer = 0;
           window.requestAnimationFrame(() => appendChunk(end));
         }, 16);
       } else if (generation === collectionRenderGeneration) {
+        if (!streamedToVisibleList) {
+          const scrollTop = songList.scrollTop;
+          songList.replaceChildren(staging);
+          songList.scrollTop = scrollTop;
+        }
         collectionRenderActive = false;
         updateCollectionCardVisibility();
       }
