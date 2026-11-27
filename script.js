@@ -153,7 +153,6 @@
   // Keep hidden library panels out of the render path. A schedule refresh or
   // an IndexedDB completion can happen while the user is changing tabs; doing
   // both song lists synchronously there makes the next sidebar click wait.
-  let collectionRenderPending = true;
   // Schedule activation changes only affect the small action buttons on
   // collection cards. Keep that invalidation separate from a full list
   // render so returning to the collection does not sort and rebuild every
@@ -2683,17 +2682,13 @@
     return activeSidebarView() === view;
   }
 
-  function cancelCollectionRender(options = {}) {
-    // Navigation keeps a completed collection DOM in place while an
-    // incomplete build is safely cancelled and rebuilt when the view opens.
-    if (options.preserveView) {
-      collectionRenderPending = collectionCardSource !== songs
-        || collectionCardRecords.length !== songs.length
-        || !songList.childElementCount;
-    }
-    if (!options.preserveView && (collectionRenderActive || collectionSearchRenderTimer)) {
-      collectionRenderPending = true;
-    }
+  function collectionListNeedsRender() {
+    return collectionCardSource !== songs
+      || collectionCardRecords.length !== songs.length
+      || !songList.childElementCount;
+  }
+
+  function cancelCollectionRender() {
     collectionRenderGeneration += 1;
     window.clearTimeout(collectionRenderTimer);
     window.clearTimeout(collectionSearchRenderTimer);
@@ -2764,13 +2759,9 @@
       // Background work can call renderList while another screen is open
       // (for example after offline image reconciliation). Keep the completed
       // collection DOM reusable instead of forcing a full rebuild on return.
-      collectionRenderPending = collectionCardSource !== songs
-        || collectionCardRecords.length !== songs.length
-        || !songList.childElementCount;
       if (renderLocalSongs) mySongsRenderPending = true;
       return;
     }
-    collectionRenderPending = false;
     collectionScheduleControlsPending = false;
     updateActiveScheduleInfo();
     if (renderLocalSongs) {
@@ -2815,7 +2806,6 @@
     }
 
     cancelCollectionRender();
-    collectionRenderPending = false;
     collectionCardSource = songs;
     collectionCardSort = collectionSort;
     collectionCardRecords = [];
@@ -3900,15 +3890,11 @@
       if (!appSidebar.classList.contains('is-open')) {
         sidebarBackdrop.hidden = true;
         sidebarToggle.classList.remove('is-hidden');
-        if (isSidebarViewActive('collection') && collectionRenderPending) {
-          scheduleNavigationRender('collection', () => renderList({ renderLocalSongs: false }));
-        }
       }
     }, 160);
   }
   function activateAppView(view, options = {}) {
     cancelNavigationRender();
-    if (view !== 'collection') cancelCollectionRender({ preserveView: true });
     if (view !== 'my-songs') mySongsRenderGeneration += 1;
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
     appViewPanels.forEach((panel) => {
@@ -3945,7 +3931,7 @@
     if (view === 'my-songs' && mySongsRenderPending) {
       scheduleNavigationRender('my-songs', renderMySongs);
     }
-    if (view === 'collection' && collectionRenderPending) {
+    if (view === 'collection' && collectionListNeedsRender()) {
       scheduleNavigationRender('collection', () => renderList({ renderLocalSongs: false }));
     } else if (view === 'collection' && collectionScheduleControlsPending) {
       // The list DOM is still valid; update only the per-card schedule
@@ -3969,10 +3955,6 @@
     window.clearTimeout(sidebarBackdropHideTimer);
     if (open) {
       if (document.activeElement === search) search.blur();
-      // Stop any queued collection chunks before opening the drawer. The
-      // current list remains visible underneath, but the tap gets the main
-      // thread immediately.
-      cancelCollectionRender({ preserveView: true });
       sidebarBackdrop.hidden = false;
       // Let the backdrop start from opacity 0 before enabling its transition.
       window.requestAnimationFrame(() => {
