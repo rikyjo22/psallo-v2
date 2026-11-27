@@ -4494,7 +4494,9 @@
     const instruments = Object.entries(currentPreviewSong?.images || {})
       .filter(([, files]) => Array.isArray(files) && files.length);
     scoreImageInstruments.replaceChildren();
-    if (scoreViewerFromList || instruments.length < 2) {
+    // The full-screen viewer should offer every available instrument even
+    // when it was opened directly from a collection card.
+    if (instruments.length < 2) {
       scoreImageInstruments.hidden = true;
       scoreImageDialog.classList.add('instrument-controls-hidden');
       return false;
