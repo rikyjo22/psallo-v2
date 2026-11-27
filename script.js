@@ -144,7 +144,7 @@
   let collectionRenderTimer = 0;
   let collectionRenderActive = false;
   // Collection cards are kept in the DOM after the initial list build. Search
-  // and category changes only toggle their visibility, so typing does not
+  // and category changes only toggle their display state, so typing does not
   // create and destroy a large subtree on every keystroke.
   let collectionCardSource = null;
   let collectionCardSort = '';
@@ -2742,8 +2742,7 @@
     collectionCardRecords.forEach((record) => {
       const visible = matchesSongCategoryFilter(record.song, activeCategory)
         && searchTextMatches(record.searchText, query);
-      record.card.style.visibility = visible ? '' : 'hidden';
-      record.card.style.pointerEvents = visible ? '' : 'none';
+      record.card.style.display = visible ? '' : 'none';
       record.card.classList.toggle('is-filter-hidden', !visible);
       if (visible) visibleCount += 1;
     });
@@ -6413,7 +6412,7 @@
     renderScheduleTargets();
   });
   // Focus the field immediately on mobile. The collection list stays mounted
-  // while search changes only toggle card visibility.
+  // while search changes only toggle each card's display state.
   searchBox?.addEventListener('pointerdown', (event) => {
     if (event.target === search || event.target === clearSearchButton) {
       search.focus({ preventScroll: true });
