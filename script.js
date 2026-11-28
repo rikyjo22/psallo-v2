@@ -1,6 +1,7 @@
 ﻿(() => {
   'use strict';
 
+  const HTML_ESCAPE_MAP = Object.freeze({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' });
   // Pemutaran file Drive memakai endpoint media yang tersedia di backend manager.
   const API_URL = 'https://script.google.com/macros/s/AKfycbz3aMkgQWSpfnkuMoViwicrNYJ69OQuTbNGcWosrT7j5_shw6BvhoV6KM3RibjjRMc_YQ/exec';
   const CACHE_KEY = 'song-book:songs:v4';
@@ -899,9 +900,7 @@
   });
   fontSizeObserver.observe(document.body, { childList: true, subtree: true });
   function escapeText(value) {
-    const span = document.createElement('span');
-    span.textContent = String(value == null ? '' : value);
-    return span.innerHTML;
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (character) => HTML_ESCAPE_MAP[character]);
   }
 
   function setRefreshLoading(loading) {
