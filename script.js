@@ -137,19 +137,19 @@
   const mySongSearchTextCache = new WeakMap();
   const songReferencesCache = new WeakMap();
   let collectionSearchRenderTimer = 0;
-  let collectionRenderGeneration = 0;
-  // Reusing the filtered/sorted array avoids repeating the most expensive
-  // part of collection navigation every time the user returns to the view.
-  // The source reference changes whenever fresh data is loaded, so stale
-  // entries are discarded automatically.
-  let collectionRenderTimer = 0;
-  let collectionRenderActive = false;
-  // Collection cards are kept in the DOM after the initial list build. Search
-  // and category changes only toggle their display state, so typing does not
-  // create and destroy a large subtree on every keystroke.
+  // Song data stays indexed in memory; card elements are created only for the
+  // current viewport and its scroll buffer.
   let collectionCardSource = null;
   let collectionCardSort = '';
   let collectionCardRecords = [];
+  let collectionVisibleRecords = [];
+  let collectionVirtualMode = false;
+  let collectionWindowStart = -1;
+  let collectionWindowEnd = -1;
+  let collectionWindowVisibleCount = -1;
+  let collectionWindowFrame = 0;
+  let collectionTopSpacer = null;
+  let collectionBottomSpacer = null;
   let mySongsRenderGeneration = 0;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
@@ -2025,7 +2025,9 @@
   function scheduleCollectionScheduleControlsRefresh() {
     window.cancelAnimationFrame(collectionScheduleControlsRefreshFrame);
     const generation = ++collectionScheduleControlsRefreshGeneration;
-    const buttons = [...document.querySelectorAll('#song-list .add-to-schedule')];
+    const buttons = collectionVirtualMode
+      ? collectionCardRecords.map((record) => record.card?.querySelector('.add-to-schedule')).filter(Boolean)
+      : [...document.querySelectorAll('#song-list .add-to-schedule')];
     const enabled = Boolean(activeScheduleId) && !schedulesDisabled && schedules.length > 0;
     let index = 0;
     const updateChunk = () => {
@@ -2683,15 +2685,6 @@
     return activeSidebarView() === view;
   }
 
-  function cancelCollectionRender() {
-    collectionRenderGeneration += 1;
-    window.cancelAnimationFrame(collectionRenderTimer);
-    window.clearTimeout(collectionSearchRenderTimer);
-    collectionRenderTimer = 0;
-    collectionSearchRenderTimer = 0;
-    collectionRenderActive = false;
-  }
-
   function createCollectionCard(song) {
     const card = document.createElement('article');
     card.className = 'song-card';
@@ -2731,29 +2724,73 @@
   function updateCollectionCardVisibility() {
     const query = normalizeSearch(search.value);
     let visibleCount = 0;
+    const visibleRecords = [];
     collectionCardRecords.forEach((record) => {
       const visible = matchesSongCategoryFilter(record.song, activeCategory)
-        && searchTextMatches(record.searchText, query);
-      record.card.style.display = visible ? '' : 'none';
-      record.card.classList.toggle('is-filter-hidden', !visible);
-      if (visible) visibleCount += 1;
+        && (!query || searchTextMatches(getCollectionSearchText(record.song), query));
+      if (visible) {
+        visibleCount += 1;
+        visibleRecords.push(record);
+      }
     });
+    collectionVisibleRecords = visibleRecords;
     if (!songs.length) {
       setStatus('Belum ada lagu di database. Tambahkan lagu melalui Song Manager.');
-    } else if (!collectionRenderActive && !visibleCount) {
+    } else if (!visibleCount) {
       setStatus('Tidak ada lagu yang cocok. Coba kata kunci atau kategori lain.');
     } else {
       setStatus('');
     }
+    if (collectionVirtualMode) updateCollectionVirtualWindow(true);
     return visibleCount;
+  }
+
+  function updateCollectionVirtualWindow(force = false) {
+    if (!collectionVirtualMode) return;
+    const rowHeight = window.matchMedia('(max-width: 600px)').matches ? 80 : 90;
+    const total = collectionVisibleRecords.length;
+    const viewportHeight = songList.clientHeight || rowHeight * 8;
+    const maxScrollTop = Math.max(0, total * rowHeight - viewportHeight);
+    const scrollTop = Math.min(songList.scrollTop, maxScrollTop);
+    if (songList.scrollTop !== scrollTop) songList.scrollTop = scrollTop;
+    const overscan = 8;
+    const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+    const end = Math.min(total, Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscan);
+    if (!force && start === collectionWindowStart && end === collectionWindowEnd && total === collectionWindowVisibleCount) return;
+
+    if (!collectionTopSpacer) {
+      collectionTopSpacer = document.createElement('div');
+      collectionTopSpacer.className = 'collection-virtual-spacer';
+      collectionTopSpacer.setAttribute('aria-hidden', 'true');
+    }
+    if (!collectionBottomSpacer) {
+      collectionBottomSpacer = document.createElement('div');
+      collectionBottomSpacer.className = 'collection-virtual-spacer';
+      collectionBottomSpacer.setAttribute('aria-hidden', 'true');
+    }
+    const fragment = document.createDocumentFragment();
+    if (start > 0) {
+      collectionTopSpacer.style.height = `${start * rowHeight}px`;
+      fragment.append(collectionTopSpacer);
+    }
+    for (let index = start; index < end; index += 1) {
+      const record = collectionVisibleRecords[index];
+      if (!record.card) record.card = createCollectionCard(record.song);
+      fragment.append(record.card);
+    }
+    if (end < total) {
+      collectionBottomSpacer.style.height = `${(total - end) * rowHeight}px`;
+      fragment.append(collectionBottomSpacer);
+    }
+    songList.replaceChildren(fragment);
+    collectionWindowStart = start;
+    collectionWindowEnd = end;
+    collectionWindowVisibleCount = total;
   }
 
   function renderList(options = {}) {
     const renderLocalSongs = options.renderLocalSongs !== false;
     if (!isSidebarViewActive('collection') && !options.allowInactive) {
-      // Background work can call renderList while another screen is open
-      // (for example after offline image reconciliation). Keep the completed
-      // collection DOM reusable instead of forcing a full rebuild on return.
       return;
     }
     updateActiveScheduleInfo();
@@ -2763,32 +2800,12 @@
 
     const needsSourceRebuild = collectionCardSource !== songs
       || collectionCardRecords.length !== songs.length;
-    if (collectionCardSource === songs && collectionRenderActive) {
-      // Let the in-progress initial build finish. Existing cards can be
-      // filtered immediately, and each subsequent chunk uses the current
-      // query without restarting DOM work.
-      if (collectionCardSort === collectionSort) {
-        updateCollectionCardVisibility();
-        return;
-      }
-      // A sort change changes card order, so restart the partial build in the
-      // requested order. Ordinary text/category search never takes this path.
-      cancelCollectionRender();
-      collectionCardSource = null;
-      collectionCardRecords = [];
-    }
     if (!needsSourceRebuild && collectionCardSort !== collectionSort) {
-      // A sort change can reuse the existing cards too. Moving existing nodes
-      // keeps search and the number-search auto-sort free from DOM creation.
       const recordsBySong = new Map(collectionCardRecords.map((record) => [record.song, record]));
       const sortedRecords = sortSongsForDisplay(songs, collectionSort)
-        .map((song) => recordsBySong.get(song))
-        .filter(Boolean);
+        .map((song) => recordsBySong.get(song) || { song, card: null });
       collectionCardRecords = sortedRecords;
       collectionCardSort = collectionSort;
-      const fragment = document.createDocumentFragment();
-      sortedRecords.forEach((record) => fragment.append(record.card));
-      songList.replaceChildren(fragment);
       updateCollectionCardVisibility();
       return;
     }
@@ -2797,68 +2814,16 @@
       return;
     }
 
-    cancelCollectionRender();
     collectionCardSource = songs;
     collectionCardSort = collectionSort;
-    collectionCardRecords = [];
-    if (!songs.length) {
-      songList.replaceChildren();
-      updateCollectionCardVisibility();
-      return;
-    }
-    const sorted = sortSongsForDisplay(songs, collectionSort);
-    const generation = ++collectionRenderGeneration;
-    // Build replacements off-screen so a refresh never blanks the collection
-    // while the user is looking at another view (or returns mid-build).
-    const staging = document.createDocumentFragment();
-    let streamIntoVisibleList = songList.childElementCount === 0;
-    let streamedToVisibleList = false;
-    collectionRenderActive = true;
-    setStatus('Menyiapkan koleksi lagu…');
-    const appendChunk = (start) => {
-      if (generation !== collectionRenderGeneration) return;
-      const fragment = document.createDocumentFragment();
-      const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 40 : 96;
-      const end = Math.min(sorted.length, start + chunkSize);
-      const query = normalizeSearch(search.value);
-      for (let index = start; index < end; index += 1) {
-        const song = sorted[index];
-        const record = { song, card: createCollectionCard(song), searchText: getCollectionSearchText(song) };
-        const visible = matchesSongCategoryFilter(song, activeCategory)
-          && searchTextMatches(record.searchText, query);
-        record.card.style.display = visible ? '' : 'none';
-        record.card.classList.toggle('is-filter-hidden', !visible);
-        collectionCardRecords.push(record);
-        fragment.append(record.card);
-      }
-      // First population streams into the real list even if its screen is
-      // hidden. Returning to Koleksi can then show completed batches at once;
-      // refreshes with an existing list still stage replacements off-screen.
-      if (streamIntoVisibleList) {
-        songList.append(staging, fragment);
-        streamIntoVisibleList = false;
-        streamedToVisibleList = true;
-      } else if (streamedToVisibleList) {
-        songList.append(fragment);
-      } else {
-        staging.append(fragment);
-      }
-      if (end < sorted.length && generation === collectionRenderGeneration) {
-        collectionRenderTimer = window.requestAnimationFrame(() => {
-          collectionRenderTimer = 0;
-          appendChunk(end);
-        });
-      } else if (generation === collectionRenderGeneration) {
-        if (!streamedToVisibleList) {
-          const scrollTop = songList.scrollTop;
-          songList.replaceChildren(staging);
-          songList.scrollTop = scrollTop;
-        }
-        collectionRenderActive = false;
-        updateCollectionCardVisibility();
-      }
-    };
-    appendChunk(0);
+    collectionCardRecords = sortSongsForDisplay(songs, collectionSort)
+      .map((song) => ({ song, card: null }));
+    collectionVisibleRecords = [];
+    collectionVirtualMode = true;
+    collectionWindowStart = -1;
+    collectionWindowEnd = -1;
+    collectionWindowVisibleCount = -1;
+    updateCollectionCardVisibility();
   }
 
   function renderMySongs() {
@@ -4036,7 +4001,10 @@
     }
     document.querySelectorAll('[data-header-action="cancel-my-song-upload"]').forEach((button) => { button.hidden = !visible.has('cancel-my-song-upload') || cancelMySongUploadButton.hidden; });
   }
-  window.addEventListener('resize', () => updateHeaderActions(document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView || 'schedule'));
+  window.addEventListener('resize', () => {
+    updateHeaderActions(document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView || 'schedule');
+    if (collectionVirtualMode) updateCollectionVirtualWindow(true);
+  });
   function activateLibraryTab(tab) {
     libraryTabs.querySelectorAll('[role="tab"]').forEach((item) => {
       const selected = item === tab;
@@ -6360,6 +6328,13 @@
   document.getElementById('close-delete-schedule').addEventListener('click', () => finishScheduleDeletion(false));
   deleteScheduleDialog.addEventListener('close', () => { pendingScheduleDeletionId = ''; });
   songList.addEventListener('click', handleCollectionClick);
+  songList.addEventListener('scroll', () => {
+    if (!collectionVirtualMode || collectionWindowFrame) return;
+    collectionWindowFrame = window.requestAnimationFrame(() => {
+      collectionWindowFrame = 0;
+      updateCollectionVirtualWindow();
+    });
+  }, { passive: true });
   scheduleList.addEventListener('change', handleActiveScheduleChange);
   scheduleList.addEventListener('focusin', (event) => {
     const titleInput = event.target.closest('input.schedule-title-input');

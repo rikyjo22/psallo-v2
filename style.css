@@ -2050,3 +2050,9 @@ body{font-size:16px}
 
 /* Keep inactive screens out of layout while preserving their existing DOM. */
 .app-view[hidden]{display:none!important}
+
+/* Keep the virtualized collection rows at a predictable height for its spacers. */
+#song-list>.song-card{height:90px;min-height:90px;max-height:90px;overflow:hidden}
+#song-list .song-card-main .song-subtitle{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#song-list>.collection-virtual-spacer{display:block;width:100%;padding:0;border:0;pointer-events:none}
+@media(max-width:600px){#song-list>.song-card{height:80px;min-height:80px;max-height:80px}}
