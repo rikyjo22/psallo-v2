@@ -2041,6 +2041,7 @@ body{font-size:16px}
 .sidebar-menu-icon svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .sidebar-backdrop{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .14s ease;will-change:opacity}
 .sidebar-backdrop.is-visible{opacity:1;visibility:visible;pointer-events:auto}
+.app-sidebar.is-navigation-close,.sidebar-backdrop.is-navigation-close{transition-duration:.06s!important}
 
 
 .song-list .add-to-schedule[hidden]{display:none!important}

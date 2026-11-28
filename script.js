@@ -2120,6 +2120,12 @@
   }
 
   function handleCollectionClick(event) {
+    const openButton = event.target.closest('[data-open-collection-song]');
+    if (openButton) {
+      const song = songs.find((item) => String(item.id) === String(openButton.dataset.openCollectionSong));
+      if (song) openSongFromList(song, songs, undefined, true);
+      return;
+    }
     const saveLocalButton = event.target.closest('[data-save-song-to-my-songs]');
     if (saveLocalButton) {
       event.preventDefault();
@@ -2680,7 +2686,7 @@
 
   function cancelCollectionRender() {
     collectionRenderGeneration += 1;
-    window.clearTimeout(collectionRenderTimer);
+    window.cancelAnimationFrame(collectionRenderTimer);
     window.clearTimeout(collectionSearchRenderTimer);
     collectionRenderTimer = 0;
     collectionSearchRenderTimer = 0;
@@ -2695,10 +2701,10 @@
     const openButton = document.createElement('button');
     openButton.type = 'button';
     openButton.className = 'song-card-main';
+    openButton.dataset.openCollectionSong = String(song.id);
     const referenceCount = songReferenceCount(song);
     openButton.setAttribute('aria-label', `Buka ${song.category} ${displaySongNumber(song.number)}, ${song.title}${referenceCount ? `, ${referenceCount} referensi` : ''}`);
     openButton.innerHTML = `${songIndex}<span class="song-details"><span class="song-title">${escapeText(displaySongTitle(song))}</span><span class="song-subtitle">${songMeta}</span></span><span class="song-open" aria-hidden="true">&#8250;</span>`;
-    openButton.addEventListener('click', () => openSongFromList(song, songs, undefined, true));
     card.append(openButton);
     const quickActions = document.createElement('span');
     quickActions.className = 'song-card-quick-actions';
@@ -2815,11 +2821,12 @@
       const fragment = document.createDocumentFragment();
       const chunkSize = window.matchMedia('(max-width: 600px)').matches ? 40 : 96;
       const end = Math.min(sorted.length, start + chunkSize);
+      const query = normalizeSearch(search.value);
       for (let index = start; index < end; index += 1) {
         const song = sorted[index];
         const record = { song, card: createCollectionCard(song), searchText: getCollectionSearchText(song) };
         const visible = matchesSongCategoryFilter(song, activeCategory)
-          && searchTextMatches(record.searchText, normalizeSearch(search.value));
+          && searchTextMatches(record.searchText, query);
         record.card.style.display = visible ? '' : 'none';
         record.card.classList.toggle('is-filter-hidden', !visible);
         collectionCardRecords.push(record);
@@ -2835,10 +2842,10 @@
         staging.append(fragment);
       }
       if (end < sorted.length && generation === collectionRenderGeneration) {
-        collectionRenderTimer = window.setTimeout(() => {
+        collectionRenderTimer = window.requestAnimationFrame(() => {
           collectionRenderTimer = 0;
-          window.requestAnimationFrame(() => appendChunk(end));
-        }, 16);
+          appendChunk(end);
+        });
       } else if (generation === collectionRenderGeneration) {
         if (!streamedToVisibleList) {
           const scrollTop = songList.scrollTop;
@@ -3857,8 +3864,10 @@
     sidebarSettingsDialog.close();
   });
   let hasOpenedCollectionView = false;
-  function closeSidebar() {
+  function closeSidebar(immediate = false) {
     window.clearTimeout(sidebarBackdropHideTimer);
+    appSidebar.classList.toggle('is-navigation-close', immediate);
+    sidebarBackdrop.classList.toggle('is-navigation-close', immediate);
     appSidebar.classList.remove('is-open');
     sidebarToggle.setAttribute('aria-label', 'Buka menu');
     sidebarToggle.setAttribute('aria-expanded', 'false');
@@ -3871,7 +3880,7 @@
         sidebarBackdrop.hidden = true;
         sidebarToggle.classList.remove('is-hidden');
       }
-    }, 160);
+    }, immediate ? 80 : 160);
   }
   function activateAppView(view, options = {}) {
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
@@ -3908,7 +3917,7 @@
       hasOpenedCollectionView = true;
       if (!songs.length && !options.skipInitialLoad) loadSongs(true, false);
     }
-    closeSidebar();
+    closeSidebar(true);
     window.requestAnimationFrame(() => {
       if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView !== view) return;
       updateHeaderActions(view);
@@ -3920,6 +3929,8 @@
     const open = !appSidebar.classList.contains('is-open');
     window.clearTimeout(sidebarBackdropHideTimer);
     if (open) {
+      appSidebar.classList.remove('is-navigation-close');
+      sidebarBackdrop.classList.remove('is-navigation-close');
       if (document.activeElement === search) search.blur();
       sidebarBackdrop.hidden = false;
       // Let the backdrop start from opacity 0 before enabling its transition.
