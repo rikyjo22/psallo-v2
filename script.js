@@ -150,14 +150,6 @@
   let collectionCardSort = '';
   let collectionCardRecords = [];
   let mySongsRenderGeneration = 0;
-  // Keep hidden library panels out of the render path. A schedule refresh or
-  // an IndexedDB completion can happen while the user is changing tabs; doing
-  // both song lists synchronously there makes the next sidebar click wait.
-  // Schedule activation changes only affect the small action buttons on
-  // collection cards. Keep that invalidation separate from a full list
-  // render so returning to the collection does not sort and rebuild every
-  // song card again.
-  let mySongsRenderPending = true;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
   let mySongsSort = 'title-asc';
@@ -182,7 +174,6 @@
   let cachedSongsUpdatedAt = null;
   let isLoadingSongs = false;
   let schedules = [];
-  let scheduleRenderPending = true;
   let schedulesDisabled = false;
   let scheduleTitleBeforeEdit = null;
   let activeScheduleId = '';
@@ -1598,14 +1589,9 @@
   }
 
   function renderSchedules() {
-    // The schedule editor is a separate screen. Rebuilding every schedule
-    // card while the user is browsing the collection only competes with
-    // pointer events; the next visit renders the latest state.
-    if (!isSidebarViewActive('schedule') && !scheduleViewDialog.open) {
-      scheduleRenderPending = true;
-      return;
-    }
-    scheduleRenderPending = false;
+    // Keep the schedule DOM current even while its screen is hidden. Screen
+    // navigation only changes visibility, so opening Jadwal never waits for
+    // a deferred card rebuild.
     if (typeof updateHeaderIdentity === 'function' && document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'schedule') updateHeaderIdentity('schedule');
     renderShareButtonState();
     renderScheduleTargets();
@@ -2060,9 +2046,7 @@
     // a sidebar switch. Cards created during the refresh use the current state.
     scheduleCollectionScheduleControlsRefresh();
     const enabled = Boolean(activeScheduleId) && !schedulesDisabled && schedules.length > 0;
-    if (isSidebarViewActive('my-songs')) {
-      document.querySelectorAll('#my-songs-list .my-song-add-action').forEach((button) => { button.disabled = !enabled; });
-    } else mySongsRenderPending = true;
+    document.querySelectorAll('#my-songs-list .my-song-add-action').forEach((button) => { button.disabled = !enabled; });
     updateActiveScheduleInfo();
   }
 
@@ -2765,13 +2749,11 @@
       // Background work can call renderList while another screen is open
       // (for example after offline image reconciliation). Keep the completed
       // collection DOM reusable instead of forcing a full rebuild on return.
-      if (renderLocalSongs) mySongsRenderPending = true;
       return;
     }
     updateActiveScheduleInfo();
     if (renderLocalSongs) {
       if (isSidebarViewActive('my-songs')) window.requestAnimationFrame(() => renderMySongs());
-      else mySongsRenderPending = true;
     }
 
     const needsSourceRebuild = collectionCardSource !== songs
@@ -2871,7 +2853,6 @@
   }
 
   function renderMySongs() {
-    mySongsRenderPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(mySongsSearch.value);
     const selectedCategory = mySongsCategoryFilter.value || 'ALL';
@@ -3897,7 +3878,7 @@
     appViewPanels.forEach((panel) => {
       const activePanel = panel.dataset.appViewPanel === panelView;
       panel.classList.toggle('is-active', activePanel);
-      panel.removeAttribute('hidden');
+      panel.hidden = !activePanel;
     });
     appViewButtons.forEach((button) => {
       const active = button.dataset.appView === view;
