@@ -157,7 +157,6 @@
   // collection cards. Keep that invalidation separate from a full list
   // render so returning to the collection does not sort and rebuild every
   // song card again.
-  let collectionScheduleControlsPending = false;
   let mySongsRenderPending = true;
   let activeCategory = 'ALL';
   let collectionSort = 'title-asc';
@@ -976,7 +975,6 @@
       if (document.querySelector('.sidebar-nav-item.is-active')?.dataset.appView === 'collection') updateHeaderIdentity('collection');
       buildFilters();
       window.requestAnimationFrame(() => {
-        if (isSidebarViewActive('collection')) cancelNavigationRender();
         renderList({ renderLocalSongs: false, allowInactive: true });
         renderSchedules();
       });
@@ -1085,7 +1083,6 @@
       setSyncStatus(`Update terakhir: ${formatUpdatedAt(cached.updatedAt)}`);
       buildFilters();
       window.requestAnimationFrame(() => {
-        if (isSidebarViewActive('collection')) cancelNavigationRender();
         renderList({ renderLocalSongs: false, allowInactive: true });
         renderSchedules();
       });
@@ -2038,16 +2035,31 @@
       container.innerHTML = `<span class="active-schedule-info-icon" aria-hidden="true">&#128197;</span><span class="active-schedule-info-copy"><strong>Jadwal yang Aktif</strong><span>${escapeText(title)} <span aria-hidden="true">&#183;</span> ${escapeText(date)} <span aria-hidden="true">&#183;</span> ${songCount} lagu</span></span>`;
     });
   }
-  function refreshScheduleTargetControls() {
+  let collectionScheduleControlsRefreshFrame = 0;
+  let collectionScheduleControlsRefreshGeneration = 0;
+  function scheduleCollectionScheduleControlsRefresh() {
+    window.cancelAnimationFrame(collectionScheduleControlsRefreshFrame);
+    const generation = ++collectionScheduleControlsRefreshGeneration;
+    const buttons = [...document.querySelectorAll('#song-list .add-to-schedule')];
     const enabled = Boolean(activeScheduleId) && !schedulesDisabled && schedules.length > 0;
-    // Only touch controls in the visible library. The other list can contain
-    // hundreds of cards; scanning it whenever a schedule is activated was
-    // blocking the next sidebar navigation. Mark the hidden list dirty so it
-    // is rendered with the current schedule when opened.
-    if (isSidebarViewActive('collection')) {
-      document.querySelectorAll('#song-list .add-to-schedule').forEach((button) => { button.hidden = !enabled; });
-      collectionScheduleControlsPending = false;
-    } else collectionScheduleControlsPending = true;
+    let index = 0;
+    const updateChunk = () => {
+      if (generation !== collectionScheduleControlsRefreshGeneration) return;
+      const end = Math.min(buttons.length, index + 160);
+      for (; index < end; index += 1) buttons[index].hidden = !enabled;
+      if (index < buttons.length) {
+        collectionScheduleControlsRefreshFrame = window.requestAnimationFrame(updateChunk);
+      } else {
+        collectionScheduleControlsRefreshFrame = 0;
+      }
+    };
+    collectionScheduleControlsRefreshFrame = window.requestAnimationFrame(updateChunk);
+  }
+  function refreshScheduleTargetControls() {
+    // Refresh in short animation-frame batches so large libraries never block
+    // a sidebar switch. Cards created during the refresh use the current state.
+    scheduleCollectionScheduleControlsRefresh();
+    const enabled = Boolean(activeScheduleId) && !schedulesDisabled && schedules.length > 0;
     if (isSidebarViewActive('my-songs')) {
       document.querySelectorAll('#my-songs-list .my-song-add-action').forEach((button) => { button.disabled = !enabled; });
     } else mySongsRenderPending = true;
@@ -2682,12 +2694,6 @@
     return activeSidebarView() === view;
   }
 
-  function collectionListNeedsRender() {
-    return collectionCardSource !== songs
-      || collectionCardRecords.length !== songs.length
-      || !songList.childElementCount;
-  }
-
   function cancelCollectionRender() {
     collectionRenderGeneration += 1;
     window.clearTimeout(collectionRenderTimer);
@@ -2762,7 +2768,6 @@
       if (renderLocalSongs) mySongsRenderPending = true;
       return;
     }
-    collectionScheduleControlsPending = false;
     updateActiveScheduleInfo();
     if (renderLocalSongs) {
       if (isSidebarViewActive('my-songs')) window.requestAnimationFrame(() => renderMySongs());
@@ -2866,10 +2871,6 @@
   }
 
   function renderMySongs() {
-    if (!isSidebarViewActive('my-songs')) {
-      mySongsRenderPending = true;
-      return;
-    }
     mySongsRenderPending = false;
     updateActiveScheduleInfo();
     const query = normalizeSearch(mySongsSearch.value);
@@ -3875,29 +3876,6 @@
     sidebarSettingsDialog.close();
   });
   let hasOpenedCollectionView = false;
-  let navigationRenderFrame = 0;
-  let navigationRenderIdle = 0;
-  let navigationRenderTimer = 0;
-  function cancelNavigationRender() {
-    window.cancelAnimationFrame(navigationRenderFrame);
-    if (navigationRenderIdle && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(navigationRenderIdle);
-    window.clearTimeout(navigationRenderTimer);
-    navigationRenderFrame = 0;
-    navigationRenderIdle = 0;
-    navigationRenderTimer = 0;
-  }
-  function scheduleNavigationRender(view, render) {
-    cancelNavigationRender();
-    // Give the panel switch one paint before rendering. The collection render
-    // itself is chunked, so an extra timer/frame only adds visible navigation
-    // latency on mobile browsers.
-    navigationRenderFrame = window.requestAnimationFrame(() => {
-      navigationRenderFrame = 0;
-      navigationRenderIdle = 0;
-      navigationRenderTimer = 0;
-      if (isSidebarViewActive(view)) render();
-    });
-  }
   function closeSidebar() {
     window.clearTimeout(sidebarBackdropHideTimer);
     appSidebar.classList.remove('is-open');
@@ -3915,17 +3893,12 @@
     }, 160);
   }
   function activateAppView(view, options = {}) {
-    cancelNavigationRender();
-    if (view !== 'my-songs') mySongsRenderGeneration += 1;
     const panelView = ['my-songs', 'collection', 'settings'].includes(view) ? 'songs' : view;
     appViewPanels.forEach((panel) => {
       const activePanel = panel.dataset.appViewPanel === panelView;
       panel.classList.toggle('is-active', activePanel);
       panel.removeAttribute('hidden');
     });
-    if (view === 'schedule') {
-      scheduleNavigationRender('schedule', renderSchedules);
-    }
     appViewButtons.forEach((button) => {
       const active = button.dataset.appView === view;
       button.classList.toggle('is-active', active);
@@ -3946,19 +3919,10 @@
     if (view === 'my-songs') activateLibraryTab(document.getElementById('my-songs-tab'));
     if (view === 'collection') activateLibraryTab(document.getElementById('all-songs-tab'));
     if (view === 'settings') activateLibraryTab(instrumentProfileButton);
-    // Switch the visible panel first. Render only the panel the user just
-    // opened, on the next frame, so a large hidden list cannot block the
-    // sidebar transition or require a second tap.
-    if (view === 'my-songs' && mySongsRenderPending) {
-      scheduleNavigationRender('my-songs', renderMySongs);
-    }
-    if (view === 'collection' && collectionListNeedsRender()) {
-      scheduleNavigationRender('collection', () => renderList({ renderLocalSongs: false }));
-    } else if (view === 'collection' && collectionScheduleControlsPending) {
-      // The list DOM is still valid; update only the per-card schedule
-      // actions after the panel is visible. This keeps navigation work tiny.
-      scheduleNavigationRender('collection', () => refreshScheduleTargetControls());
-    }
+    // Navigation only changes panel visibility. Each panel keeps its DOM;
+    // data updates render their own lists independently of tab activation.
+    // Collection cards are prepared when cache/data changes, in the
+    // background. Never build or scan the list in the navigation click path.
     if (view === 'collection' && !hasOpenedCollectionView) {
       hasOpenedCollectionView = true;
       if (!songs.length && !options.skipInitialLoad) loadSongs(true, false);
