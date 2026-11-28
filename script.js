@@ -2831,7 +2831,10 @@
         collectionCardRecords.push(record);
         fragment.append(record.card);
       }
-      if (streamIntoVisibleList && isSidebarViewActive('collection')) {
+      // First population streams into the real list even if its screen is
+      // hidden. Returning to Koleksi can then show completed batches at once;
+      // refreshes with an existing list still stage replacements off-screen.
+      if (streamIntoVisibleList) {
         songList.append(staging, fragment);
         streamIntoVisibleList = false;
         streamedToVisibleList = true;
